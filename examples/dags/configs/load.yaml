@@ -1,0 +1,12 @@
+name: example_load
+description: "Load transformed data to final destination"
+platform: local
+input_format: parquet
+output_format: parquet
+log_level: INFO
+max_retries: 3
+retry_delay: 1.0
+params:
+  job_class: "examples.example_job.LoadJob"
+  input_path: "examples/output/transformed.parquet"
+  destination_path: "examples/output/aggregated_customers.parquet"

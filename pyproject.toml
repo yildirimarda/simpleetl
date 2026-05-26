@@ -1,0 +1,99 @@
+[project]
+name = "simpleetl"
+version = "1.0.0"
+description = "A lightweight, professional ETL framework for local, AWS Glue, Databricks, and Azure Synapse"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "pandas>=2.0.0",
+    "pyarrow>=12.0.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0",
+    "sqlalchemy>=2.0.0",
+    "fsspec>=2024.1.0",
+    "xmltodict>=0.13.0",
+    "openpyxl>=3.1.5",
+]
+
+[project.optional-dependencies]
+# Cloud storage support (S3, GCS)
+cloud = [
+    "s3fs>=2024.1.0",
+    "gcsfs>=2024.1.0",
+    "adlfs>=2024.1.0",
+]
+# AWS platform support (Glue, Secrets Manager)
+aws = [
+    "boto3>=1.26.0",
+]
+# Spark-based processing (Databricks, Synapse)
+spark = [
+    "pyspark>=3.5.0; platform_system != 'Windows'",
+]
+# Database drivers for PostgreSQL, MySQL, SQL Server
+databases = [
+    "psycopg2-binary>=2.9.0",
+    "mysql-connector-python>=8.0.0",
+    "pyodbc>=5.0.0",
+]
+# Secrets management backends
+secrets = [
+    "hvac>=2.0.0",
+    "azure-keyvault-secrets>=4.0.0",
+    "azure-identity>=1.0.0",
+]
+# Avro format support (fastavro is optional; pyarrow handles it too)
+avro = [
+    "fastavro>=1.12.2",
+]
+# Monitoring
+monitoring = [
+    "prometheus-client>=0.20.0",
+]
+# All optional dependencies
+all = [
+    "simpleetl[cloud,aws,spark,databases,secrets,avro,monitoring]",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "black>=23.0.0",
+    "isort>=5.0.0",
+    "docker>=6.0.0",
+    "kubernetes>=28.0.0",
+]
+
+[project.scripts]
+simpleetl = "simpleetl.cli:main"
+
+[build-system]
+requires = ["setuptools>=65.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.mypy]
+# Third-party packages without type stubs
+[[tool.mypy.overrides]]
+module = [
+    "fsspec.*",
+    "boto3.*",
+    "botocore.*",
+    "hvac.*",
+    "awsglue.*",
+    "importlib_metadata",
+    "msvcrt",
+]
+ignore_missing_imports = true
+
+[dependency-groups]
+dev = [
+    "black>=25.11.0",
+    "docker>=7.1.0",
+    "isort>=6.1.0",
+    "kubernetes>=35.0.0",
+    "mypy>=1.19.1",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.13",
+]

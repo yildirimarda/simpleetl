@@ -1,0 +1,50 @@
+# Development Configuration
+environment: development
+debug: true
+
+logging:
+  level: DEBUG
+  format: text
+  file: logs/etl_dev.log
+
+database:
+  default:
+    driver: sqlite
+    database: etl_dev.db
+  postgres:
+    driver: postgresql
+    host: localhost
+    port: 5432
+    database: etl_dev
+    username: etl_user
+    password: ${DB_PASSWORD:-etl_password}
+  mysql:
+    driver: mysql
+    host: localhost
+    port: 3306
+    database: etl_dev
+    username: etl_user
+    password: ${DB_PASSWORD:-etl_password}
+
+storage:
+  local:
+    path: ./data/dev
+  s3:
+    bucket: etl-dev-data
+    region: us-east-1
+    access_key_id: ${AWS_ACCESS_KEY_ID}
+    secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+
+metrics:
+  enabled: true
+  port: 8000
+  path: /metrics
+
+retry:
+  max_attempts: 3
+  delay: 1
+  backoff_factor: 2
+
+batch:
+  size: 1000
+  timeout: 30

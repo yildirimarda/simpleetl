@@ -1,0 +1,13 @@
+name: example_csv_job
+description: "A simple example ETL job that reads CSV, filters data, and writes CSV"
+platform: local
+input_format: csv
+output_format: csv
+log_level: INFO
+max_retries: 3
+retry_delay: 2.0
+params:
+  input_path: examples/input/sample_data.csv
+  output_path: examples/output/filtered_data.csv
+  filter_column: age
+  filter_min_value: 18

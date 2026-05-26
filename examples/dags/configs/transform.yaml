@@ -1,0 +1,14 @@
+name: example_transform
+description: "Transform extracted customer data"
+platform: local
+input_format: parquet
+output_format: parquet
+log_level: INFO
+max_retries: 3
+retry_delay: 1.0
+params:
+  job_class: "examples.example_job.TransformJob"
+  input_path: "examples/output/extracted.parquet"
+  output_path: "examples/output/transformed.parquet"
+  filter_column: "status"
+  filter_value: "active"

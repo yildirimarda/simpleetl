@@ -1,0 +1,86 @@
+# Production Configuration
+environment: production
+debug: false
+
+logging:
+  level: WARNING
+  format: json
+  file: /var/log/etl/etl.log
+  rotate:
+    max_size: 100000000  # 100MB
+    backup_count: 10
+  remote:
+    enabled: true
+    host: logs.example.com
+    port: 514
+    protocol: tcp
+
+database:
+  default:
+    driver: postgresql
+    host: prod-db-cluster.cluster-xyz.us-east-1.rds.amazonaws.com
+    port: 5432
+    database: etl_production
+    username: etl_user
+    password: ${DB_PASSWORD}
+    sslmode: require
+    pool_size: 50
+    pool_timeout: 30
+    pool_recycle: 3600
+
+storage:
+  local:
+    path: /data/prod
+  s3:
+    bucket: etl-prod-data
+    region: us-east-1
+    access_key_id: ${AWS_ACCESS_KEY_ID}
+    secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+    encryption: AES256
+
+metrics:
+  enabled: true
+  port: 8000
+  path: /metrics
+  export_interval: 30
+  remote:
+    enabled: true
+    url: https://monitoring.example.com/api/v1/metrics
+    api_key: ${MONITORING_API_KEY}
+
+retry:
+  max_attempts: 10
+  delay: 5
+  backoff_factor: 2
+  max_delay: 300
+  jitter: 0.1
+
+batch:
+  size: 10000
+  timeout: 120
+
+monitoring:
+  alert_thresholds:
+    error_rate: 0.01
+    latency_p95: 600
+    latency_p99: 1200
+    memory_usage: 85
+    cpu_usage: 80
+    disk_usage: 85
+
+security:
+  encryption:
+    enabled: true
+    algorithm: AES-256
+  masking:
+    enabled: true
+    patterns:
+      - credit_card: \d{4}-\d{4}-\d{4}-\d{4}
+      - ssn: \d{3}-\d{2}-\d{4}
+      - email: \b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b
+
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention_days: 30
+  encryption: true

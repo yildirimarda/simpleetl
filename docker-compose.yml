@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  simpleetl:
+    build: .
+    container_name: simpleetl
+    volumes:
+      - ./examples:/app/examples
+      - ./configs:/app/configs
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+      - ENVIRONMENT=development
+    command: uv run python main.py
+    depends_on:
+      - postgres
+      - mysql
+    networks:
+      - simpleetl-network
+
+  # PostgreSQL for testing database operations
+  postgres:
+    image: postgres:15
+    container_name: simpleetl-postgres
+    environment:
+      POSTGRES_DB: etl_test
+      POSTGRES_USER: etl_user
+      POSTGRES_PASSWORD: etl_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - simpleetl-network
+
+  # MySQL for testing database operations
+  mysql:
+    image: mysql:8.0
+    container_name: simpleetl-mysql
+    environment:
+      MYSQL_DATABASE: etl_test
+      MYSQL_USER: etl_user
+      MYSQL_PASSWORD: etl_password
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - simpleetl-network
+
+volumes:
+  postgres_data:
+  mysql_data:
+
+networks:
+  simpleetl-network:
+    driver: bridge

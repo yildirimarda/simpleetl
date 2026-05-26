@@ -1,0 +1,11 @@
+name: sample_etl_job
+description: Sample ETL job for customer data processing
+platform: local
+input_format: csv
+output_format: parquet
+log_level: INFO
+max_retries: 3
+retry_delay: 1.0
+params:
+  source_file: "examples/sample_customers.csv"
+  destination_file: "examples/aggregated_customers.parquet"

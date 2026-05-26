@@ -1,0 +1,39 @@
+# Example 3-job DAG: extract -> transform -> load
+#
+# Usage:
+#   uv run simpleetl --dag examples/dags/example_dag.yaml
+#
+# To run with parallelism:
+#   uv run simpleetl --dag examples/dags/example_dag.yaml --max-parallel 2
+#
+# Note: job_class references must point to importable Python modules.
+#       Config files must exist and be valid YAML/JSON.
+
+name: example_pipeline
+
+jobs:
+  - name: extract
+    description: "Extract raw data from source"
+    job_class: "examples.example_job.ExtractJob"
+    config_path: "examples/dags/configs/extract.yaml"
+    params:
+      source_path: "examples/sample_customers.csv"
+
+  - name: transform
+    description: "Transform extracted data"
+    job_class: "examples.example_job.TransformJob"
+    config_path: "examples/dags/configs/transform.yaml"
+    dependencies:
+      - extract
+    params:
+      filter_column: "status"
+      filter_value: "active"
+
+  - name: load
+    description: "Load transformed data to destination"
+    job_class: "examples.example_job.LoadJob"
+    config_path: "examples/dags/configs/load.yaml"
+    dependencies:
+      - transform
+    params:
+      destination_path: "examples/output/aggregated_customers.parquet"

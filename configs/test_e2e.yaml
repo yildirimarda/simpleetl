@@ -1,0 +1,21 @@
+# Minimal end-to-end test configuration for CI/CD pipeline.
+#
+# This config is used by the CI e2e and Docker verification jobs to
+# exercise a real ETL job: read CSV -> filter rows -> write CSV.
+#
+# Usage:
+#   simpleetl --config configs/test_e2e.yaml
+
+name: e2e_test_job
+description: "End-to-end CI test: reads CSV, filters adults (age >= 18), writes CSV"
+platform: local
+input_format: csv
+output_format: csv
+log_level: INFO
+max_retries: 0
+params:
+  job_class: "examples.jobs.example_csv_job.ExampleCSVJob"
+  input_path: "examples/input/sample_data.csv"
+  output_path: "tmp_output/test_output.csv"
+  filter_column: "age"
+  filter_min_value: 18

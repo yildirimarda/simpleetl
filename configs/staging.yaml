@@ -1,0 +1,50 @@
+# Staging Configuration
+environment: staging
+debug: false
+
+logging:
+  level: INFO
+  format: json
+  file: logs/etl_staging.log
+
+database:
+  default:
+    driver: postgresql
+    host: staging-db.internal
+    port: 5432
+    database: etl_staging
+    username: etl_user
+    password: ${DB_PASSWORD}
+    pool_size: 20
+    pool_timeout: 30
+
+storage:
+  local:
+    path: /data/staging
+  s3:
+    bucket: etl-staging-data
+    region: us-east-1
+    access_key_id: ${AWS_ACCESS_KEY_ID}
+    secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+
+metrics:
+  enabled: true
+  port: 8000
+  path: /metrics
+  export_interval: 15
+
+retry:
+  max_attempts: 5
+  delay: 2
+  backoff_factor: 2
+  max_delay: 60
+
+batch:
+  size: 5000
+  timeout: 60
+
+monitoring:
+  alert_thresholds:
+    error_rate: 0.05
+    latency_p95: 300
+    memory_usage: 80

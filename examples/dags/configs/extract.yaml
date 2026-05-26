@@ -1,0 +1,12 @@
+name: example_extract
+description: "Extract raw customer data from CSV"
+platform: local
+input_format: csv
+output_format: parquet
+log_level: INFO
+max_retries: 3
+retry_delay: 1.0
+params:
+  job_class: "examples.example_job.ExtractJob"
+  source_file: "examples/sample_customers.csv"
+  output_path: "examples/output/extracted.parquet"
