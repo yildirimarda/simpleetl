@@ -21,7 +21,7 @@ Quick Start:
     job.run_with_error_handling()
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 __author__ = "SimpleETL Contributors"
 
 # -- Core ETL ----------------------------------------------------------------
@@ -80,6 +80,10 @@ from simpleetl.core.schema import (
     SchemaValidationError,
     SQLDialect,
     generate_ddl,
+    StructType,
+    ArrayType,
+    MapType,
+    FieldDef,
 )
 
 # -- Incremental -------------------------------------------------------------
@@ -201,6 +205,33 @@ from simpleetl.core.secrets import (
     resolve_secrets,
 )
 
+# -- Lineage & Observability -------------------------------------------------
+
+from simpleetl.core.lineage import (
+    LineageEvent,
+    LineageTracker,
+    ProvenanceTracker,
+    ProvenanceHook,
+    LineageHook,
+    FileLineageStore,
+    OpenLineageConverter,
+    DataFreshnessTracker,
+    AlertRule,
+    AlertChannel,
+    WebhookChannel,
+    SlackChannel,
+    EmailChannel,
+    AlertManager,
+    get_lineage_tracker,
+    configure_lineage_persistence,
+    get_file_lineage_store,
+    get_freshness_tracker,
+    get_alert_manager,
+    create_lineage_hook,
+    configure_openlineage,
+    get_openlineage_converter,
+)
+
 # -- Filesystem --------------------------------------------------------------
 
 from simpleetl.core.filesystem import (
@@ -220,6 +251,21 @@ from simpleetl.core.logger import (
 from simpleetl.core.metrics import (
     MetricsCollector,
     get_metrics,
+)
+
+# -- Security ------------------------------------------------------------------
+
+from simpleetl.core.security import (
+    detect_pii_columns,
+    detect_pii_values,
+    mask_pii,
+    ColumnEncryptor,
+    AuditLogger,
+    RBACPolicy,
+    apply_rbac_filter,
+    mask_email,
+    mask_phone,
+    mask_credit_card,
 )
 
 # -- Health ------------------------------------------------------------------
@@ -255,6 +301,8 @@ from simpleetl.transformations import (
     pivot_data,
     unpivot_data,
     transform_chain,
+    TransformationChain,
+    chain,
 )
 
 # -- Platforms ---------------------------------------------------------------
@@ -422,6 +470,10 @@ __all__ = [
     "SchemaValidationError",
     "SQLDialect",
     "generate_ddl",
+    "StructType",
+    "ArrayType",
+    "MapType",
+    "FieldDef",
     # Incremental
     "Watermark",
     "WatermarkStore",
@@ -501,6 +553,29 @@ __all__ = [
     "HashiCorpVaultProvider",
     "SecretNotFoundError",
     "resolve_secrets",
+    # Lineage & Observability
+    "LineageEvent",
+    "LineageTracker",
+    "ProvenanceTracker",
+    "ProvenanceHook",
+    "LineageHook",
+    "FileLineageStore",
+    "OpenLineageConverter",
+    "DataFreshnessTracker",
+    "AlertRule",
+    "AlertChannel",
+    "WebhookChannel",
+    "SlackChannel",
+    "EmailChannel",
+    "AlertManager",
+    "get_lineage_tracker",
+    "configure_lineage_persistence",
+    "get_file_lineage_store",
+    "get_freshness_tracker",
+    "get_alert_manager",
+    "create_lineage_hook",
+    "configure_openlineage",
+    "get_openlineage_converter",
     # Filesystem
     "get_filesystem",
     "is_cloud_path",
@@ -514,6 +589,17 @@ __all__ = [
     # Health
     "HealthServer",
     "start_health_server",
+    # Security
+    "detect_pii_columns",
+    "detect_pii_values",
+    "mask_pii",
+    "ColumnEncryptor",
+    "AuditLogger",
+    "RBACPolicy",
+    "apply_rbac_filter",
+    "mask_email",
+    "mask_phone",
+    "mask_credit_card",
     # Transformations
     "filter_data",
     "map_values",
@@ -538,6 +624,8 @@ __all__ = [
     "pivot_data",
     "unpivot_data",
     "transform_chain",
+    "TransformationChain",
+    "chain",
     # Platforms
     "PlatformRunner",
     "LocalPlatformRunner",

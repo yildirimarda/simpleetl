@@ -21,7 +21,7 @@ def create_parser() -> argparse.ArgumentParser:
         description="SimpleETL - A lightweight ETL framework",
     )
     parser.add_argument(
-        "--version", action="version", version="%(prog)s 0.1.0"
+        "--version", action="version", version="%(prog)s 1.0.0"
     )
     parser.add_argument(
         "--config", "-c",
