@@ -9,6 +9,7 @@ Covers uncovered lines in job.py including:
 - schema_registry setter with None, SchemaRegistry instance, and path string
 - register_output_schema with and without registry
 - validate_against_schema - KeyError for unknown name, successful validation
+- validate_output - None data, non-DataFrame, schema discovery, helpful errors
 - register_hook
 - run_with_error_handling checkpoint resume
 - run_with_error_handling on_success checkpoint delete
@@ -380,7 +381,113 @@ class TestValidateAgainstSchema:
 
 
 # ---------------------------------------------------------------------------
-# 8. register_hook (line 276)
+# 8. validate_output (lines 724-773)
+# ---------------------------------------------------------------------------
+
+class TestValidateOutput:
+    """Tests for validate_output method."""
+
+    def _make_schema(self):
+        return Schema(
+            columns=[
+                ColumnDef("id", "int64", nullable=False),
+                ColumnDef("name", "object"),
+            ]
+        )
+
+    def test_validate_output_none_data_raises_value_error(self):
+        """validate_output raises ValueError when data is None."""
+        config = ETLJobConfig(
+            name="test_job",
+            input_format="csv",
+            output_format="csv",
+        )
+        job = ConcreteTestJob(config)
+        schema = self._make_schema()
+        job.register_output_schema("users", schema)
+
+        with pytest.raises(ValueError, match="Cannot validate None data"):
+            job.validate_output(None, schema_name="users")
+
+    def test_validate_output_non_dataframe_raises_type_error(self):
+        """validate_output raises TypeError when data is not a DataFrame."""
+        config = ETLJobConfig(
+            name="test_job",
+            input_format="csv",
+            output_format="csv",
+        )
+        job = ConcreteTestJob(config)
+        schema = self._make_schema()
+        job.register_output_schema("users", schema)
+
+        with pytest.raises(TypeError, match="Data must be a pandas DataFrame"):
+            job.validate_output([1, 2, 3], schema_name="users")
+
+    def test_validate_output_discovers_schema_from_params(self):
+        """validate_output auto-discovers schema_name from config.params['output_schema']."""
+        config = ETLJobConfig(
+            name="test_job",
+            input_format="csv",
+            output_format="csv",
+            params={"output_schema": "auto_schema"},
+        )
+        job = ConcreteTestJob(config)
+        schema = self._make_schema()
+        job.register_output_schema("auto_schema", schema)
+
+        df = pd.DataFrame({"id": [1], "name": ["a"]})
+        with patch.object(job.logger, "info") as mock_info:
+            job.validate_output(df)
+            mock_info.assert_called()
+
+    def test_validate_output_uses_config_name_as_fallback(self):
+        """If no output_schema param, uses config.name as schema name."""
+        config = ETLJobConfig(
+            name="fallback_schema",
+            input_format="csv",
+            output_format="csv",
+        )
+        job = ConcreteTestJob(config)
+        schema = self._make_schema()
+        job.register_output_schema("fallback_schema", schema)
+
+        df = pd.DataFrame({"id": [1], "name": ["a"]})
+        with patch.object(job.logger, "info"):
+            job.validate_output(df)
+
+    def test_validate_output_success_logs_and_validates(self):
+        """validate_output logs validation and calls validate_against_schema."""
+        config = ETLJobConfig(
+            name="test_job",
+            input_format="csv",
+            output_format="csv",
+        )
+        job = ConcreteTestJob(config)
+        schema = self._make_schema()
+        job.register_output_schema("users", schema)
+
+        df = pd.DataFrame({"id": [1, 2], "name": ["a", "b"]})
+        with patch.object(job.logger, "info") as mock_info:
+            job.validate_output(df, schema_name="users")
+            # Should log both the validation start and success
+            assert mock_info.call_count == 2
+
+    def test_validate_output_key_error_raises_with_helpful_message(self):
+        """validate_output raises KeyError with message about using register_output_schema."""
+        config = ETLJobConfig(
+            name="test_job",
+            input_format="csv",
+            output_format="csv",
+        )
+        job = ConcreteTestJob(config)
+
+        df = pd.DataFrame({"id": [1], "name": ["a"]})
+        with pytest.raises(KeyError, match="Use register_output_schema"):
+            job.validate_output(df, schema_name="missing_schema")
+
+
+# ---------------------------------------------------------------------------
+# 9. register_hook (line 276)
 # ---------------------------------------------------------------------------
 
 class TestRegisterHook:
@@ -420,7 +527,7 @@ class TestRegisterHook:
 
 
 # ---------------------------------------------------------------------------
-# 9. run_with_error_handling checkpoint resume (lines 359-361)
+# 10. run_with_error_handling checkpoint resume (lines 359-361)
 # ---------------------------------------------------------------------------
 
 class TestRunErrorHandlingCheckpointResume:
@@ -464,7 +571,7 @@ class TestRunErrorHandlingCheckpointResume:
 
 
 # ---------------------------------------------------------------------------
-# 10. run_with_error_handling on_success checkpoint delete (line 393)
+# 11. run_with_error_handling on_success checkpoint delete (line 393)
 # ---------------------------------------------------------------------------
 
 class TestRunErrorHandlingCheckpointDelete:
@@ -503,7 +610,7 @@ class TestRunErrorHandlingCheckpointDelete:
 
 
 # ---------------------------------------------------------------------------
-# 11. run_with_error_handling permanent error (lines 410-413)
+# 12. run_with_error_handling permanent error (lines 410-413)
 # ---------------------------------------------------------------------------
 
 class TestRunErrorHandlingPermanentError:
@@ -565,7 +672,7 @@ class TestRunErrorHandlingPermanentError:
 
 
 # ---------------------------------------------------------------------------
-# 12. run_with_partial_failure (lines 454-547)
+# 13. run_with_partial_failure (lines 454-547)
 # ---------------------------------------------------------------------------
 
 class TestRunWithPartialFailure:
@@ -799,7 +906,7 @@ class TestRunWithPartialFailure:
 
 
 # ---------------------------------------------------------------------------
-# 13. run_incremental non-DataFrame warning (lines 641-647)
+# 14. run_incremental non-DataFrame warning (lines 641-647)
 # ---------------------------------------------------------------------------
 
 class TestRunIncrementalNonDataFrame:

@@ -3,8 +3,8 @@
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yourusername/simpleetl)
 [![Python](https://img.shields.io/badge/python-3.9%2B-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-1521%20passed-brightgreen.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-96%25-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1540%20passed-brightgreen.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)]()
 
 A **production-grade** ETL framework for Python. Designed to run on **local**, **AWS Glue**, **Databricks**, and **Azure Synapse** platforms. Supports all major data formats with a focus on simplicity, readability, and observability.
 
@@ -59,7 +59,7 @@ A **production-grade** ETL framework for Python. Designed to run on **local**, *
 - **Plugin System**: Extensible via hooks and entry_points-based discovery
 - **Production Ready**: Docker, Kubernetes, Prometheus metrics, structured logging
 - **Lightweight Core**: Only 6 core dependencies; cloud/spark/db as optional extras
-- **High Quality**: 1521 tests, 96% coverage, ruff + mypy clean
+- **High Quality**: 1540 tests, 94% coverage, ruff + mypy clean
 
 ## Installation
 
@@ -162,15 +162,10 @@ uv run simpleetl --config job.yaml
 ### Alternatively: Use the Top-Level API
 
 ```python
-from simpleetl import SimpleETL
-
-simple_etl = SimpleETL(
-    input_path="data/users.csv",
-    output_path="data/adults.parquet",
-)
+import simpleetl
 
 # Read, filter, and write in one line
-df = simple_etl.read("data/users.csv")
+df = simpleetl.read("data/users.csv")
 filtered = df[df["age"] >= 18]
 simpleetl.write(filtered, "data/adults.parquet")
 ```
@@ -786,7 +781,7 @@ uv run pytest --cov=simpleetl --cov-report=term-missing
 uv run pytest tests/test_lineage.py -v
 
 # Run benchmarks
-uv run python -m pytest tests/ -q  # 1521 tests, 0 failures
+uv run python -m pytest tests/ -q  # 1546 tests, 0 failures
 ```
 
 ---
@@ -844,7 +839,7 @@ simpleetl/
 │       ├── glue.py              # AWS Glue platform runner
 │       ├── databricks.py        # Databricks platform runner
 │       └── synapse.py           # Azure Synapse platform runner
-├── tests/                       # 1521 tests across 38 modules
+├── tests/                       # 1540 tests across 41 modules
 ├── benchmarks/                  # Performance benchmark suite
 ├── docs/                        # Documentation (10 guides)
 ├── examples/                    # Example ETL jobs and configurations

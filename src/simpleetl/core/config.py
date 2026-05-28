@@ -135,6 +135,8 @@ class ETLJobConfig(BaseModel):
     database: DatabaseConfig = DatabaseConfig()
     openlineage_url: Optional[str] = None
     openlineage_namespace: str = "simpleetl"
+    format_options: Dict[str, Dict[str, Any]] = {}
+    batch_size: int = 10000
 
 
 def _apply_env_prefix(config_data: Dict[str, Any],

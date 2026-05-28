@@ -68,6 +68,7 @@ from simpleetl.formats import (
     ExcelWriter,
     DatabaseReader,
     DatabaseWriter,
+    Table,
     FormatFactory,
 )
 
@@ -251,6 +252,8 @@ from simpleetl.core.logger import (
 from simpleetl.core.metrics import (
     MetricsCollector,
     get_metrics,
+    job_timer,
+    TimerContext,
 )
 
 # -- Security ------------------------------------------------------------------
@@ -380,7 +383,7 @@ def read(source: str, format: str = "auto", **kwargs):
     if format == "auto":
         format = _detect_format(source)
 
-    reader = FormatFactory.get_reader(format)
+    reader = FormatFactory.get_reader(source)
     return reader.read(source, **kwargs)
 
 
@@ -402,7 +405,7 @@ def write(df, destination: str, format: str = "auto", **kwargs) -> None:
     if format == "auto":
         format = _detect_format(destination)
 
-    writer = FormatFactory.get_writer(format)
+    writer = FormatFactory.get_writer(destination)
     writer.write(df, destination, **kwargs)
 
 
@@ -462,6 +465,7 @@ __all__ = [
     "ExcelWriter",
     "DatabaseReader",
     "DatabaseWriter",
+    "Table",
     "FormatFactory",
     # Schema
     "Schema",
@@ -586,6 +590,8 @@ __all__ = [
     "get_logger",
     "MetricsCollector",
     "get_metrics",
+    "job_timer",
+    "TimerContext",
     # Health
     "HealthServer",
     "start_health_server",
