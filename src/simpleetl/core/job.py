@@ -267,6 +267,28 @@ class ETLJob(ABC):
             "DataFrame validated successfully against schema '%s'", name
         )
 
+    # -- format options helpers ------------------------------------------------
+
+    def get_format_options(self, format_name: Optional[str] = None) -> Dict[str, Any]:
+        """Get format-specific options for reading/writing.
+
+        Merges global params with format-specific options from config.
+
+        Args:
+            format_name: Format name to get options for. If None, uses
+                input_format for extract and output_format for load context.
+                This method returns merged dict without context awareness.
+
+        Returns:
+            Dictionary of format-specific options.
+        """
+        format_opts = self.config.format_options.get(format_name, {})
+        # Merge with any chunk_size from batch_size config
+        if self.config.batch_size:
+            format_opts = dict(format_opts)
+            format_opts.setdefault("chunk_size", self.config.batch_size)
+        return format_opts
+
     # -- hook helpers -------------------------------------------------------
 
     def register_hook(
@@ -698,3 +720,54 @@ class ETLJob(ABC):
         )
 
         self.logger.info("Merge load completed successfully for '%s'", table_name)
+
+    def validate_output(
+        self,
+        data,
+        schema_name: Optional[str] = None,
+        strict_nullability: bool = False,
+        strict_types: bool = False,
+    ) -> None:
+        """Validate transformed data against a registered output schema.
+
+        Automatically discovers schema_name from config if not provided.
+
+        Args:
+            data: pandas DataFrame to validate.
+            schema_name: Name of the registered schema. Defaults to
+                ``config.params.get("output_schema")`` or config.name.
+            strict_nullability: Enforce non-nullable constraints.
+            strict_types: Enforce dtype constraints.
+
+        Raises:
+            KeyError: If no schema is registered.
+            SchemaValidationError: If validation fails.
+        """
+        import pandas as pd
+
+        if schema_name is None:
+            schema_name = self.config.params.get("output_schema", self.config.name)
+
+        if data is None:
+            raise ValueError("Cannot validate None data")
+
+        if not isinstance(data, pd.DataFrame):
+            raise TypeError(
+                f"Data must be a pandas DataFrame, got {type(data).__name__}"
+            )
+
+        self._setup_logging()
+        self.logger.info("Validating output data against schema '%s'", schema_name)
+
+        try:
+            self.validate_against_schema(
+                schema_name,
+                data,
+                strict_nullability=strict_nullability,
+                strict_types=strict_types,
+            )
+        except KeyError:
+            raise KeyError(
+                f"No output schema registered for '{schema_name}'. "
+                f"Use register_output_schema() to register one."
+            ) from None

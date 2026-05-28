@@ -20,6 +20,227 @@ from .base import DataReader, DataWriter
 logger = logging.getLogger(__name__)
 
 
+class Table:
+    """Schema-aware database table abstraction for ETL operations.
+
+    Wraps a database table with its schema, connection pool, and provides
+    methods for reading, writing, and upserting data with automatic schema
+    inference and validation.
+
+    Example::
+
+        table = Table("users", connection_string="postgresql://localhost/db")
+        df = table.read()
+        table.upsert(df, key_columns=["user_id"])
+    """
+
+    def __init__(
+        self,
+        table_name: str,
+        connection_string: Optional[str] = None,
+        engine: Optional[sqlalchemy.engine.Engine] = None,
+        pool: Optional[ConnectionPool] = None,
+        schema: Optional[str] = None,
+    ) -> None:
+        """Initialize a database table abstraction.
+
+        Args:
+            table_name: Name of the database table.
+            connection_string: SQLAlchemy connection string.
+            engine: SQLAlchemy engine (alternative to connection_string).
+            pool: ConnectionPool instance (alternative to connection_string).
+            schema: Optional database schema name.
+        """
+        self.table_name = table_name
+        self.schema = schema
+        self._reader = DatabaseReader()
+        self._writer = DatabaseWriter()
+
+        if pool is not None:
+            self._pool = pool
+        elif engine is not None:
+            self._pool = None
+            self._engine = engine
+        elif connection_string is not None:
+            self._pool = None
+            self._engine = get_engine(ConnectionConfig(url=connection_string))
+        else:
+            raise ValueError(
+                "Must provide one of connection_string, engine, or pool"
+            )
+
+    @property
+    def engine(self) -> Optional[sqlalchemy.engine.Engine]:
+        """Get the SQLAlchemy engine, creating it from pool if needed."""
+        if hasattr(self, "_engine"):
+            return self._engine
+        if hasattr(self, "_pool"):
+            return self._pool.engine
+        return None
+
+    def get_full_name(self) -> str:
+        """Return the fully-qualified table name (schema.table if applicable)."""
+        if self.schema:
+            return f"{self.schema}.{self.table_name}"
+        return self.table_name
+
+    def read(
+        self,
+        columns: Optional[List[str]] = None,
+        where: Optional[str] = None,
+        order_by: Optional[str] = None,
+        limit: Optional[int] = None,
+        **kwargs,
+    ) -> pd.DataFrame:
+        """Read data from the table.
+
+        Args:
+            columns: Specific columns to select. Defaults to all columns.
+            where: Optional WHERE clause (without the keyword).
+            order_by: Column(s) to order by.
+            limit: Maximum number of rows to return.
+            **kwargs: Additional arguments passed to DatabaseReader.
+
+        Returns:
+            DataFrame containing the table data.
+        """
+        engine = self.engine
+        if engine is None:
+            raise ValueError("No database engine available")
+
+        # Build query
+        col_list = ", ".join(columns) if columns else "*"
+        full_name = self.get_full_name()
+        sql = f"SELECT {col_list} FROM {full_name}"
+        if where:
+            sql += f" WHERE {where}"
+        if order_by:
+            sql += f" ORDER BY {order_by}"
+        if limit:
+            sql += f" LIMIT {limit}"
+
+        return self._reader.read(engine, sql=sql, **kwargs)
+
+    def read_chunks(
+        self,
+        chunk_size: int = 10000,
+        columns: Optional[List[str]] = None,
+        where: Optional[str] = None,
+        **kwargs,
+    ) -> Iterator[pd.DataFrame]:
+        """Read data from the table in chunks.
+
+        Args:
+            chunk_size: Number of rows per chunk.
+            columns: Specific columns to select.
+            where: Optional WHERE clause.
+            **kwargs: Additional arguments passed to DatabaseReader.
+
+        Yields:
+            DataFrame chunks.
+        """
+        engine = self.engine
+        if engine is None:
+            raise ValueError("No database engine available")
+
+        col_list = ", ".join(columns) if columns else "*"
+        full_name = self.get_full_name()
+        sql = f"SELECT {col_list} FROM {full_name}"
+        if where:
+            sql += f" WHERE {where}"
+
+        yield from self._reader.read_chunks(engine, chunk_size=chunk_size, sql=sql, **kwargs)
+
+    def write(
+        self,
+        data: pd.DataFrame,
+        if_exists: str = "fail",
+        **kwargs,
+    ) -> None:
+        """Write data to the table.
+
+        Args:
+            data: DataFrame to write.
+            if_exists: Behavior when table exists ('fail', 'replace', 'append').
+            **kwargs: Additional arguments passed to DatabaseWriter.
+        """
+        engine = self.engine
+        if engine is None:
+            raise ValueError("No database engine available")
+
+        self._writer.write(
+            data,
+            engine,
+            table_name=self.table_name,
+            if_exists=if_exists,
+            schema=self.schema,
+            **kwargs,
+        )
+
+    def upsert(
+        self,
+        data: pd.DataFrame,
+        key_columns: List[str],
+        **kwargs,
+    ) -> int:
+        """Perform an UPSERT (INSERT or UPDATE) operation.
+
+        Args:
+            data: DataFrame containing the data to upsert.
+            key_columns: Columns that form the unique key.
+            **kwargs: Additional arguments passed to DatabaseWriter.merge.
+
+        Returns:
+            Number of rows affected.
+        """
+        engine = self.engine
+        if engine is None:
+            raise ValueError("No database engine available")
+
+        return self._writer.merge(
+            data,
+            engine,
+            table_name=self.table_name,
+            key_columns=key_columns,
+            schema=self.schema,
+            **kwargs,
+        )
+
+    def truncate(self) -> None:
+        """Truncate all data from the table.
+
+        Uses TRUNCATE for PostgreSQL/MySQL, DELETE for SQLite.
+        """
+        engine = self.engine
+        if engine is None:
+            raise ValueError("No database engine available")
+
+        full_name = self.get_full_name()
+        dialect = engine.dialect.name
+
+        if dialect == "sqlite":
+            with engine.begin() as conn:
+                conn.execute(text(f"DELETE FROM {full_name}"))
+        else:
+            with engine.begin() as conn:
+                conn.execute(text(f"TRUNCATE TABLE {full_name}"))
+
+    def exists(self) -> bool:
+        """Check if the table exists in the database."""
+        engine = self.engine
+        if engine is None:
+            raise ValueError("No database engine available")
+
+        from sqlalchemy import inspect
+
+        inspector = inspect(engine)
+        if self.schema:
+            tables = inspector.get_table_names(schema=self.schema)
+        else:
+            tables = inspector.get_table_names()
+        return self.table_name in tables
+
+
 class DatabaseReader(DataReader):
     """Read data from databases using SQL queries with connection pooling."""
 

@@ -21,7 +21,7 @@ from .avro import AvroReader, AvroWriter
 from .orc import OrcReader, OrcWriter
 from .xml import XMLReader, XMLWriter
 from .excel import ExcelReader, ExcelWriter
-from .database import DatabaseReader, DatabaseWriter
+from .database import DatabaseReader, DatabaseWriter, Table
 from .glue_catalog import GlueCatalogReader, GlueCatalogWriter
 from .factory import FormatFactory
 
@@ -46,6 +46,7 @@ __all__ = [
     'ExcelWriter',
     'DatabaseReader',
     'DatabaseWriter',
+    'Table',
     # Glue Data Catalog
     'GlueCatalogReader',
     'GlueCatalogWriter',
