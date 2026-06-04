@@ -23,6 +23,9 @@ from .xml import XMLReader, XMLWriter
 from .excel import ExcelReader, ExcelWriter
 from .database import DatabaseReader, DatabaseWriter, Table
 from .glue_catalog import GlueCatalogReader, GlueCatalogWriter
+from .duckdb import DuckDBReader, DuckDBWriter
+from .rest_api import RestApiReader, RestApiWriter
+from .delta import DeltaLakeReader, DeltaLakeWriter
 from .factory import FormatFactory
 
 __all__ = [
@@ -50,6 +53,15 @@ __all__ = [
     # Glue Data Catalog
     'GlueCatalogReader',
     'GlueCatalogWriter',
+    # DuckDB
+    'DuckDBReader',
+    'DuckDBWriter',
+    # REST API
+    'RestApiReader',
+    'RestApiWriter',
+    # Delta Lake
+    'DeltaLakeReader',
+    'DeltaLakeWriter',
     # Factory
     'FormatFactory',
 ]

@@ -1,6 +1,6 @@
 [project]
 name = "simpleetl"
-version = "1.0.0"
+version = "1.1.0"
 description = "A lightweight, professional ETL framework for local, AWS Glue, Databricks, and Azure Synapse"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -50,9 +50,25 @@ avro = [
 monitoring = [
     "prometheus-client>=0.20.0",
 ]
+# Jinja2 templating for config files
+template = [
+    "jinja2>=3.0.0",
+]
+# DuckDB analytical database (in-process, no server required)
+duckdb = [
+    "duckdb>=0.9.0",
+]
+# REST API source/sink
+rest = [
+    "requests>=2.28.0",
+]
+# Delta Lake format (native Python, no Spark required)
+delta = [
+    "deltalake>=0.14.0",
+]
 # All optional dependencies
 all = [
-    "simpleetl[cloud,aws,spark,databases,secrets,avro,monitoring]",
+    "simpleetl[cloud,aws,spark,databases,secrets,avro,monitoring,template,duckdb,rest,delta]",
 ]
 dev = [
     "pytest>=7.0.0",

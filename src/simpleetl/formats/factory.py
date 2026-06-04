@@ -13,6 +13,7 @@ from . import orc
 from . import xml
 from . import excel
 from . import database
+from . import duckdb as _duckdb_mod
 
 
 def _get_plugin_registry():
@@ -102,7 +103,12 @@ class FormatFactory:
             'reader': excel.ExcelReader,
             'writer': excel.ExcelWriter,
             'mime_type': 'application/vnd.ms-excel'
-        }
+        },
+        '.duckdb': {
+            'reader': _duckdb_mod.DuckDBReader,
+            'writer': _duckdb_mod.DuckDBWriter,
+            'mime_type': 'application/octet-stream',
+        },
     }
 
     @classmethod

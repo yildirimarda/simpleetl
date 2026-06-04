@@ -425,3 +425,82 @@ A professional, production-grade ETL framework written in Python. Designed to ru
 2. **Cloud Credentials**: Users must provide AWS/GCP/Azure credentials via environment or secrets providers
 3. **Large File Processing**: Memory usage depends on pandas/PyArrow; true streaming requires explicit `read_chunks()` usage
 4. **Orchestrator Integration**: Hooks exist but full operator/integration packages need to be provided by users (Airflow/Prefect/Dagster operators not bundled)
+
+---
+
+## Phase 8: v1.1 — Modern Data Stack Enhancements
+
+### Motivation
+v1.0 covers the ETL fundamentals thoroughly. v1.1 targets three gaps that come up immediately in real projects:
+- Config files hardcode dates/env-specific values (Jinja2 templates fix this)
+- No way to run SQL against in-memory DataFrames or DuckDB files (DuckDB format + `sql_transform`)
+- No built-in data profiling — engineers always reach for pandas `describe()` manually (profiling module)
+- REST APIs are the #1 data source in modern stacks but there's no `RestApiReader`
+- Delta Lake is the de facto lakehouse format but requires Spark today
+
+### 8.1 Jinja2 Config Templates — COMPLETE ✅
+
+- [x] Add `jinja2` as optional `template` dependency
+- [x] Pre-process YAML/JSON configs through Jinja2 before Pydantic parsing
+- [x] Built-in template variables: `env` (os.environ), `now`/`today` (datetime helpers), `params` (job-level key-value pairs)
+- [x] `load_config()` accepts optional `template_vars: dict` kwarg; auto-detects `{{` markers
+- [x] CLI: `--param key=value` flag to inject template variables
+- [x] `render_config_template()` exported from `simpleetl.__init__`
+- [x] Tests: `tests/test_config_templates.py` (22 tests)
+
+### 8.2 DuckDB Format + SQL Transform — COMPLETE ✅
+
+- [x] Add `duckdb` as optional `duckdb` dependency
+- [x] `DuckDBReader`: read from DuckDB file via SQL query or table name
+- [x] `DuckDBWriter`: write DataFrame to DuckDB table (append / replace / error modes)
+- [x] `DuckDBReader.read_chunks()` for streaming large result sets
+- [x] `sql_transform(df, query, *, table_name)` in `transformations.py`
+- [x] Format auto-detection for `.duckdb` extension
+- [x] Export from `simpleetl.__init__`
+- [x] Tests: `tests/test_formats_duckdb.py` (17 tests)
+
+### 8.3 Data Profiling Module — COMPLETE ✅
+
+- [x] `src/simpleetl/core/profiling.py` — `DataProfiler`, `ProfileReport`, `ColumnProfile` classes
+- [x] `DataProfiler.profile(df)` → `ProfileReport` with per-column stats
+- [x] Per-column stats: dtype, null_count, null_pct, distinct_count, distinct_pct, min, max, mean, std, top_values (top-N)
+- [x] Dataset-level stats: row_count, column_count, memory_mb, duplicate_row_count
+- [x] `ProfileReport.to_dict()` / `to_json()` / `to_html()` / `to_markdown()` output methods
+- [x] CLI command: `simpleetl --profile <file>` — prints markdown report
+- [x] Export `DataProfiler`, `ProfileReport`, `ColumnProfile` from `simpleetl.__init__`
+- [x] Tests: `tests/test_profiling.py` (29 tests)
+
+### 8.4 REST API Reader/Writer — COMPLETE ✅
+
+- [x] Add `requests` as optional `rest` dependency
+- [x] `RestApiReader` in `src/simpleetl/formats/rest_api.py`
+  - [x] Authentication: none, Bearer token, API key (header or query-param), Basic auth
+  - [x] Pagination strategies: none, offset/limit, cursor (next_cursor field), link-header (RFC 5988)
+  - [x] Response formats: JSON (root key extraction), CSV text fallback
+  - [x] `read_chunks()` yields one page at a time
+  - [x] Rate limiting: `requests_per_second` with sleep-based throttle
+- [x] `RestApiWriter` — POST/PUT records as JSON to an endpoint (batched, optional record_key wrapping)
+- [x] Tests: `tests/test_formats_rest.py` (24 tests, all mocked)
+
+### 8.5 Delta Lake Format — COMPLETE ✅
+
+- [x] Add `deltalake` as optional `delta` dependency (pure-Python, no Spark required)
+- [x] `DeltaLakeReader` in `src/simpleetl/formats/delta.py`
+  - [x] Read current snapshot as DataFrame
+  - [x] Time travel: `version` and `timestamp` parameters
+  - [x] `read_chunks()` via PyArrow dataset scanner with configurable batch size
+- [x] `DeltaLakeWriter`
+  - [x] Write modes: `append`, `overwrite`, `error`
+  - [x] Partition columns support
+  - [x] Schema mode forwarding (overwrite / merge)
+- [x] Export from `simpleetl.__init__`
+- [x] Tests: `tests/test_formats_delta.py` (13 tests)
+
+### 8.6 Quality & Coverage — COMPLETE ✅
+
+- [x] All new modules pass ruff (0 errors)
+- [x] All new modules pass mypy (0 errors)
+- [x] Total tests: 1658 passed, 2 skipped (was 1546)
+- [x] Update `pyproject.toml` with new optional extras (`template`, `duckdb`, `rest`, `delta`)
+- [x] Update `all` extra to include new extras
+- [x] Bump version to `1.1.0` in `pyproject.toml`, `__init__.py`, `cli.py`
