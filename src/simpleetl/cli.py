@@ -5,6 +5,7 @@ Command-line interface for SimpleETL framework.
 import argparse
 import sys
 from pathlib import Path
+from typing import Dict, Optional
 
 from .core.config import load_config
 from .core.dag import DAG, DAGRunner
@@ -14,6 +15,19 @@ from .core.metrics import get_metrics
 logger = get_logger(__name__)
 
 
+def _parse_params(param_list: list) -> Dict[str, str]:
+    """Parse ``key=value`` strings from ``--param`` flags."""
+    result: Dict[str, str] = {}
+    for item in param_list or []:
+        if "=" not in item:
+            raise SystemExit(
+                f"Invalid --param format '{item}'. Expected 'key=value'."
+            )
+        k, v = item.split("=", 1)
+        result[k.strip()] = v.strip()
+    return result
+
+
 def create_parser() -> argparse.ArgumentParser:
     """Create the argument parser."""
     parser = argparse.ArgumentParser(
@@ -21,7 +35,7 @@ def create_parser() -> argparse.ArgumentParser:
         description="SimpleETL - A lightweight ETL framework",
     )
     parser.add_argument(
-        "--version", action="version", version="%(prog)s 1.0.0"
+        "--version", action="version", version="%(prog)s 1.1.0"
     )
     parser.add_argument(
         "--config", "-c",
@@ -66,6 +80,37 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Continue executing independent branches even if a node fails",
     )
+    parser.add_argument(
+        "--param",
+        metavar="KEY=VALUE",
+        action="append",
+        dest="params",
+        default=[],
+        help=(
+            "Inject a template variable into the config (Jinja2). "
+            "Can be repeated: --param date=2024-01-01 --param env=prod"
+        ),
+    )
+    parser.add_argument(
+        "profile_file",
+        nargs="?",
+        metavar="FILE",
+        help=(
+            "Profile a data file and print statistics. "
+            "Usage: simpleetl profile <file>"
+        ),
+    )
+    parser.add_argument(
+        "--profile",
+        action="store_true",
+        help="Profile the file specified as a positional argument.",
+    )
+    parser.add_argument(
+        "--profile-format",
+        choices=["markdown", "json", "html"],
+        default="markdown",
+        help="Output format for the profile report (default: markdown).",
+    )
     return parser
 
 
@@ -93,7 +138,31 @@ def detect_platform() -> None:
     print(f"  Azure Synapse: {info['is_synapse']}")
 
 
-def run_job(config_path: str, platform_override: str | None = None) -> None:
+def profile_file(path: str, fmt: str = "markdown") -> None:
+    """Profile a data file and print statistics to stdout.
+
+    Args:
+        path: Path to the data file (any format supported by FormatFactory).
+        fmt: Output format — ``"markdown"``, ``"json"``, or ``"html"``.
+    """
+    from .core.profiling import DataProfiler
+    from .formats import FormatFactory
+
+    reader = FormatFactory.get_reader(path)
+    df = reader.read(path)
+    profiler = DataProfiler()
+    report = profiler.profile(df)
+
+    if fmt == "json":
+        print(report.to_json())
+    elif fmt == "html":
+        print(report.to_html())
+    else:
+        print(report.to_markdown())
+
+
+def run_job(config_path: str, platform_override: Optional[str] = None,
+            template_vars: Optional[Dict[str, str]] = None) -> None:
     """
     Run an ETL job from a configuration file.
 
@@ -103,7 +172,7 @@ def run_job(config_path: str, platform_override: str | None = None) -> None:
     """
     import importlib
 
-    config = load_config(config_path)
+    config = load_config(config_path, template_vars=template_vars or {})
     logger.info(f"Loaded job config: {config.name}")
     logger.info(f"Description: {config.description}")
     logger.info(f"Platform: {platform_override or config.platform}")
@@ -195,6 +264,16 @@ def main() -> None:
         detect_platform()
         return
 
+    if args.profile or args.profile_file:
+        target = args.profile_file
+        if not target:
+            logger.error("Specify a file to profile: simpleetl --profile <file>")
+            sys.exit(1)
+        profile_file(target, fmt=args.profile_format)
+        return
+
+    template_vars = _parse_params(args.params)
+
     if args.dag:
         run_dag(
             args.dag,
@@ -209,11 +288,11 @@ def main() -> None:
             sys.exit(1)
 
         if args.dry_run:
-            config = load_config(args.config)
+            config = load_config(args.config, template_vars=template_vars or None)
             logger.info(f"Configuration valid: {config.name}")
             return
 
-        run_job(args.config, args.platform)
+        run_job(args.config, args.platform, template_vars=template_vars or None)
         return
 
     parser.print_help()

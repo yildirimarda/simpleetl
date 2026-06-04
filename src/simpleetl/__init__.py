@@ -21,7 +21,7 @@ Quick Start:
     job.run_with_error_handling()
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "SimpleETL Contributors"
 
 # -- Core ETL ----------------------------------------------------------------
@@ -33,6 +33,10 @@ from simpleetl.core import (
     save_config,
     resolve_env_vars,
     EnvVarResolutionError,
+)
+from simpleetl.core.config import (
+    render_config_template,
+    ConfigTemplateError,
 )
 
 # -- Errors ------------------------------------------------------------------
@@ -69,6 +73,12 @@ from simpleetl.formats import (
     DatabaseReader,
     DatabaseWriter,
     Table,
+    DuckDBReader,
+    DuckDBWriter,
+    RestApiReader,
+    RestApiWriter,
+    DeltaLakeReader,
+    DeltaLakeWriter,
     FormatFactory,
 )
 
@@ -306,6 +316,15 @@ from simpleetl.transformations import (
     transform_chain,
     TransformationChain,
     chain,
+    sql_transform,
+)
+
+# -- Profiling ---------------------------------------------------------------
+
+from simpleetl.core.profiling import (
+    DataProfiler,
+    ProfileReport,
+    ColumnProfile,
 )
 
 # -- Platforms ---------------------------------------------------------------
@@ -438,6 +457,9 @@ __all__ = [
     "save_config",
     "resolve_env_vars",
     "EnvVarResolutionError",
+    # Config templates
+    "render_config_template",
+    "ConfigTemplateError",
     # Errors
     "ETLError",
     "ExtractError",
@@ -466,6 +488,12 @@ __all__ = [
     "DatabaseReader",
     "DatabaseWriter",
     "Table",
+    "DuckDBReader",
+    "DuckDBWriter",
+    "RestApiReader",
+    "RestApiWriter",
+    "DeltaLakeReader",
+    "DeltaLakeWriter",
     "FormatFactory",
     # Schema
     "Schema",
@@ -632,6 +660,11 @@ __all__ = [
     "transform_chain",
     "TransformationChain",
     "chain",
+    "sql_transform",
+    # Profiling
+    "DataProfiler",
+    "ProfileReport",
+    "ColumnProfile",
     # Platforms
     "PlatformRunner",
     "LocalPlatformRunner",

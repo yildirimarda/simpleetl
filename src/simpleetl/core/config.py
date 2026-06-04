@@ -1,12 +1,14 @@
 """
 Configuration loading and validation for ETL jobs.
 
-Supports environment variable interpolation (``${VAR}``, ``${VAR:-default}``)
-and secret resolution via the :mod:`secrets` module.
+Supports environment variable interpolation (``${VAR}``, ``${VAR:-default}``),
+Jinja2 template rendering (requires ``simpleetl[template]``), and secret
+resolution via the :mod:`secrets` module.
 """
 
 import os
 import re
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -27,7 +29,59 @@ _BARE_ENV_VAR_PATTERN = re.compile(r"\$([A-Z_][A-Z0-9_]*)")
 
 class EnvVarResolutionError(Exception):
     """Raised when a required environment variable is not set."""
-    pass
+
+
+class ConfigTemplateError(Exception):
+    """Raised when Jinja2 template rendering fails or Jinja2 is not installed."""
+
+
+def render_config_template(
+    content: str,
+    template_vars: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Render a Jinja2 template string with built-in ETL variables.
+
+    Built-in template namespaces available in every template:
+
+    * ``env`` — ``os.environ`` (e.g. ``{{ env.HOME }}``)
+    * ``now`` — current :class:`datetime` (e.g. ``{{ now.strftime('%Y-%m-%d') }}``)
+    * ``today`` — today's date as an ISO string (e.g. ``{{ today }}``)
+    * ``params`` — the caller-supplied *template_vars* dict
+
+    Args:
+        content: Raw template string (typically the YAML/JSON file contents).
+        template_vars: Additional variables injected as ``params``.
+
+    Returns:
+        Rendered string.
+
+    Raises:
+        ConfigTemplateError: If Jinja2 is not installed or rendering fails.
+    """
+    try:
+        from jinja2 import Environment, StrictUndefined, TemplateError
+    except ImportError:
+        raise ConfigTemplateError(
+            "jinja2 is required for config template support. "
+            "Install it with: pip install simpleetl[template]"
+        )
+
+    env = Environment(undefined=StrictUndefined)
+    ctx: Dict[str, Any] = {
+        "env": os.environ,
+        "now": datetime.now(),
+        "today": date.today().isoformat(),
+        "params": template_vars or {},
+    }
+    if template_vars:
+        ctx.update(template_vars)
+
+    try:
+        return env.from_string(content).render(**ctx)
+    except TemplateError as exc:
+        raise ConfigTemplateError(
+            f"Failed to render config template: {exc}"
+        ) from exc
 
 
 def resolve_env_vars(
@@ -175,30 +229,40 @@ def _apply_env_prefix(config_data: Dict[str, Any],
 def load_config(
     config_path: str | Path,
     secrets_provider: Optional[SecretsProvider] = None,
+    *,
+    template_vars: Optional[Dict[str, Any]] = None,
 ) -> ETLJobConfig:
     """
     Load and validate ETL job configuration from a YAML or JSON file.
 
     The loading pipeline is:
 
-    1. Parse the file into a raw dictionary.
-    2. Apply ``env_prefix`` auto-loading (if configured).
-    3. Resolve environment variable references (``${VAR}``,
+    1. Read the file as raw text.
+    2. *(Optional)* Render through Jinja2 when *template_vars* is provided
+       or the file contains ``{{`` markers.  Requires ``simpleetl[template]``.
+    3. Parse the rendered text as YAML or JSON.
+    4. Apply ``env_prefix`` auto-loading (if configured).
+    5. Resolve environment variable references (``${VAR}``,
        ``${VAR:-default}``).
-    4. Resolve secret references (``${secrets://...}``) if a
+    6. Resolve secret references (``${secrets://...}``) if a
        *secrets_provider* is supplied.
-    5. Validate with Pydantic.
+    7. Validate with Pydantic.
 
     Args:
         config_path: Path to the configuration file.
         secrets_provider: Optional secrets provider for resolving
             ``${secrets://...}`` references.
+        template_vars: Variables injected into the Jinja2 template context
+            as the ``params`` namespace.  When supplied, template rendering
+            is always applied; when *None*, rendering is skipped unless the
+            file content contains ``{{``.
 
     Returns:
         Validated ETLJobConfig instance.
 
     Raises:
         FileNotFoundError: If the config file does not exist.
+        ConfigTemplateError: If template rendering fails.
         EnvVarResolutionError: If a required env var is missing.
         ValidationError: If the configuration is invalid.
     """
@@ -209,18 +273,25 @@ def load_config(
         )
 
     with open(config_path, "r") as f:
-        if config_path.suffix in [".yaml", ".yml"]:
-            config_data = yaml.safe_load(f)
-        elif config_path.suffix == ".json":
-            import json
+        raw_content = f.read()
 
-            config_data = json.load(f)
-        else:
-            raise ValueError(
-                f"Unsupported configuration file format: "
-                f"{config_path.suffix}. "
-                "Supported formats are .yaml, .yml, .json"
-            )
+    # Apply Jinja2 template rendering when requested or when the file looks
+    # like a template (contains {{ ... }}).
+    if template_vars is not None or "{{" in raw_content:
+        raw_content = render_config_template(raw_content, template_vars)
+
+    if config_path.suffix in [".yaml", ".yml"]:
+        config_data = yaml.safe_load(raw_content)
+    elif config_path.suffix == ".json":
+        import json
+
+        config_data = json.loads(raw_content)
+    else:
+        raise ValueError(
+            f"Unsupported configuration file format: "
+            f"{config_path.suffix}. "
+            "Supported formats are .yaml, .yml, .json"
+        )
 
     if not isinstance(config_data, dict):
         raise ValueError("Configuration file must contain a mapping at the "

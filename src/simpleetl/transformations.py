@@ -1548,3 +1548,46 @@ def chain(df: pd.DataFrame) -> TransformationChain:
         >>> result = chain(df).filter(column='age', min_value=18).sort(by='name').result()
     """
     return TransformationChain(df)
+
+
+def sql_transform(
+    df: pd.DataFrame,
+    query: str,
+    *,
+    table_name: str = "data",
+) -> pd.DataFrame:
+    """Execute a SQL query against a DataFrame using DuckDB in-memory.
+
+    The DataFrame is registered as a temporary view named *table_name*
+    (default ``"data"``), so queries can reference it directly:
+
+    .. code-block:: python
+
+        result = sql_transform(
+            df,
+            "SELECT region, SUM(revenue) AS total FROM data GROUP BY region",
+        )
+
+    Args:
+        df: Input DataFrame to query.
+        query: SQL query string.  Reference the DataFrame with *table_name*.
+        table_name: Name used to register *df* (default: ``"data"``).
+
+    Returns:
+        Query result as a new DataFrame.
+
+    Raises:
+        ImportError: If ``duckdb`` is not installed
+            (``pip install simpleetl[duckdb]``).
+    """
+    try:
+        import duckdb
+    except ImportError:
+        raise ImportError(
+            "duckdb is required for sql_transform. "
+            "Install it with: pip install simpleetl[duckdb]"
+        )
+
+    conn = duckdb.connect(":memory:")
+    conn.register(table_name, df)
+    return conn.execute(query).df()
