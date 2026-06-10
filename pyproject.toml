@@ -1,6 +1,6 @@
 [project]
 name = "simpleetl"
-version = "1.1.0"
+version = "1.2.0"
 description = "A lightweight, professional ETL framework for local, AWS Glue, Databricks, and Azure Synapse"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -66,9 +66,18 @@ rest = [
 delta = [
     "deltalake>=0.14.0",
 ]
+# Apache Iceberg format (native Python, no Spark required)
+iceberg = [
+    "pyiceberg>=0.7.0",
+]
+# OpenTelemetry distributed tracing
+otel = [
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+]
 # All optional dependencies
 all = [
-    "simpleetl[cloud,aws,spark,databases,secrets,avro,monitoring,template,duckdb,rest,delta]",
+    "simpleetl[cloud,aws,spark,databases,secrets,avro,monitoring,template,duckdb,rest,delta,iceberg,otel]",
 ]
 dev = [
     "pytest>=7.0.0",
@@ -97,6 +106,7 @@ module = [
     "botocore.*",
     "hvac.*",
     "awsglue.*",
+    "pyiceberg.*",
     "importlib_metadata",
     "msvcrt",
 ]

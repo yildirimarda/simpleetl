@@ -2,7 +2,6 @@
 
 import json
 import os
-import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -10,7 +9,6 @@ import pytest
 
 from simpleetl.core.config import (
     ConfigTemplateError,
-    ETLJobConfig,
     load_config,
     render_config_template,
 )

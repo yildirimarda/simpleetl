@@ -5,7 +5,7 @@ import json
 import pandas as pd
 import pytest
 
-from simpleetl.core.profiling import ColumnProfile, DataProfiler, ProfileReport
+from simpleetl.core.profiling import DataProfiler
 
 
 # ---------------------------------------------------------------------------
@@ -211,7 +211,6 @@ class TestProfilerEdgeCases:
         assert abs(col.distinct_pct - 100.0) < 0.01
 
     def test_float_column_with_inf(self):
-        import numpy as np
         profiler = DataProfiler()
         df = pd.DataFrame({"x": [1.0, 2.0, float("inf"), float("-inf")]})
         # Should not crash

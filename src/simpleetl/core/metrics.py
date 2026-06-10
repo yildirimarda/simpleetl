@@ -3,7 +3,7 @@ Metrics collection hooks with Prometheus compatibility.
 """
 
 import time
-from typing import Dict, Optional, Callable, Any
+from typing import Dict, List, Optional, Callable, Any, Tuple
 from prometheus_client import Counter, Gauge, Histogram, CollectorRegistry, generate_latest
 from prometheus_client.core import GaugeMetricFamily
 import threading
@@ -131,24 +131,105 @@ class MetricsCollector:
         if output_format == 'text':
             return generate_latest(self.registry).decode('utf-8')
         elif output_format == 'json':
-            # Return metrics as JSON (requires additional implementation)
             return self._get_metrics_json()
         else:
             raise ValueError(f"Unsupported output format: {output_format}")
 
     def _get_metrics_json(self) -> str:
-        """Get metrics as JSON."""
-        # This would require implementing JSON serialization
-        # For now, return a placeholder
+        """Serialize all collected metrics to a JSON string.
+
+        The document contains a ``timestamp`` (ISO 8601, UTC) and a
+        ``metrics`` list. Each entry has ``name``, ``type``
+        (counter/gauge/histogram) and ``value``; entries for labeled
+        metric children also include ``labels``. Histogram values are
+        dictionaries with ``count``, ``sum`` and ``buckets`` keys.
+        """
         import json
-        metrics_data = {}
-        for name, metric in self._counters.items():
-            metrics_data[name] = {
-                'type': 'counter',
-                'value': metric._value._value.get(),
-                'labels': metric._labelvalues
+        from datetime import datetime, timezone
+
+        entries: List[Dict[str, Any]] = []
+
+        for name, counter_metric in self._counters.items():
+            for family in counter_metric.collect():
+                for sample in family.samples:
+                    if not sample.name.endswith('_total'):
+                        continue
+                    entry: Dict[str, Any] = {
+                        'name': name,
+                        'type': 'counter',
+                        'value': sample.value,
+                    }
+                    if sample.labels:
+                        entry['labels'] = dict(sample.labels)
+                    entries.append(entry)
+
+        for name, gauge_metric in self._gauges.items():
+            for family in gauge_metric.collect():
+                for sample in family.samples:
+                    entry = {
+                        'name': name,
+                        'type': 'gauge',
+                        'value': sample.value,
+                    }
+                    if sample.labels:
+                        entry['labels'] = dict(sample.labels)
+                    entries.append(entry)
+
+        for name, histogram_metric in self._histograms.items():
+            entries.extend(
+                self._histogram_json_entries(name, histogram_metric)
+            )
+
+        payload: Dict[str, Any] = {
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'metrics': entries,
+        }
+        return json.dumps(payload, indent=2)
+
+    @staticmethod
+    def _histogram_json_entries(name: str,
+                                metric: Histogram) -> List[Dict[str, Any]]:
+        """Build JSON entries for a histogram, one per label set.
+
+        Groups the histogram's Prometheus samples (``*_bucket``,
+        ``*_count``, ``*_sum``) by their label values (excluding the
+        bucket boundary label ``le``).
+        """
+        series: Dict[Tuple[Tuple[str, str], ...], Dict[str, Any]] = {}
+        for family in metric.collect():
+            for sample in family.samples:
+                labels = {
+                    k: v for k, v in sample.labels.items() if k != 'le'
+                }
+                key = tuple(sorted(labels.items()))
+                data = series.setdefault(key, {
+                    'labels': labels,
+                    'count': 0.0,
+                    'sum': 0.0,
+                    'buckets': {},
+                })
+                if sample.name.endswith('_bucket'):
+                    data['buckets'][sample.labels['le']] = sample.value
+                elif sample.name.endswith('_count'):
+                    data['count'] = sample.value
+                elif sample.name.endswith('_sum'):
+                    data['sum'] = sample.value
+
+        entries: List[Dict[str, Any]] = []
+        for data in series.values():
+            entry: Dict[str, Any] = {
+                'name': name,
+                'type': 'histogram',
+                'value': {
+                    'count': data['count'],
+                    'sum': data['sum'],
+                    'buckets': data['buckets'],
+                },
             }
-        return json.dumps(metrics_data, indent=2)
+            if data['labels']:
+                entry['labels'] = data['labels']
+            entries.append(entry)
+        return entries
 
     def register_custom_metric(self, name: str, metric_type: str,
                              description: str) -> None:

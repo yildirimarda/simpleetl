@@ -504,3 +504,114 @@ v1.0 covers the ETL fundamentals thoroughly. v1.1 targets three gaps that come u
 - [x] Update `pyproject.toml` with new optional extras (`template`, `duckdb`, `rest`, `delta`)
 - [x] Update `all` extra to include new extras
 - [x] Bump version to `1.1.0` in `pyproject.toml`, `__init__.py`, `cli.py`
+
+---
+
+## Phase 9: v1.2 — Reliability & Enterprise Observability — COMPLETE ✅ (2026-06-10)
+
+### Final Status
+- **Tests**: 1883 passed, 2 skipped (was 1658) ✅
+- **Coverage**: 94% overall; new modules at 95–100% ✅
+- **Linting**: ruff clean (0 errors, src + tests) ✅
+- **Type Checking**: mypy clean (0 errors, src + tests) ✅
+- **Version**: 1.2.0 ✅
+
+### Motivation
+v1.1 rounded out the modern-data-stack surface (templates, DuckDB, REST, Delta,
+profiling). v1.2 targets the gaps that block confident production rollouts:
+- Quality checks exist but are **programmatic only** — no way to declare
+  expectations in the job config (Great Expectations style)
+- `Schema.diff()` exists but nothing **detects drift between runs** automatically
+- Iceberg is the second pillar of the lakehouse next to Delta — not supported
+- No distributed tracing; Prometheus counters only (no OpenTelemetry)
+- Known stubs left in the code: `EmailChannel` (log-only), Glue job bookmarks
+  (log-only), `MetricsCollector._get_metrics_json()` (placeholder)
+- No project scaffolding (`init`) or standalone config validation in the CLI
+
+### 9.1 Declarative Data Quality Rules — config-driven validation
+
+- [x] `validation_rules` section in `ETLJobConfig` (list of rule dicts)
+- [x] `src/simpleetl/core/quality_rules.py` — `QualityRule` dataclass +
+      `QualityRuleEngine` that parses config rules and evaluates a DataFrame
+- [x] Rule types: `not_null`, `unique`, `in_range`, `in_set`, `matches_regex`,
+      `min_length`/`max_length`, `row_count_min`/`row_count_max`, `expression`
+      (pandas `eval`-based custom predicate)
+- [x] Per-rule `severity`: `error` (fail job) vs `warning` (log + continue)
+- [x] `QualityRuleHook` (POST_TRANSFORM by default) that runs the engine and
+      raises on error-severity failures
+- [x] `RuleResult` / `RuleReport` with `to_dict()` for logging/alerting
+- [x] Tests: `tests/test_quality_rules.py`
+
+### 9.2 Schema Drift Detection — automatic, between runs
+
+- [x] `schema_drift` section in `ETLJobConfig` (`enabled`, `registry_path`,
+      `schema_name`, `on_drift`, `auto_register`)
+- [x] `src/simpleetl/core/drift.py` — `SchemaDriftDetector` built on
+      `Schema.from_dataframe()` + `Schema.diff()` + `FileSchemaRegistry`
+- [x] `on_drift` actions: `fail` (raise `SchemaDriftError`), `warn` (log),
+      `evolve` (register new version and continue)
+- [x] First run auto-registers the baseline schema
+- [x] `SchemaDriftHook` (POST_EXTRACT) for job lifecycle integration
+- [x] `DriftReport` describing added/removed/type-changed columns
+- [x] Tests: `tests/test_drift.py`
+
+### 9.3 Apache Iceberg Format
+
+- [x] Add `pyiceberg` as optional `iceberg` dependency
+- [x] `src/simpleetl/formats/iceberg.py` — `IcebergReader` / `IcebergWriter`
+- [x] Reader: catalog-based table load, column projection, row filter,
+      snapshot time travel (`snapshot_id`), `read_chunks()` streaming
+- [x] Writer: `append` / `overwrite` modes, table auto-create from DataFrame
+- [x] SQLite-backed local catalog support for zero-infra usage
+- [x] Graceful `ImportError` message pointing at `simpleetl[iceberg]`
+- [x] Tests: `tests/test_formats_iceberg.py` (skipped when pyiceberg missing)
+
+### 9.4 OpenTelemetry Tracing
+
+- [x] Add `opentelemetry-api`/`opentelemetry-sdk` as optional `otel` dependency
+- [x] `src/simpleetl/core/tracing.py` — `setup_tracing()`, `TracingHook`
+- [x] One span per job run with child spans per phase (extract/transform/load)
+- [x] Span attributes: job name, platform, record counts, error status
+- [x] OTLP exporter config via `tracing` config section (`enabled`,
+      `service_name`, `endpoint`); console/in-memory fallback for tests
+- [x] Works as no-op when opentelemetry is not installed
+- [x] Tests: `tests/test_tracing.py` (in-memory span exporter)
+
+### 9.5 Stub Completion — make every advertised feature real
+
+- [x] `EmailChannel`: real SMTP sending via stdlib `smtplib`
+      (host/port/STARTTLS/SSL/auth, from/to, subject template); keeps log-only
+      behavior when no host configured. Tests mock `smtplib.SMTP`.
+- [x] AWS Glue job bookmarks: guarded `awsglue.job.Job.init()/commit()` calls
+      when running inside Glue; logging fallback elsewhere. Tests mock awsglue.
+- [x] `MetricsCollector._get_metrics_json()`: real JSON serialization of
+      counters/gauges/histograms (name, value, labels, timestamp)
+
+### 9.6 CLI: Project Scaffolding & Config Validation
+
+- [x] `simpleetl --init <dir>` — generate a starter project: `config.yaml`,
+      `job.py` (ETLJob subclass), `README.md`, sample input CSV
+- [x] `simpleetl --validate-config <file>` — validate config (Pydantic +
+      validation_rules sanity check) and print a human-readable summary
+      without running the job
+- [x] Tests: extend `tests/test_cli.py`
+
+### 9.7 Quality Gate & Release
+
+- [x] Wire new hooks into `ETLJob` lifecycle from config
+      (validation_rules → QualityRuleHook, schema_drift → SchemaDriftHook,
+      tracing → TracingHook)
+- [x] Export new public classes from `simpleetl.__init__`
+- [x] New optional extras in `pyproject.toml` (`iceberg`, `otel`); update `all`
+- [x] Docs: `docs/quality_rules.md`, `docs/schema_drift.md`, `docs/iceberg.md`,
+      `docs/tracing.md`; README feature list update
+- [x] ruff + mypy clean (0 errors)
+- [x] Coverage ≥ 95% on new modules; full suite green
+- [x] Bump version to `1.2.0` in `pyproject.toml`, `__init__.py`, `cli.py`,
+      `docs/api-reference.md`
+
+### Deferred to v1.3 (consciously out of scope)
+- Polars / engine abstraction (requires deep refactor of pandas-typed API)
+- Kafka streaming source (needs broker-backed integration tests)
+- Snowflake / BigQuery native dialects (driver-heavy; needs real accounts to
+  validate UPSERT semantics)

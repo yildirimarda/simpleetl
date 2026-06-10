@@ -6,6 +6,7 @@ import json
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timezone
+from typing import Any
 
 from simpleetl.core.lineage import (
     LineageEvent,
@@ -68,7 +69,7 @@ def start_mock_server(
 
 def _make_event(**kwargs: object) -> LineageEvent:
     """Create a LineageEvent with sensible defaults for testing."""
-    defaults: dict[str, object] = {
+    defaults: dict[str, Any] = {
         "event_id": "evt-001",
         "timestamp": datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc),
         "job_name": "test_job",

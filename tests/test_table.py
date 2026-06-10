@@ -1,6 +1,5 @@
 """Tests for the Table database abstraction class."""
 
-import tempfile
 import pandas as pd
 import pytest
 

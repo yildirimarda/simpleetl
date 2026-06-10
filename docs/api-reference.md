@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API documentation for SimpleETL v1.1.0.
+Complete API documentation for SimpleETL v1.2.0.
 
 ---
 

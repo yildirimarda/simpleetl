@@ -11,7 +11,7 @@ import pytest
 
 deltalake = pytest.importorskip("deltalake", reason="deltalake not installed")
 
-from simpleetl.formats.delta import DeltaLakeReader, DeltaLakeWriter
+from simpleetl.formats.delta import DeltaLakeReader, DeltaLakeWriter  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

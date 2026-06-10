@@ -1,15 +1,14 @@
 """Tests for DuckDB format reader/writer and sql_transform (Phase 8.2)."""
 
 import sys
-from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 
 duckdb = pytest.importorskip("duckdb", reason="duckdb not installed")
 
-from simpleetl.formats.duckdb import DuckDBReader, DuckDBWriter
-from simpleetl.transformations import sql_transform
+from simpleetl.formats.duckdb import DuckDBReader, DuckDBWriter  # noqa: E402
+from simpleetl.transformations import sql_transform  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
