@@ -27,6 +27,7 @@ from .duckdb import DuckDBReader, DuckDBWriter
 from .rest_api import RestApiReader, RestApiWriter
 from .delta import DeltaLakeReader, DeltaLakeWriter
 from .iceberg import IcebergReader, IcebergWriter
+from .kafka import KafkaReader, KafkaWriter
 from .factory import FormatFactory
 
 __all__ = [
@@ -66,6 +67,9 @@ __all__ = [
     # Apache Iceberg
     'IcebergReader',
     'IcebergWriter',
+    # Kafka
+    'KafkaReader',
+    'KafkaWriter',
     # Factory
     'FormatFactory',
 ]

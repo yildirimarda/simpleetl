@@ -21,7 +21,7 @@ Quick Start:
     job.run_with_error_handling()
 """
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 __author__ = "SimpleETL Contributors"
 
 # -- Core ETL ----------------------------------------------------------------
@@ -83,6 +83,8 @@ from simpleetl.formats import (
     DeltaLakeWriter,
     IcebergReader,
     IcebergWriter,
+    KafkaReader,
+    KafkaWriter,
     FormatFactory,
 )
 
@@ -150,6 +152,16 @@ from simpleetl.core.tracing import (
     TracingHook,
     setup_tracing,
     is_tracing_available,
+)
+
+# -- Polars interop --------------------------------------------------------------
+
+from simpleetl.core.engine import (
+    is_polars_available,
+    to_polars,
+    from_polars,
+    polars_transform,
+    polars_sql_transform,
 )
 
 # -- Connection --------------------------------------------------------------
@@ -529,6 +541,8 @@ __all__ = [
     "DeltaLakeWriter",
     "IcebergReader",
     "IcebergWriter",
+    "KafkaReader",
+    "KafkaWriter",
     "FormatFactory",
     # Schema
     "Schema",
@@ -572,6 +586,12 @@ __all__ = [
     "TracingHook",
     "setup_tracing",
     "is_tracing_available",
+    # Polars interop
+    "is_polars_available",
+    "to_polars",
+    "from_polars",
+    "polars_transform",
+    "polars_sql_transform",
     # Connection
     "ConnectionConfig",
     "ConnectionPool",

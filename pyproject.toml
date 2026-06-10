@@ -1,6 +1,6 @@
 [project]
 name = "simpleetl"
-version = "1.2.0"
+version = "1.3.0"
 description = "A lightweight, professional ETL framework for local, AWS Glue, Databricks, and Azure Synapse"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -75,9 +75,25 @@ otel = [
     "opentelemetry-api>=1.20.0",
     "opentelemetry-sdk>=1.20.0",
 ]
+# Polars interop and IO acceleration
+polars = [
+    "polars>=1.0.0",
+]
+# Kafka streaming source/sink
+kafka = [
+    "confluent-kafka>=2.0.0",
+]
+# Snowflake warehouse dialect (SQLAlchemy resolves it from the URL)
+snowflake = [
+    "snowflake-sqlalchemy>=1.5.0",
+]
+# BigQuery warehouse dialect (SQLAlchemy resolves it from the URL)
+bigquery = [
+    "sqlalchemy-bigquery>=1.9.0",
+]
 # All optional dependencies
 all = [
-    "simpleetl[cloud,aws,spark,databases,secrets,avro,monitoring,template,duckdb,rest,delta,iceberg,otel]",
+    "simpleetl[cloud,aws,spark,databases,secrets,avro,monitoring,template,duckdb,rest,delta,iceberg,otel,polars,kafka,snowflake,bigquery]",
 ]
 dev = [
     "pytest>=7.0.0",
@@ -107,6 +123,7 @@ module = [
     "hvac.*",
     "awsglue.*",
     "pyiceberg.*",
+    "confluent_kafka.*",
     "importlib_metadata",
     "msvcrt",
 ]

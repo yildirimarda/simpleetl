@@ -3,6 +3,7 @@ Database format reader and writer using SQLAlchemy with connection pooling.
 """
 
 import logging
+import uuid
 from typing import Any, Iterable, Iterator, List, Optional, Union
 
 import pandas as pd
@@ -18,6 +19,18 @@ from simpleetl.core.connection import (
 from .base import DataReader, DataWriter
 
 logger = logging.getLogger(__name__)
+
+# URL prefixes recognized as SQLAlchemy connection strings. The snowflake
+# and bigquery dialects are resolved by SQLAlchemy from the URL at runtime;
+# SimpleETL never imports their driver packages directly.
+_SUPPORTED_URL_PREFIXES = (
+    "sqlite://",
+    "postgresql://",
+    "mysql://",
+    "mssql://",
+    "snowflake://",
+    "bigquery://",
+)
 
 
 class Table:
@@ -368,11 +381,11 @@ class DatabaseReader(DataReader):
             return source
         if isinstance(source, str):
             # Only treat as URL if it looks like a connection string
-            if source.startswith(("sqlite://", "postgresql://", "mysql://", "mssql://")):
+            if source.startswith(_SUPPORTED_URL_PREFIXES):
                 return get_engine(ConnectionConfig(url=source))
             raise ValueError(
                 f"String source must be a connection URL "
-                f"(sqlite://, postgresql://, mysql://, mssql://). Got: {source}"
+                f"({', '.join(_SUPPORTED_URL_PREFIXES)}). Got: {source}"
             )
         raise ValueError(
             "Invalid source type. Must be connection string, "
@@ -465,8 +478,9 @@ class DatabaseWriter(DataWriter):
         """
         Perform an UPSERT (INSERT or UPDATE) operation.
 
-        Supports PostgreSQL ON CONFLICT, MySQL REPLACE, and SQLite REPLACE
-        syntax depending on the database dialect.
+        Supports PostgreSQL ON CONFLICT, MySQL REPLACE, SQLite REPLACE,
+        and native MERGE statements for Snowflake and BigQuery depending
+        on the database dialect.
 
         Args:
             data: pandas DataFrame containing the data to upsert.
@@ -500,6 +514,14 @@ class DatabaseWriter(DataWriter):
             )
         if dialect == "sqlite":
             return self._merge_sqlite(
+                engine, data, table_name, key_columns, update_columns, **kwargs,
+            )
+        if dialect == "snowflake":
+            return self._merge_snowflake(
+                engine, data, table_name, key_columns, update_columns, **kwargs,
+            )
+        if dialect == "bigquery":
+            return self._merge_bigquery(
                 engine, data, table_name, key_columns, update_columns, **kwargs,
             )
 
@@ -610,6 +632,139 @@ class DatabaseWriter(DataWriter):
         return rows_affected
 
     @staticmethod
+    def _merge_snowflake(
+        engine: sqlalchemy.engine.Engine,
+        data: pd.DataFrame,
+        table_name: str,
+        key_columns: List[str],
+        update_columns: List[str],
+        **kwargs,
+    ) -> int:
+        """Snowflake UPSERT using a native MERGE INTO via a temp table.
+
+        Loads the data into a session-scoped temporary staging table,
+        then issues a single atomic MERGE statement against the target.
+        The staging table is dropped in a finally block.
+        """
+        schema = kwargs.pop("schema", None)
+        full_table = f"{schema}.{table_name}" if schema else table_name
+        staging = f"{table_name}_staging_{uuid.uuid4().hex[:8]}"
+        full_staging = f"{schema}.{staging}" if schema else staging
+
+        columns = list(data.columns)
+        col_list = ", ".join(columns)
+        val_placeholders = ", ".join([f":{c}" for c in columns])
+        on_clause = " AND ".join(
+            [f"target.{c} = source.{c}" for c in key_columns]
+        )
+        insert_values = ", ".join([f"source.{c}" for c in columns])
+
+        matched_clause = ""
+        if update_columns:
+            update_clause = ", ".join(
+                [f"target.{c} = source.{c}" for c in update_columns]
+            )
+            matched_clause = f"WHEN MATCHED THEN UPDATE SET {update_clause} "
+
+        merge_sql = (
+            f"MERGE INTO {full_table} AS target "
+            f"USING (SELECT {col_list} FROM {full_staging}) AS source "
+            f"ON {on_clause} "
+            f"{matched_clause}"
+            f"WHEN NOT MATCHED THEN INSERT ({col_list}) "
+            f"VALUES ({insert_values})"
+        )
+
+        rows_affected = 0
+        try:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    f"CREATE TEMPORARY TABLE {full_staging} "
+                    f"LIKE {full_table}"
+                ))
+                insert_sql = (
+                    f"INSERT INTO {full_staging} ({col_list}) "
+                    f"VALUES ({val_placeholders})"
+                )
+                for _, row in data.iterrows():
+                    conn.execute(text(insert_sql), {c: row[c] for c in columns})
+                result = conn.execute(text(merge_sql))
+                rows_affected = result.rowcount
+        finally:
+            with engine.begin() as conn:
+                conn.execute(text(f"DROP TABLE IF EXISTS {full_staging}"))
+
+        logger.info("Snowflake MERGE affected %d rows", rows_affected)
+        return rows_affected
+
+    @staticmethod
+    def _merge_bigquery(
+        engine: sqlalchemy.engine.Engine,
+        data: pd.DataFrame,
+        table_name: str,
+        key_columns: List[str],
+        update_columns: List[str],
+        **kwargs,
+    ) -> int:
+        """BigQuery UPSERT using a native MERGE via a staging table.
+
+        BigQuery only supports CREATE TEMP TABLE inside scripts, so a
+        real staging table with a unique suffix is created instead and
+        dropped in a finally block. Identifiers are backtick-quoted.
+        """
+        schema = kwargs.pop("schema", None)
+        full_table = f"{schema}.{table_name}" if schema else table_name
+        staging = f"{table_name}_staging_{uuid.uuid4().hex[:8]}"
+        full_staging = f"{schema}.{staging}" if schema else staging
+
+        columns = list(data.columns)
+        col_list = ", ".join(columns)
+        val_placeholders = ", ".join([f":{c}" for c in columns])
+        on_clause = " AND ".join(
+            [f"target.{c} = source.{c}" for c in key_columns]
+        )
+        insert_values = ", ".join([f"source.{c}" for c in columns])
+
+        matched_clause = ""
+        if update_columns:
+            update_clause = ", ".join(
+                [f"target.{c} = source.{c}" for c in update_columns]
+            )
+            matched_clause = f"WHEN MATCHED THEN UPDATE SET {update_clause} "
+
+        merge_sql = (
+            f"MERGE INTO `{full_table}` AS target "
+            f"USING (SELECT {col_list} FROM `{full_staging}`) AS source "
+            f"ON {on_clause} "
+            f"{matched_clause}"
+            f"WHEN NOT MATCHED THEN INSERT ({col_list}) "
+            f"VALUES ({insert_values})"
+        )
+
+        rows_affected = 0
+        try:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    f"CREATE TABLE `{full_staging}` LIKE `{full_table}`"
+                ))
+                insert_sql = (
+                    f"INSERT INTO `{full_staging}` ({col_list}) "
+                    f"VALUES ({val_placeholders})"
+                )
+                for _, row in data.iterrows():
+                    conn.execute(text(insert_sql), {c: row[c] for c in columns})
+                result = conn.execute(text(merge_sql))
+                rows_affected = result.rowcount
+        finally:
+            with engine.begin() as conn:
+                conn.execute(
+                    text(f"DROP TABLE IF EXISTS `{full_staging}`")
+                )
+
+        logger.info("BigQuery MERGE affected %d rows", rows_affected)
+        return rows_affected
+
+    @staticmethod
     def _merge_generic(
         engine: sqlalchemy.engine.Engine,
         data: pd.DataFrame,
@@ -659,11 +814,11 @@ class DatabaseWriter(DataWriter):
             return source
         if isinstance(source, str):
             # Only treat as URL if it looks like a connection string
-            if source.startswith(("sqlite://", "postgresql://", "mysql://", "mssql://")):
+            if source.startswith(_SUPPORTED_URL_PREFIXES):
                 return get_engine(ConnectionConfig(url=source))
             raise ValueError(
                 f"String source must be a connection URL "
-                f"(sqlite://, postgresql://, mysql://, mssql://). Got: {source}"
+                f"({', '.join(_SUPPORTED_URL_PREFIXES)}). Got: {source}"
             )
         raise ValueError(
             "Invalid destination type. Must be connection string, "
