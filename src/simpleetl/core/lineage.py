@@ -11,12 +11,14 @@ from __future__ import annotations
 import json
 import logging
 import os
+import smtplib
 import urllib.request
 import urllib.error
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
+from email.message import EmailMessage
 from typing import Any, Callable, Dict, List, Optional
 
 from .hooks import (
@@ -1182,24 +1184,132 @@ class SlackChannel(AlertChannel):
 
 
 class EmailChannel(AlertChannel):
-    """Stub for email alerts (logs the alert, actual SMTP is platform-specific)."""
+    """Send alerts via SMTP email.
+
+    When ``smtp_host`` is provided, alerts are delivered through a real
+    SMTP server using the standard library :mod:`smtplib`.  Without an
+    ``smtp_host`` the channel falls back to log-only behavior, which is
+    useful for local development and testing.
+
+    Args:
+        recipients: Recipient email addresses.  Kept for backwards
+            compatibility; ``to_addrs`` is the preferred spelling.
+        smtp_host: SMTP server hostname.  When ``None``, alerts are
+            only logged and no email is sent.
+        smtp_port: SMTP server port.  Defaults to 587 (submission).
+        username: Optional username for SMTP authentication.
+        password: Optional password for SMTP authentication.
+        use_tls: Upgrade the connection with STARTTLS (default).
+        use_ssl: Connect with implicit TLS via ``smtplib.SMTP_SSL``
+            instead of a plain connection.  Takes precedence over
+            ``use_tls``.
+        from_addr: Sender address.  Defaults to
+            ``simpleetl@<smtp_host>``.
+        to_addrs: Recipient email addresses.  Takes precedence over
+            ``recipients`` when both are given.
+        subject_prefix: Prefix for the email subject line.
+        timeout: Socket timeout in seconds for the SMTP connection.
+    """
 
     def __init__(
-        self, recipients: List[str], smtp_host: str = "localhost"
+        self,
+        recipients: Optional[List[str]] = None,
+        smtp_host: Optional[str] = None,
+        smtp_port: int = 587,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        use_tls: bool = True,
+        use_ssl: bool = False,
+        from_addr: Optional[str] = None,
+        to_addrs: Optional[List[str]] = None,
+        subject_prefix: str = "[SimpleETL]",
+        timeout: float = 10.0,
     ) -> None:
-        self.recipients = recipients
-        self.smtp_host = smtp_host
+        self.recipients: List[str] = list(to_addrs or recipients or [])
+        self.to_addrs: List[str] = self.recipients
+        self._configured = smtp_host is not None
+        self.smtp_host: str = smtp_host or "localhost"
+        self.smtp_port = smtp_port
+        self.username = username
+        self.password = password
+        self.use_tls = use_tls
+        self.use_ssl = use_ssl
+        self.from_addr: str = from_addr or f"simpleetl@{self.smtp_host}"
+        self.subject_prefix = subject_prefix
+        self.timeout = timeout
 
     def send(self, message: str, severity: str, rule_name: str) -> bool:
-        logger = logging.getLogger(__name__)
-        logger.info(
-            "[EMAIL ALERT] To: %s | Severity: %s | Rule: %s | Message: %s",
-            self.recipients,
-            severity,
-            rule_name,
-            message,
+        """Send the alert via SMTP, or log it when unconfigured.
+
+        Returns:
+            True on success (including the log-only fallback), False
+            when SMTP delivery fails.
+        """
+        if not self._configured:
+            logger.info(
+                "[EMAIL ALERT] To: %s | Severity: %s | Rule: %s | "
+                "Message: %s",
+                self.recipients,
+                severity,
+                rule_name,
+                message,
+            )
+            return True
+
+        msg = self._build_message(message, severity, rule_name)
+        try:
+            if self.use_ssl:
+                with smtplib.SMTP_SSL(
+                    self.smtp_host, self.smtp_port, timeout=self.timeout
+                ) as server:
+                    self._authenticate_and_send(server, msg)
+            else:
+                with smtplib.SMTP(
+                    self.smtp_host, self.smtp_port, timeout=self.timeout
+                ) as server:
+                    if self.use_tls:
+                        server.starttls()
+                    self._authenticate_and_send(server, msg)
+            logger.info(
+                "Email alert for rule '%s' sent to %s",
+                rule_name,
+                self.recipients,
+            )
+            return True
+        except Exception as exc:
+            logger.error(
+                "Failed to send email alert for rule '%s': %s",
+                rule_name,
+                exc,
+            )
+            return False
+
+    def _build_message(
+        self, message: str, severity: str, rule_name: str
+    ) -> EmailMessage:
+        """Construct the plain-text alert email."""
+        msg = EmailMessage()
+        msg["Subject"] = (
+            f"{self.subject_prefix} {severity.upper()} alert: {rule_name}"
         )
-        return True
+        msg["From"] = self.from_addr
+        msg["To"] = ", ".join(self.recipients)
+        msg.set_content(
+            "SimpleETL alert notification\n"
+            "\n"
+            f"Rule:     {rule_name}\n"
+            f"Severity: {severity}\n"
+            f"Message:  {message}\n"
+        )
+        return msg
+
+    def _authenticate_and_send(
+        self, server: smtplib.SMTP, msg: EmailMessage
+    ) -> None:
+        """Log in when credentials are configured, then send."""
+        if self.username and self.password:
+            server.login(self.username, self.password)
+        server.send_message(msg)
 
 
 # ---------------------------------------------------------------------------

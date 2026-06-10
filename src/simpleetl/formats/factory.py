@@ -14,6 +14,7 @@ from . import xml
 from . import excel
 from . import database
 from . import duckdb as _duckdb_mod
+from . import iceberg as _iceberg_mod
 
 
 def _get_plugin_registry():
@@ -153,6 +154,10 @@ class FormatFactory:
         ):
             return database.DatabaseReader(**kwargs)
 
+        # Apache Iceberg tables are addressed via the iceberg:// scheme
+        if source.startswith('iceberg://'):
+            return _iceberg_mod.IcebergReader(**kwargs)
+
         ext = cls._get_extension(source)
 
         if ext in cls.FORMAT_MAP:
@@ -200,6 +205,10 @@ class FormatFactory:
         ):
             return database.DatabaseWriter(**kwargs)
 
+        # Apache Iceberg tables are addressed via the iceberg:// scheme
+        if destination.startswith('iceberg://'):
+            return _iceberg_mod.IcebergWriter(**kwargs)
+
         ext = cls._get_extension(destination)
 
         if ext in cls.FORMAT_MAP:
@@ -245,6 +254,14 @@ class FormatFactory:
                 'mime_type': 'application/x-sqlite3'
             }
 
+        # Apache Iceberg tables are addressed via the iceberg:// scheme
+        if source.startswith('iceberg://'):
+            return {
+                'format': 'iceberg',
+                'extension': '',
+                'mime_type': 'application/octet-stream'
+            }
+
         ext = cls._get_extension(source)
 
         if ext in cls.FORMAT_MAP:
@@ -270,4 +287,6 @@ class FormatFactory:
         for ext, format_info in cls.FORMAT_MAP.items():
             format_name = ext[1:]  # Remove the dot
             result[format_name] = ext
+        # Scheme-addressed formats without a file extension
+        result['iceberg'] = 'iceberg://'
         return result

@@ -2,6 +2,9 @@
 Tests for the metrics collection module.
 """
 
+import json
+from datetime import datetime, timedelta
+
 import pytest
 from prometheus_client import CollectorRegistry
 from simpleetl.core.metrics import MetricsCollector, get_metrics
@@ -81,6 +84,158 @@ class TestMetricsCollector:
         assert 'etl_jobs_total' in collector._counters
         assert 'etl_active_jobs' in collector._gauges
         assert 'etl_job_duration_seconds' in collector._histograms
+
+
+class TestMetricsJSON:
+    """Test JSON serialization of collected metrics."""
+
+    def _collector(self):
+        """Create a collector with an isolated registry."""
+        return MetricsCollector(registry=CollectorRegistry())
+
+    def test_json_output_parses(self):
+        """Test that the JSON output is valid and well-shaped."""
+        collector = self._collector()
+        payload = json.loads(collector.get_metrics('json'))
+        assert 'timestamp' in payload
+        assert isinstance(payload['metrics'], list)
+        assert len(payload['metrics']) > 0
+        for entry in payload['metrics']:
+            assert 'name' in entry
+            assert entry['type'] in {'counter', 'gauge', 'histogram'}
+            assert 'value' in entry
+
+    def test_json_timestamp_is_iso_utc(self):
+        """Test that the timestamp is ISO 8601 with UTC offset."""
+        collector = self._collector()
+        payload = json.loads(collector.get_metrics('json'))
+        ts = datetime.fromisoformat(payload['timestamp'])
+        assert ts.tzinfo is not None
+        assert ts.utcoffset() == timedelta(0)
+
+    def test_json_counter_value(self):
+        """Test that counter increments appear in the JSON output."""
+        collector = self._collector()
+        collector.inc_counter('etl_jobs_total', 3.0)
+        payload = json.loads(collector.get_metrics('json'))
+        entry = next(
+            m for m in payload['metrics'] if m['name'] == 'etl_jobs_total'
+        )
+        assert entry['type'] == 'counter'
+        assert entry['value'] == 3.0
+        assert 'labels' not in entry
+
+    def test_json_gauge_value(self):
+        """Test that gauge values appear in the JSON output."""
+        collector = self._collector()
+        collector.set_gauge('etl_active_jobs', 7.0)
+        payload = json.loads(collector.get_metrics('json'))
+        entry = next(
+            m for m in payload['metrics'] if m['name'] == 'etl_active_jobs'
+        )
+        assert entry['type'] == 'gauge'
+        assert entry['value'] == 7.0
+
+    def test_json_labeled_counter(self):
+        """Test that labeled counter children include their labels."""
+        collector = self._collector()
+        collector.counter(
+            'jobs_by_status', 'Jobs by status', labelnames=('status',)
+        )
+        collector.inc_counter(
+            'jobs_by_status', 2.0, labels={'status': 'ok'}
+        )
+        collector.inc_counter(
+            'jobs_by_status', 1.0, labels={'status': 'failed'}
+        )
+        payload = json.loads(collector.get_metrics('json'))
+        entries = [
+            m for m in payload['metrics'] if m['name'] == 'jobs_by_status'
+        ]
+        assert all(e['type'] == 'counter' for e in entries)
+        by_status = {e['labels']['status']: e['value'] for e in entries}
+        assert by_status == {'ok': 2.0, 'failed': 1.0}
+
+    def test_json_labeled_gauge(self):
+        """Test that labeled gauge children include their labels."""
+        collector = self._collector()
+        collector.gauge(
+            'queue_depth', 'Queue depth', labelnames=('queue',)
+        )
+        collector.set_gauge('queue_depth', 4.0, labels={'queue': 'main'})
+        payload = json.loads(collector.get_metrics('json'))
+        entry = next(
+            m for m in payload['metrics'] if m['name'] == 'queue_depth'
+        )
+        assert entry['type'] == 'gauge'
+        assert entry['value'] == 4.0
+        assert entry['labels'] == {'queue': 'main'}
+
+    def test_json_histogram_value(self):
+        """Test histogram serialization includes count, sum, buckets."""
+        collector = self._collector()
+        collector.observe_histogram('etl_job_duration_seconds', 1.5)
+        collector.observe_histogram('etl_job_duration_seconds', 0.5)
+        payload = json.loads(collector.get_metrics('json'))
+        entry = next(
+            m for m in payload['metrics']
+            if m['name'] == 'etl_job_duration_seconds'
+        )
+        assert entry['type'] == 'histogram'
+        assert entry['value']['count'] == 2.0
+        assert entry['value']['sum'] == 2.0
+        assert entry['value']['buckets']['+Inf'] == 2.0
+        assert entry['value']['buckets']['1.0'] == 1.0
+
+    def test_json_labeled_histogram(self):
+        """Test labeled histogram children include their labels."""
+        collector = self._collector()
+        collector.histogram(
+            'stage_duration', 'Stage duration', labelnames=('stage',)
+        )
+        collector.observe_histogram(
+            'stage_duration', 0.2, labels={'stage': 'read'}
+        )
+        payload = json.loads(collector.get_metrics('json'))
+        entry = next(
+            m for m in payload['metrics'] if m['name'] == 'stage_duration'
+        )
+        assert entry['type'] == 'histogram'
+        assert entry['labels'] == {'stage': 'read'}
+        assert entry['value']['count'] == 1.0
+        assert entry['value']['sum'] == pytest.approx(0.2)
+
+    def test_json_contains_all_default_metrics(self):
+        """Test that all default metric names are serialized."""
+        collector = self._collector()
+        payload = json.loads(collector.get_metrics('json'))
+        names = {m['name'] for m in payload['metrics']}
+        assert 'etl_jobs_total' in names
+        assert 'etl_jobs_failed' in names
+        assert 'etl_active_jobs' in names
+        assert 'etl_last_job_timestamp' in names
+        assert 'etl_job_duration_seconds' in names
+
+    def test_json_export_to_file(self):
+        """Test that JSON metrics can be exported to a file."""
+        import os
+        import tempfile
+
+        collector = self._collector()
+        collector.inc_counter('etl_jobs_total', 1.0)
+
+        with tempfile.NamedTemporaryFile(
+            suffix='.json', delete=False
+        ) as f:
+            temp_file = f.name
+
+        try:
+            collector.export_to_file(temp_file, format='json')
+            with open(temp_file, 'r') as f:
+                payload = json.load(f)
+            assert 'metrics' in payload
+        finally:
+            os.unlink(temp_file)
 
 
 class TestTimerContext:

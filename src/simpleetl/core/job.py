@@ -106,6 +106,12 @@ class ETLJob(ABC):
         # Per-job hook registry (falls back to global registry)
         self._hook_registry: HookRegistry = get_hook_registry()
 
+        # Config-driven hooks (validation_rules, schema_drift, tracing).
+        # Kept separate from the registry: registry hooks never abort a job
+        # (exceptions are swallowed), while these must be able to fail it.
+        self._config_hooks: Dict[str, List[Hook]] = {}
+        self._register_config_hooks()
+
     @abstractmethod
     def run(self) -> None:
         """
@@ -282,7 +288,11 @@ class ETLJob(ABC):
         Returns:
             Dictionary of format-specific options.
         """
-        format_opts = self.config.format_options.get(format_name, {})
+        format_opts = (
+            self.config.format_options.get(format_name, {})
+            if format_name is not None
+            else {}
+        )
         # Merge with any chunk_size from batch_size config
         if self.config.batch_size:
             format_opts = dict(format_opts)
@@ -303,10 +313,60 @@ class ETLJob(ABC):
         """
         self._hook_registry.register(hook_point, hook, priority)
 
+    def _register_config_hooks(self) -> None:
+        """Build hooks declared in the job configuration.
+
+        Three config sections produce hooks automatically:
+
+        * ``validation_rules`` — a :class:`QualityRuleHook` at post_transform
+        * ``schema_drift.enabled`` — a :class:`SchemaDriftHook` at post_extract
+        * ``tracing.enabled`` — a :class:`TracingHook` on every hook point
+
+        Imports are deferred so that optional features stay optional.
+        """
+        if self.config.validation_rules:
+            from .quality_rules import QualityRuleHook
+
+            self._config_hooks.setdefault(POST_TRANSFORM, []).append(
+                QualityRuleHook(self.config.validation_rules)
+            )
+
+        if self.config.schema_drift.enabled:
+            from .drift import SchemaDriftHook
+
+            self._config_hooks.setdefault(POST_EXTRACT, []).append(
+                SchemaDriftHook(self.config.schema_drift)
+            )
+
+        if self.config.tracing.enabled:
+            from .tracing import TracingHook, setup_tracing
+
+            # Only install a global exporter when an endpoint is configured;
+            # otherwise spans go to whatever provider the caller set up
+            # (e.g. an explicit setup_tracing() call with a console exporter).
+            if self.config.tracing.endpoint:
+                setup_tracing(self.config.tracing)
+            tracing_hook = TracingHook(self.config.tracing)
+            for point in (
+                PRE_EXTRACT,
+                POST_EXTRACT,
+                PRE_TRANSFORM,
+                POST_TRANSFORM,
+                PRE_LOAD,
+                POST_LOAD,
+                ON_ERROR,
+                ON_COMPLETE,
+            ):
+                self._config_hooks.setdefault(point, []).append(tracing_hook)
+
     def _execute_hooks(
         self, hook_point: str, data: Any = None, error: Optional[Exception] = None
     ) -> HookContext:
         """Execute all hooks registered for *hook_point*.
+
+        Registry hooks run first and never abort the job. Config-driven
+        hooks run afterwards and their exceptions propagate, so an
+        error-severity quality rule or a ``fail`` drift action stops the job.
 
         Args:
             hook_point: The hook point to trigger.
@@ -326,6 +386,8 @@ class ETLJob(ABC):
             start_time=_time.time(),
         )
         self._hook_registry.execute(hook_point, ctx)
+        for hook in self._config_hooks.get(hook_point, []):
+            hook.execute(ctx)
         return ctx
 
     def _setup_logging(self) -> None:

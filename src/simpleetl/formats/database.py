@@ -55,6 +55,7 @@ class Table:
         self.schema = schema
         self._reader = DatabaseReader()
         self._writer = DatabaseWriter()
+        self._pool: Optional[ConnectionPool]
 
         if pool is not None:
             self._pool = pool
@@ -74,7 +75,7 @@ class Table:
         """Get the SQLAlchemy engine, creating it from pool if needed."""
         if hasattr(self, "_engine"):
             return self._engine
-        if hasattr(self, "_pool"):
+        if self._pool is not None:
             return self._pool.engine
         return None
 
@@ -119,7 +120,9 @@ class Table:
         if limit:
             sql += f" LIMIT {limit}"
 
-        return self._reader.read(engine, sql=sql, **kwargs)
+        result = self._reader.read(engine, sql=sql, **kwargs)
+        assert isinstance(result, pd.DataFrame)  # non-chunked read
+        return result
 
     def read_chunks(
         self,

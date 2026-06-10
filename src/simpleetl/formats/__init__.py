@@ -26,6 +26,7 @@ from .glue_catalog import GlueCatalogReader, GlueCatalogWriter
 from .duckdb import DuckDBReader, DuckDBWriter
 from .rest_api import RestApiReader, RestApiWriter
 from .delta import DeltaLakeReader, DeltaLakeWriter
+from .iceberg import IcebergReader, IcebergWriter
 from .factory import FormatFactory
 
 __all__ = [
@@ -62,6 +63,9 @@ __all__ = [
     # Delta Lake
     'DeltaLakeReader',
     'DeltaLakeWriter',
+    # Apache Iceberg
+    'IcebergReader',
+    'IcebergWriter',
     # Factory
     'FormatFactory',
 ]

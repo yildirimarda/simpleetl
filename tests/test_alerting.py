@@ -4,6 +4,7 @@ Tests for the alerting integration hooks in the lineage module.
 
 import json
 import logging
+import smtplib
 from unittest.mock import patch, MagicMock
 
 from simpleetl.core.lineage import (
@@ -263,6 +264,167 @@ class TestEmailChannel:
         """Test custom SMTP host configuration."""
         channel = EmailChannel(recipients=["a@b.com"], smtp_host="smtp.example.com")
         assert channel.smtp_host == "smtp.example.com"
+
+
+# ---------------------------------------------------------------------------
+# EmailChannel SMTP delivery tests
+# ---------------------------------------------------------------------------
+
+
+class TestEmailChannelSMTP:
+    """Test EmailChannel real SMTP delivery (mocked smtplib)."""
+
+    def _channel(self, **kwargs):
+        """Build a fully configured EmailChannel with overrides."""
+        params = {
+            "smtp_host": "smtp.example.com",
+            "from_addr": "etl@example.com",
+            "to_addrs": ["ops@example.com", "admin@example.com"],
+        }
+        params.update(kwargs)
+        return EmailChannel(**params)
+
+    def test_send_uses_starttls(self):
+        """Test the default path connects via SMTP and upgrades with STARTTLS."""
+        channel = self._channel()
+        with patch("smtplib.SMTP") as mock_smtp:
+            result = channel.send("disk full", "critical", "disk_rule")
+
+        assert result is True
+        mock_smtp.assert_called_once_with("smtp.example.com", 587, timeout=10.0)
+        server = mock_smtp.return_value.__enter__.return_value
+        server.starttls.assert_called_once()
+        server.send_message.assert_called_once()
+        server.login.assert_not_called()
+
+    def test_send_message_contents(self):
+        """Test the EmailMessage subject, headers, and plain-text body."""
+        channel = self._channel()
+        with patch("smtplib.SMTP") as mock_smtp:
+            channel.send("rows dropped", "warning", "row_rule")
+
+        server = mock_smtp.return_value.__enter__.return_value
+        msg = server.send_message.call_args.args[0]
+        assert msg["Subject"] == "[SimpleETL] WARNING alert: row_rule"
+        assert msg["From"] == "etl@example.com"
+        assert msg["To"] == "ops@example.com, admin@example.com"
+        body = msg.get_content()
+        assert "rows dropped" in body
+        assert "warning" in body
+        assert "row_rule" in body
+
+    def test_send_custom_subject_prefix(self):
+        """Test that a custom subject prefix is used."""
+        channel = self._channel(subject_prefix="[PROD]")
+        with patch("smtplib.SMTP") as mock_smtp:
+            channel.send("msg", "critical", "r1")
+
+        server = mock_smtp.return_value.__enter__.return_value
+        msg = server.send_message.call_args.args[0]
+        assert msg["Subject"] == "[PROD] CRITICAL alert: r1"
+
+    def test_send_with_credentials_logs_in(self):
+        """Test that username/password trigger an SMTP login."""
+        channel = self._channel(username="user", password="secret")
+        with patch("smtplib.SMTP") as mock_smtp:
+            result = channel.send("msg", "warning", "r1")
+
+        assert result is True
+        server = mock_smtp.return_value.__enter__.return_value
+        server.login.assert_called_once_with("user", "secret")
+        server.send_message.assert_called_once()
+
+    def test_send_ssl_variant(self):
+        """Test use_ssl=True connects via SMTP_SSL without STARTTLS."""
+        channel = self._channel(use_ssl=True, smtp_port=465)
+        with patch("smtplib.SMTP_SSL") as mock_ssl, \
+                patch("smtplib.SMTP") as mock_smtp:
+            result = channel.send("msg", "critical", "r1")
+
+        assert result is True
+        mock_ssl.assert_called_once_with("smtp.example.com", 465, timeout=10.0)
+        mock_smtp.assert_not_called()
+        server = mock_ssl.return_value.__enter__.return_value
+        server.starttls.assert_not_called()
+        server.send_message.assert_called_once()
+
+    def test_send_tls_disabled_skips_starttls(self):
+        """Test use_tls=False skips the STARTTLS upgrade."""
+        channel = self._channel(use_tls=False)
+        with patch("smtplib.SMTP") as mock_smtp:
+            channel.send("msg", "warning", "r1")
+
+        server = mock_smtp.return_value.__enter__.return_value
+        server.starttls.assert_not_called()
+        server.send_message.assert_called_once()
+
+    def test_send_custom_timeout(self):
+        """Test that a custom timeout is passed to the SMTP connection."""
+        channel = self._channel(timeout=3.5)
+        with patch("smtplib.SMTP") as mock_smtp:
+            channel.send("msg", "warning", "r1")
+
+        mock_smtp.assert_called_once_with("smtp.example.com", 587, timeout=3.5)
+
+    def test_send_connect_error_returns_false(self):
+        """Test that SMTP connection errors are caught and return False."""
+        channel = self._channel()
+        with patch(
+            "smtplib.SMTP",
+            side_effect=smtplib.SMTPConnectError(421, "cannot connect"),
+        ):
+            result = channel.send("msg", "critical", "r1")
+
+        assert result is False
+
+    def test_send_message_failure_returns_false(self):
+        """Test that send_message failures are caught and return False."""
+        channel = self._channel()
+        with patch("smtplib.SMTP") as mock_smtp:
+            server = mock_smtp.return_value.__enter__.return_value
+            server.send_message.side_effect = smtplib.SMTPDataError(
+                550, "rejected"
+            )
+            result = channel.send("msg", "critical", "r1")
+
+        assert result is False
+
+    def test_send_failure_is_logged(self, caplog):
+        """Test that SMTP failures are logged as errors."""
+        channel = self._channel()
+        with patch(
+            "smtplib.SMTP", side_effect=smtplib.SMTPException("boom")
+        ), caplog.at_level(logging.ERROR):
+            channel.send("msg", "critical", "fail_rule")
+
+        assert "Failed to send email alert" in caplog.text
+        assert "fail_rule" in caplog.text
+
+    def test_unconfigured_channel_does_not_use_smtp(self, caplog):
+        """Test that no smtp_host keeps the log-only behavior."""
+        channel = EmailChannel(recipients=["admin@example.com"])
+        with patch("smtplib.SMTP") as mock_smtp, \
+                patch("smtplib.SMTP_SSL") as mock_ssl, \
+                caplog.at_level(logging.INFO):
+            result = channel.send("body", "warning", "r1")
+
+        assert result is True
+        mock_smtp.assert_not_called()
+        mock_ssl.assert_not_called()
+        assert "[EMAIL ALERT]" in caplog.text
+
+    def test_recipients_alias_maps_to_to_addrs(self):
+        """Test that the legacy recipients kwarg populates to_addrs."""
+        channel = EmailChannel(
+            recipients=["a@b.com"], smtp_host="smtp.example.com"
+        )
+        assert channel.to_addrs == ["a@b.com"]
+        assert channel.recipients == ["a@b.com"]
+
+    def test_default_from_addr_derived_from_host(self):
+        """Test the default sender address is derived from smtp_host."""
+        channel = self._channel(from_addr=None)
+        assert channel.from_addr == "simpleetl@smtp.example.com"
 
 
 # ---------------------------------------------------------------------------

@@ -168,6 +168,32 @@ class DatabaseConfig(BaseModel):
     retry_delay: float = 1.0
 
 
+class SchemaDriftConfig(BaseModel):
+    """Schema drift detection configuration.
+
+    When enabled, the schema of extracted data is compared against the
+    latest registered version in a schema registry after each extract.
+    """
+
+    enabled: bool = False
+    registry_path: str = ".simpleetl/schema_registry"
+    schema_name: Optional[str] = None
+    on_drift: str = "warn"  # one of: fail, warn, evolve
+    auto_register: bool = True
+
+
+class TracingConfig(BaseModel):
+    """OpenTelemetry tracing configuration.
+
+    Requires ``simpleetl[otel]``. When *endpoint* is unset, spans are
+    exported to the console (or kept in memory during tests).
+    """
+
+    enabled: bool = False
+    service_name: str = "simpleetl"
+    endpoint: Optional[str] = None
+
+
 class ETLJobConfig(BaseModel):
     """Base configuration model for ETL jobs."""
 
@@ -191,6 +217,9 @@ class ETLJobConfig(BaseModel):
     openlineage_namespace: str = "simpleetl"
     format_options: Dict[str, Dict[str, Any]] = {}
     batch_size: int = 10000
+    validation_rules: List[Dict[str, Any]] = []
+    schema_drift: SchemaDriftConfig = SchemaDriftConfig()
+    tracing: TracingConfig = TracingConfig()
 
 
 def _apply_env_prefix(config_data: Dict[str, Any],

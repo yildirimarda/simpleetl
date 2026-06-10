@@ -1,9 +1,9 @@
 # SimpleETL
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yourusername/simpleetl)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/yourusername/simpleetl)
 [![Python](https://img.shields.io/badge/python-3.9%2B-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-1540%20passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1883%20passed-brightgreen.svg)]()
 [![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)]()
 
 A **production-grade** ETL framework for Python. Designed to run on **local**, **AWS Glue**, **Databricks**, and **Azure Synapse** platforms. Supports all major data formats with a focus on simplicity, readability, and observability.
@@ -45,7 +45,7 @@ A **production-grade** ETL framework for Python. Designed to run on **local**, *
 
 - **Simple and Clean API**: Intuitive job lifecycle — `extract()`, `transform()`, `load()`
 - **Multi-Platform**: Runs locally, on AWS Glue, Databricks, and Azure Synapse with auto-detection
-- **Multiple Formats**: CSV, JSON, Parquet, Avro, ORC, XML, Excel, and JDBC databases
+- **Multiple Formats**: CSV, JSON, Parquet, Avro, ORC, XML, Excel, JDBC databases, DuckDB, Delta Lake, Apache Iceberg, and REST APIs
 - **Cloud Storage**: S3, GCS, ABFS via fsspec with unified path handling
 - **Incremental Loading**: Watermark-based delta loading with checkpoint/resume
 - **Streaming & Chunked**: Process datasets larger than memory with chunked I/O
@@ -56,10 +56,14 @@ A **production-grade** ETL framework for Python. Designed to run on **local**, *
 - **Schema Management**: Inference, evolution, nested types, and DDL generation
 - **Security**: Secrets management (AWS, Azure, Vault), audit logging, RBAC, PII masking
 - **Data Quality**: Schema validation, null checks, duplicate detection, value ranges
+- **Declarative Quality Rules** *(v1.2)*: Great Expectations-style rules in the job config — `not_null`, `unique`, `in_range`, regex, custom expressions
+- **Schema Drift Detection** *(v1.2)*: Automatic drift checks between runs with `fail`/`warn`/`evolve` policies
+- **OpenTelemetry Tracing** *(v1.2)*: Per-phase spans exported via OTLP
+- **Project Scaffolding** *(v1.2)*: `simpleetl --init` generates a runnable starter project
 - **Plugin System**: Extensible via hooks and entry_points-based discovery
 - **Production Ready**: Docker, Kubernetes, Prometheus metrics, structured logging
 - **Lightweight Core**: Only 6 core dependencies; cloud/spark/db as optional extras
-- **High Quality**: 1540 tests, 94% coverage, ruff + mypy clean
+- **High Quality**: 1883 tests, 94% coverage, ruff + mypy clean
 
 ## Installation
 
@@ -765,6 +769,10 @@ uv run python -m benchmarks.benchmark_dag
 | [Provenance](docs/provenance.md) | Per-record provenance tracking guide |
 | [Alerting](docs/alerting.md) | Alerting integration guide |
 | [Schema](docs/schema.md) | Nested type support guide |
+| [Quality Rules](docs/quality_rules.md) | Declarative data quality rules guide |
+| [Schema Drift](docs/schema_drift.md) | Schema drift detection guide |
+| [Iceberg](docs/iceberg.md) | Apache Iceberg format guide |
+| [Tracing](docs/tracing.md) | OpenTelemetry tracing guide |
 
 ---
 
@@ -839,9 +847,9 @@ simpleetl/
 │       ├── glue.py              # AWS Glue platform runner
 │       ├── databricks.py        # Databricks platform runner
 │       └── synapse.py           # Azure Synapse platform runner
-├── tests/                       # 1540 tests across 41 modules
+├── tests/                       # 1883 tests across 50 modules
 ├── benchmarks/                  # Performance benchmark suite
-├── docs/                        # Documentation (10 guides)
+├── docs/                        # Documentation (15 guides)
 ├── examples/                    # Example ETL jobs and configurations
 ├── configs/                     # Example environment configurations
 ├── k8s/                         # Kubernetes manifests

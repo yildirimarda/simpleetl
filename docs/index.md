@@ -1,6 +1,6 @@
 # SimpleETL Documentation
 
-**Version 1.0.0**
+**Version 1.2.0**
 
 A lightweight, professional ETL (Extract, Transform, Load) framework for Python. SimpleETL supports local execution, AWS Glue, Databricks, and Azure Synapse platforms with multiple data formats including CSV, JSON, Parquet, Avro, ORC, XML, Excel, and databases.
 
@@ -9,6 +9,10 @@ A lightweight, professional ETL (Extract, Transform, Load) framework for Python.
 - **Multiple Data Formats** -- Read and write CSV, JSON, Parquet, Avro, ORC, XML, Excel, and SQL databases
 - **Multi-Platform** -- Run jobs locally or on AWS Glue, Databricks, and Azure Synapse
 - **Data Quality** -- Built-in schema validation, null checks, duplicate detection, value range checks, and data profiling
+- **Declarative Quality Rules** -- Config-driven expectations (`not_null`, `unique`, ranges, regex, expressions) enforced automatically
+- **Schema Drift Detection** -- Automatic schema comparison between runs with fail/warn/evolve policies
+- **Lakehouse Formats** -- Delta Lake and Apache Iceberg without Spark
+- **OpenTelemetry Tracing** -- Per-phase spans for distributed tracing backends
 - **Metrics & Monitoring** -- Prometheus-compatible metrics with HTTP health/readiness endpoints
 - **Structured Logging** -- JSON-formatted structured logging with job lifecycle events
 - **Configuration-Driven** -- YAML or JSON configuration files with Pydantic validation
@@ -24,6 +28,10 @@ A lightweight, professional ETL (Extract, Transform, Load) framework for Python.
 | [API Reference](api-reference.md) | Complete API documentation for all modules |
 | [Platforms](platforms.md) | Deployment guides for all supported platforms |
 | [Development](development.md) | Developer guide: project structure, testing, contributing |
+| [Quality Rules](quality_rules.md) | Declarative data quality rules guide |
+| [Schema Drift](schema_drift.md) | Schema drift detection guide |
+| [Iceberg](iceberg.md) | Apache Iceberg format guide |
+| [Tracing](tracing.md) | OpenTelemetry tracing guide |
 
 ## Quick Example
 

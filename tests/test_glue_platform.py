@@ -664,3 +664,160 @@ class TestGlueIntegration:
             runner._update_job_bookmark()
             # Both calls should log info messages
             assert mock_logger.info.call_count == 2
+
+
+# ---------------------------------------------------------------------------
+# Tests for Glue job bookmark integration (awsglue.job.Job)
+# ---------------------------------------------------------------------------
+
+
+class TestGlueJobBookmarks:
+    """Test awsglue.job.Job init/commit integration for bookmarks."""
+
+    def _runner_with_context(self):
+        """Build a runner with job args and a mocked GlueContext."""
+        runner = GluePlatformRunner(enable_bookmarks=True)
+        runner.job_args = {"JOB_NAME": "bookmark-job", "input": "s3://b/in"}
+        runner.context_manager._glue_context = MagicMock(name="GlueContext")
+        return runner
+
+    def _mock_awsglue_job_module(self):
+        """Create a mock awsglue.job module exposing a Job class."""
+        mock_job_mod = MagicMock(name="awsglue.job")
+        return mock_job_mod
+
+    def test_set_bookmark_initializes_glue_job(self):
+        """Test that Job is built from the GlueContext and init'd."""
+        runner = self._runner_with_context()
+        mock_job_mod = self._mock_awsglue_job_module()
+
+        with patch.dict(
+            sys.modules,
+            {"awsglue": MagicMock(), "awsglue.job": mock_job_mod},
+        ):
+            runner._set_job_bookmark()
+
+        mock_job_mod.Job.assert_called_once_with(
+            runner.context_manager._glue_context
+        )
+        mock_job_mod.Job.return_value.init.assert_called_once_with(
+            "bookmark-job", runner.job_args
+        )
+        assert runner._glue_job is mock_job_mod.Job.return_value
+
+    def test_update_bookmark_commits_glue_job(self):
+        """Test that commit is called on the stored Job instance."""
+        runner = self._runner_with_context()
+        mock_job = MagicMock(name="JobInstance")
+        runner._glue_job = mock_job
+
+        runner._update_job_bookmark()
+
+        mock_job.commit.assert_called_once_with()
+
+    def test_full_bookmark_lifecycle_with_mocked_awsglue(self):
+        """Test init in set followed by commit in update."""
+        runner = self._runner_with_context()
+        mock_job_mod = self._mock_awsglue_job_module()
+
+        with patch.dict(
+            sys.modules,
+            {"awsglue": MagicMock(), "awsglue.job": mock_job_mod},
+        ):
+            runner._set_job_bookmark()
+            runner._update_job_bookmark()
+
+        instance = mock_job_mod.Job.return_value
+        instance.init.assert_called_once_with(
+            "bookmark-job", runner.job_args
+        )
+        instance.commit.assert_called_once_with()
+
+    def test_set_bookmark_without_awsglue_is_safe(self):
+        """Test ImportError fallback: no Job stored, nothing raised."""
+        runner = self._runner_with_context()
+
+        with patch.dict(
+            sys.modules, {"awsglue": None, "awsglue.job": None}
+        ):
+            runner._set_job_bookmark()
+
+        assert runner._glue_job is None
+
+    def test_set_bookmark_without_glue_context_is_safe(self):
+        """Test that a missing GlueContext skips Job init silently."""
+        runner = GluePlatformRunner(enable_bookmarks=True)
+        runner.job_args = {"JOB_NAME": "bookmark-job"}
+
+        with patch(
+            "simpleetl.platforms.glue.create_glue_context",
+            return_value=None,
+        ):
+            runner._set_job_bookmark()
+
+        assert runner._glue_job is None
+
+    def test_update_bookmark_without_job_is_safe(self):
+        """Test that update with no initialized Job does not raise."""
+        runner = self._runner_with_context()
+        assert runner._glue_job is None
+
+        runner._update_job_bookmark()  # Must not raise
+
+    def test_set_bookmark_without_job_name_skips(self):
+        """Test that a missing JOB_NAME skips Job creation."""
+        runner = GluePlatformRunner(enable_bookmarks=True)
+        runner.job_args = {}
+        runner.context_manager._glue_context = MagicMock()
+        mock_job_mod = self._mock_awsglue_job_module()
+
+        with patch.dict(
+            sys.modules,
+            {"awsglue": MagicMock(), "awsglue.job": mock_job_mod},
+        ):
+            runner._set_job_bookmark()
+
+        mock_job_mod.Job.assert_not_called()
+        assert runner._glue_job is None
+
+    def test_bookmarks_disabled_no_job_created(self):
+        """Test enable_bookmarks=False skips init and commit entirely."""
+        runner = GluePlatformRunner(enable_bookmarks=False)
+        runner.job_args = {"JOB_NAME": "x"}
+        runner.context_manager._glue_context = MagicMock()
+        mock_job_mod = self._mock_awsglue_job_module()
+
+        with patch.dict(
+            sys.modules,
+            {"awsglue": MagicMock(), "awsglue.job": mock_job_mod},
+        ):
+            runner._set_job_bookmark()
+            runner._update_job_bookmark()
+
+        mock_job_mod.Job.assert_not_called()
+
+    def test_init_failure_logged_not_raised(self, caplog):
+        """Test that a Job.init failure is logged, not raised."""
+        runner = self._runner_with_context()
+        mock_job_mod = self._mock_awsglue_job_module()
+        mock_job_mod.Job.return_value.init.side_effect = RuntimeError("boom")
+
+        with patch.dict(
+            sys.modules,
+            {"awsglue": MagicMock(), "awsglue.job": mock_job_mod},
+        ):
+            runner._set_job_bookmark()  # Must not raise
+
+        assert runner._glue_job is None
+        assert "Failed to initialize Glue job bookmarks" in caplog.text
+
+    def test_commit_failure_logged_not_raised(self, caplog):
+        """Test that a Job.commit failure is logged, not raised."""
+        runner = self._runner_with_context()
+        mock_job = MagicMock(name="JobInstance")
+        mock_job.commit.side_effect = RuntimeError("boom")
+        runner._glue_job = mock_job
+
+        runner._update_job_bookmark()  # Must not raise
+
+        assert "Failed to commit Glue job bookmark" in caplog.text

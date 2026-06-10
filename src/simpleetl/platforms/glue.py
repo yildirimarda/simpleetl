@@ -338,6 +338,9 @@ class GluePlatformRunner(PlatformRunner):
         context_manager: A ``GlueContextManager`` instance.
         enable_bookmarks: Whether to enable Glue job bookmark tracking.
         job_args: Parsed Glue job arguments.
+        _glue_job: The ``awsglue.job.Job`` instance created by
+            :meth:`_set_job_bookmark` and committed by
+            :meth:`_update_job_bookmark`.  ``None`` outside of Glue.
     """
 
     def __init__(
@@ -356,6 +359,7 @@ class GluePlatformRunner(PlatformRunner):
         self.context_manager = GlueContextManager()
         self.enable_bookmarks = enable_bookmarks
         self.job_args: Dict[str, str] = job_args or {}
+        self._glue_job: Optional[Any] = None
 
     # -- public API -----------------------------------------------------------
 
@@ -400,20 +404,92 @@ class GluePlatformRunner(PlatformRunner):
         logger.info("GlueContext and SparkSession initialized successfully")
 
     def _set_job_bookmark(self) -> None:
-        """Set up Glue job bookmark properties for the current job run."""
+        """Set up Glue job bookmark tracking for the current job run.
+
+        Inside AWS Glue, bookmarks are driven by ``awsglue.job.Job``:
+        this method instantiates a ``Job`` with the active
+        ``GlueContext`` and calls ``Job.init(job_name, args)``.  The
+        instance is stored on ``self._glue_job`` so that
+        :meth:`_update_job_bookmark` can commit it after the run.
+
+        Outside of Glue (no GlueContext, or ``awsglue`` not
+        importable) this degrades to a logged no-op and never raises.
+        """
         if not self.enable_bookmarks:
             return
         job_name = self.job_args.get("JOB_NAME", "")
-        if job_name:
-            logger.info("Glue job bookmark tracking enabled for: %s", job_name)
+        if not job_name:
+            return
+        logger.info("Glue job bookmark tracking enabled for: %s", job_name)
+
+        try:
+            glue_context = self.context_manager.glue_context
+        except RuntimeError as exc:
+            logger.warning(
+                "GlueContext unavailable; skipping bookmark init for "
+                "'%s': %s",
+                job_name,
+                exc,
+            )
+            return
+        if glue_context is None:
+            logger.debug(
+                "No GlueContext available; skipping Glue Job bookmark init"
+            )
+            return
+
+        try:
+            from awsglue.job import Job
+        except ImportError:
+            logger.warning(
+                "awsglue is not available; Glue job bookmarks cannot be "
+                "initialized for: %s",
+                job_name,
+            )
+            return
+
+        try:
+            glue_job = Job(glue_context)
+            glue_job.init(job_name, self.job_args)
+            self._glue_job = glue_job
+            logger.debug(
+                "Glue Job initialized for bookmark tracking: %s", job_name
+            )
+        except Exception as exc:
+            logger.warning(
+                "Failed to initialize Glue job bookmarks for '%s': %s",
+                job_name,
+                exc,
+            )
 
     def _update_job_bookmark(self) -> None:
-        """Update Glue job bookmark after successful job completion."""
+        """Commit the Glue job bookmark after successful completion.
+
+        Calls ``Job.commit()`` on the ``awsglue.job.Job`` instance
+        created by :meth:`_set_job_bookmark`.  When no Job was
+        initialized (e.g. outside of Glue) this degrades to a logged
+        no-op and never raises.
+        """
         if not self.enable_bookmarks:
             return
         job_name = self.job_args.get("JOB_NAME", "")
-        if job_name:
-            logger.info("Glue job bookmark updated for: %s", job_name)
+        if not job_name:
+            return
+        if self._glue_job is not None:
+            try:
+                self._glue_job.commit()
+            except Exception as exc:
+                logger.warning(
+                    "Failed to commit Glue job bookmark for '%s': %s",
+                    job_name,
+                    exc,
+                )
+                return
+        else:
+            logger.debug(
+                "No initialized Glue Job; skipping bookmark commit"
+            )
+        logger.info("Glue job bookmark updated for: %s", job_name)
 
     # -- convenience methods for Glue-based ETL logic -------------------------
 

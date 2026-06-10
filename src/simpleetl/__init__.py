@@ -21,7 +21,7 @@ Quick Start:
     job.run_with_error_handling()
 """
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __author__ = "SimpleETL Contributors"
 
 # -- Core ETL ----------------------------------------------------------------
@@ -37,6 +37,8 @@ from simpleetl.core import (
 from simpleetl.core.config import (
     render_config_template,
     ConfigTemplateError,
+    SchemaDriftConfig,
+    TracingConfig,
 )
 
 # -- Errors ------------------------------------------------------------------
@@ -79,6 +81,8 @@ from simpleetl.formats import (
     RestApiWriter,
     DeltaLakeReader,
     DeltaLakeWriter,
+    IcebergReader,
+    IcebergWriter,
     FormatFactory,
 )
 
@@ -119,6 +123,33 @@ from simpleetl.core.quality import (
     check_value_range,
     check_unique_values,
     profile_data,
+)
+
+# -- Declarative quality rules -------------------------------------------------
+
+from simpleetl.core.quality_rules import (
+    QualityRuleEngine,
+    QualityRuleError,
+    QualityRuleHook,
+    RuleReport,
+    RuleResult,
+)
+
+# -- Schema drift detection ----------------------------------------------------
+
+from simpleetl.core.drift import (
+    SchemaDriftDetector,
+    SchemaDriftError,
+    SchemaDriftHook,
+    DriftReport,
+)
+
+# -- Tracing -------------------------------------------------------------------
+
+from simpleetl.core.tracing import (
+    TracingHook,
+    setup_tracing,
+    is_tracing_available,
 )
 
 # -- Connection --------------------------------------------------------------
@@ -460,6 +491,8 @@ __all__ = [
     # Config templates
     "render_config_template",
     "ConfigTemplateError",
+    "SchemaDriftConfig",
+    "TracingConfig",
     # Errors
     "ETLError",
     "ExtractError",
@@ -494,6 +527,8 @@ __all__ = [
     "RestApiWriter",
     "DeltaLakeReader",
     "DeltaLakeWriter",
+    "IcebergReader",
+    "IcebergWriter",
     "FormatFactory",
     # Schema
     "Schema",
@@ -522,6 +557,21 @@ __all__ = [
     "check_value_range",
     "check_unique_values",
     "profile_data",
+    # Declarative quality rules
+    "QualityRuleEngine",
+    "QualityRuleError",
+    "QualityRuleHook",
+    "RuleReport",
+    "RuleResult",
+    # Schema drift detection
+    "SchemaDriftDetector",
+    "SchemaDriftError",
+    "SchemaDriftHook",
+    "DriftReport",
+    # Tracing
+    "TracingHook",
+    "setup_tracing",
+    "is_tracing_available",
     # Connection
     "ConnectionConfig",
     "ConnectionPool",
