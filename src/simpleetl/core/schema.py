@@ -24,6 +24,8 @@ class SQLDialect(str, Enum):
     POSTGRESQL = "postgresql"
     MYSQL = "mysql"
     SQLITE = "sqlite"
+    SNOWFLAKE = "snowflake"
+    BIGQUERY = "bigquery"
 
 
 # ---------------------------------------------------------------------------
@@ -698,19 +700,110 @@ class SchemaValidationError(Exception):
 
 # Mapping from pandas dtype strings to SQL type strings per dialect.
 _DTYPE_MAP: Dict[str, Dict[str, str]] = {
-    "int64": {"postgresql": "BIGINT", "mysql": "BIGINT", "sqlite": "INTEGER"},
-    "int32": {"postgresql": "INTEGER", "mysql": "INT", "sqlite": "INTEGER"},
-    "int16": {"postgresql": "SMALLINT", "mysql": "SMALLINT", "sqlite": "INTEGER"},
-    "int8": {"postgresql": "SMALLINT", "mysql": "TINYINT", "sqlite": "INTEGER"},
-    "float64": {"postgresql": "DOUBLE PRECISION", "mysql": "DOUBLE", "sqlite": "REAL"},
-    "float32": {"postgresql": "REAL", "mysql": "FLOAT", "sqlite": "REAL"},
-    "bool": {"postgresql": "BOOLEAN", "mysql": "BOOLEAN", "sqlite": "INTEGER"},
-    "object": {"postgresql": "TEXT", "mysql": "TEXT", "sqlite": "TEXT"},
-    "string": {"postgresql": "TEXT", "mysql": "TEXT", "sqlite": "TEXT"},
-    "datetime64[ns]": {"postgresql": "TIMESTAMP", "mysql": "DATETIME", "sqlite": "TEXT"},
-    "datetime64[ns, UTC]": {"postgresql": "TIMESTAMPTZ", "mysql": "TIMESTAMP", "sqlite": "TEXT"},
-    "timedelta64[ns]": {"postgresql": "INTERVAL", "mysql": "BIGINT", "sqlite": "TEXT"},
-    "category": {"postgresql": "TEXT", "mysql": "TEXT", "sqlite": "TEXT"},
+    "int64": {
+        "postgresql": "BIGINT",
+        "mysql": "BIGINT",
+        "sqlite": "INTEGER",
+        "snowflake": "NUMBER",
+        "bigquery": "INT64",
+    },
+    "int32": {
+        "postgresql": "INTEGER",
+        "mysql": "INT",
+        "sqlite": "INTEGER",
+        "snowflake": "NUMBER",
+        "bigquery": "INT64",
+    },
+    "int16": {
+        "postgresql": "SMALLINT",
+        "mysql": "SMALLINT",
+        "sqlite": "INTEGER",
+        "snowflake": "NUMBER",
+        "bigquery": "INT64",
+    },
+    "int8": {
+        "postgresql": "SMALLINT",
+        "mysql": "TINYINT",
+        "sqlite": "INTEGER",
+        "snowflake": "NUMBER",
+        "bigquery": "INT64",
+    },
+    "float64": {
+        "postgresql": "DOUBLE PRECISION",
+        "mysql": "DOUBLE",
+        "sqlite": "REAL",
+        "snowflake": "FLOAT",
+        "bigquery": "FLOAT64",
+    },
+    "float32": {
+        "postgresql": "REAL",
+        "mysql": "FLOAT",
+        "sqlite": "REAL",
+        "snowflake": "FLOAT",
+        "bigquery": "FLOAT64",
+    },
+    "bool": {
+        "postgresql": "BOOLEAN",
+        "mysql": "BOOLEAN",
+        "sqlite": "INTEGER",
+        "snowflake": "BOOLEAN",
+        "bigquery": "BOOL",
+    },
+    "object": {
+        "postgresql": "TEXT",
+        "mysql": "TEXT",
+        "sqlite": "TEXT",
+        "snowflake": "VARCHAR",
+        "bigquery": "STRING",
+    },
+    "string": {
+        "postgresql": "TEXT",
+        "mysql": "TEXT",
+        "sqlite": "TEXT",
+        "snowflake": "VARCHAR",
+        "bigquery": "STRING",
+    },
+    "datetime64[ns]": {
+        "postgresql": "TIMESTAMP",
+        "mysql": "DATETIME",
+        "sqlite": "TEXT",
+        "snowflake": "TIMESTAMP_NTZ",
+        "bigquery": "TIMESTAMP",
+    },
+    "datetime64[ns, UTC]": {
+        "postgresql": "TIMESTAMPTZ",
+        "mysql": "TIMESTAMP",
+        "sqlite": "TEXT",
+        "snowflake": "TIMESTAMP_TZ",
+        "bigquery": "TIMESTAMP",
+    },
+    "timedelta64[ns]": {
+        "postgresql": "INTERVAL",
+        "mysql": "BIGINT",
+        "sqlite": "TEXT",
+        "snowflake": "NUMBER",
+        "bigquery": "INT64",
+    },
+    "category": {
+        "postgresql": "TEXT",
+        "mysql": "TEXT",
+        "sqlite": "TEXT",
+        "snowflake": "VARCHAR",
+        "bigquery": "STRING",
+    },
+    "date": {
+        "postgresql": "DATE",
+        "mysql": "DATE",
+        "sqlite": "TEXT",
+        "snowflake": "DATE",
+        "bigquery": "DATE",
+    },
+}
+
+# Fallback SQL type per dialect for unmapped pandas dtypes.
+_FALLBACK_SQL_TYPE: Dict[str, str] = {
+    "snowflake": "VARCHAR",
+    "bigquery": "STRING",
 }
 
 
@@ -719,8 +812,8 @@ def _dtype_to_sql(dtype: str, dialect: str) -> str:
     mapping = _DTYPE_MAP.get(dtype)
     if mapping and dialect in mapping:
         return mapping[dialect]
-    # Fallback: return TEXT for unknown types
-    return "TEXT"
+    # Fallback for unknown types (TEXT unless the dialect lacks TEXT)
+    return _FALLBACK_SQL_TYPE.get(dialect, "TEXT")
 
 
 def _nested_dtype_to_sql(col: ColumnDef, dialect: str) -> str:
@@ -729,23 +822,32 @@ def _nested_dtype_to_sql(col: ColumnDef, dialect: str) -> str:
     Falls back to the flat _dtype_to_sql for non-nested columns.
 
     Mapping rules:
-        - StructType: JSONB (PostgreSQL), JSON (MySQL/SQLite)
-        - ArrayType:  element[] (PostgreSQL), JSON (MySQL/SQLite)
-        - MapType:    JSONB (PostgreSQL), JSON (MySQL/SQLite)
+        - StructType: JSONB (PostgreSQL), VARIANT (Snowflake),
+          JSON (MySQL/SQLite/BigQuery)
+        - ArrayType:  element[] (PostgreSQL), VARIANT (Snowflake),
+          JSON (MySQL/SQLite/BigQuery)
+        - MapType:    JSONB (PostgreSQL), VARIANT (Snowflake),
+          JSON (MySQL/SQLite/BigQuery)
     """
     if col.struct_type:
         if dialect == "postgresql":
             return "JSONB"
+        if dialect == "snowflake":
+            return "VARIANT"
         return "JSON"
 
     if col.array_type:
         if dialect == "postgresql":
             return f"{col.array_type.element_type}[]"
+        if dialect == "snowflake":
+            return "VARIANT"
         return "JSON"
 
     if col.map_type:
         if dialect == "postgresql":
             return "JSONB"
+        if dialect == "snowflake":
+            return "VARIANT"
         return "JSON"
 
     return _dtype_to_sql(col.dtype, dialect)
@@ -762,9 +864,10 @@ def generate_ddl(
     Args:
         schema: Schema to generate DDL for.
         table_name: Target table name.
-        dialect: SQL dialect (``"postgresql"``, ``"mysql"``, ``"sqlite"``).
+        dialect: SQL dialect (``"postgresql"``, ``"mysql"``, ``"sqlite"``,
+            ``"snowflake"``, ``"bigquery"``).
         if_not_exists: If True, add IF NOT EXISTS clause (supported by
-            PostgreSQL and SQLite; ignored for MySQL).
+            PostgreSQL, SQLite, Snowflake, and BigQuery; ignored for MySQL).
 
     Returns:
         A CREATE TABLE SQL string.
@@ -794,7 +897,8 @@ def generate_ddl(
 
     cols_sql = ",\n".join(col_defs)
 
-    if if_not_exists and dialect in ("postgresql", "sqlite"):
+    supports_if_not_exists = ("postgresql", "sqlite", "snowflake", "bigquery")
+    if if_not_exists and dialect in supports_if_not_exists:
         exists_clause = "IF NOT EXISTS "
     else:
         exists_clause = ""

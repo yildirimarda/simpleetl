@@ -1,6 +1,6 @@
 # SimpleETL Documentation
 
-**Version 1.2.0**
+**Version 1.3.0**
 
 A lightweight, professional ETL (Extract, Transform, Load) framework for Python. SimpleETL supports local execution, AWS Glue, Databricks, and Azure Synapse platforms with multiple data formats including CSV, JSON, Parquet, Avro, ORC, XML, Excel, and databases.
 
@@ -13,6 +13,9 @@ A lightweight, professional ETL (Extract, Transform, Load) framework for Python.
 - **Schema Drift Detection** -- Automatic schema comparison between runs with fail/warn/evolve policies
 - **Lakehouse Formats** -- Delta Lake and Apache Iceberg without Spark
 - **OpenTelemetry Tracing** -- Per-phase spans for distributed tracing backends
+- **Polars Interop** -- Zero-copy bridges and Polars-accelerated CSV/Parquet IO
+- **Kafka** -- Topic consumption into DataFrames; rows produced as JSON messages
+- **Cloud Warehouses** -- Snowflake and BigQuery with native MERGE upserts
 - **Metrics & Monitoring** -- Prometheus-compatible metrics with HTTP health/readiness endpoints
 - **Structured Logging** -- JSON-formatted structured logging with job lifecycle events
 - **Configuration-Driven** -- YAML or JSON configuration files with Pydantic validation
@@ -32,6 +35,9 @@ A lightweight, professional ETL (Extract, Transform, Load) framework for Python.
 | [Schema Drift](schema_drift.md) | Schema drift detection guide |
 | [Iceberg](iceberg.md) | Apache Iceberg format guide |
 | [Tracing](tracing.md) | OpenTelemetry tracing guide |
+| [Polars](polars.md) | Polars interop and IO acceleration guide |
+| [Kafka](kafka.md) | Kafka source/sink guide |
+| [Warehouses](warehouses.md) | Snowflake & BigQuery dialect guide |
 
 ## Quick Example
 

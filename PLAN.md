@@ -615,3 +615,84 @@ profiling). v1.2 targets the gaps that block confident production rollouts:
 - Kafka streaming source (needs broker-backed integration tests)
 - Snowflake / BigQuery native dialects (driver-heavy; needs real accounts to
   validate UPSERT semantics)
+
+---
+
+## Phase 10: v1.3 — Performance, Streaming & Warehouses — COMPLETE ✅ (2026-06-10)
+
+### Final Status
+- **Tests**: 2013 passed, 2 skipped (was 1883) ✅
+- **Coverage**: 95% overall; engine.py / kafka.py / parquet.py at 100% ✅
+- **Linting**: ruff clean (0 errors, src + tests) ✅
+- **Type Checking**: mypy clean (0 errors, src + tests) ✅
+- **Version**: 1.3.0 ✅
+
+### Motivation
+The three items consciously deferred from v1.2, scoped pragmatically:
+- **Polars**: a full engine abstraction would mean rewriting the pandas-typed
+  public API (40+ transformation functions, reader/writer signatures, hooks).
+  v1.3 instead ships *interop + IO acceleration*: zero-copy bridges between
+  pandas and Polars, a `polars_transform()` escape hatch for hot paths, and a
+  Polars-powered fast path inside the CSV/Parquet readers/writers. The pandas
+  API stays the single public contract.
+- **Kafka**: the #1 streaming source. A consumer/producer pair mapping JSON
+  messages to DataFrames fits the existing chunked-reader model. Unit tests
+  are fully mocked; broker-backed integration tests remain a user concern.
+- **Snowflake / BigQuery**: the two dominant cloud warehouses. SQLAlchemy
+  resolves dialects from the URL at runtime, so SimpleETL only needs dialect
+  detection, native `MERGE INTO` upsert SQL, and DDL type mappings — no
+  driver imports, drivers stay optional extras.
+
+### 10.1 Polars Interop & IO Acceleration
+
+- [x] Add `polars` as optional `polars` dependency
+- [x] `src/simpleetl/core/engine.py`:
+  - [x] `is_polars_available()` helper
+  - [x] `to_polars(df)` / `from_polars(pldf)` — Arrow-backed, zero-copy where
+        possible; clear ImportError pointing at `simpleetl[polars]`
+  - [x] `polars_transform(df, fn)` — pandas in → Polars `fn` → pandas out
+  - [x] `polars_sql_transform(df, query)` — Polars SQLContext-based SQL on a
+        DataFrame (complements DuckDB `sql_transform`)
+- [x] `engine="polars"` option in `CSVReader`/`CSVWriter` and
+      `ParquetReader`/`ParquetWriter` — Polars fast path with pandas fallback
+      (warning, not error, when Polars is missing)
+- [x] Tests: `tests/test_engine_polars.py`
+
+### 10.2 Kafka Source & Sink
+
+- [x] Add `confluent-kafka` as optional `kafka` dependency
+- [x] `src/simpleetl/formats/kafka.py`:
+  - [x] `KafkaReader`: consume a topic into a DataFrame — JSON value
+        deserialization, `max_messages`/`timeout` bounds, consumer-group
+        config, manual/auto commit
+  - [x] `KafkaReader.read_chunks()`: yield one DataFrame per poll batch for
+        continuous consumption
+  - [x] `KafkaWriter`: produce DataFrame rows as JSON messages —
+        `key_column` support, delivery flush, configurable producer config
+  - [x] Lazy import with clear `simpleetl[kafka]` ImportError
+- [x] Factory: route `kafka://host:port/topic` sources/destinations
+- [x] Tests: `tests/test_formats_kafka.py` (fully mocked, no broker)
+
+### 10.3 Snowflake & BigQuery Warehouse Dialects
+
+- [x] Add `snowflake` (snowflake-sqlalchemy) and `bigquery`
+      (sqlalchemy-bigquery) optional extras — never imported by SimpleETL
+      directly; SQLAlchemy resolves them from the URL
+- [x] `database.py`: detect `snowflake://` and `bigquery://` URLs
+- [x] `_merge_snowflake()`: native `MERGE INTO` via temp table
+- [x] `_merge_bigquery()`: native `MERGE` via temp table
+- [x] `schema.py`: `SQLDialect.SNOWFLAKE` and `SQLDialect.BIGQUERY` DDL
+      generation (type mappings incl. nested types → VARIANT / JSON)
+- [x] Tests: `tests/test_database_dialects.py` (SQL captured via mocked
+      engine; no real warehouse accounts required)
+
+### 10.4 Quality Gate & Release
+
+- [x] Export new public names from `simpleetl.__init__` / `formats.__init__`
+- [x] New optional extras in `pyproject.toml`; update `all`
+- [x] Docs: `docs/polars.md`, `docs/kafka.md`, `docs/warehouses.md`;
+      README feature list update
+- [x] ruff + mypy clean (0 errors)
+- [x] Coverage ≥ 95% on new modules; full suite green
+- [x] Bump version to `1.3.0` in `pyproject.toml`, `__init__.py`, `cli.py`,
+      `docs/api-reference.md`

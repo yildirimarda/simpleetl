@@ -15,6 +15,7 @@ from . import excel
 from . import database
 from . import duckdb as _duckdb_mod
 from . import iceberg as _iceberg_mod
+from . import kafka as _kafka_mod
 
 
 def _get_plugin_registry():
@@ -158,6 +159,10 @@ class FormatFactory:
         if source.startswith('iceberg://'):
             return _iceberg_mod.IcebergReader(**kwargs)
 
+        # Kafka topics are addressed via the kafka:// scheme
+        if source.startswith('kafka://'):
+            return _kafka_mod.KafkaReader(**kwargs)
+
         ext = cls._get_extension(source)
 
         if ext in cls.FORMAT_MAP:
@@ -208,6 +213,10 @@ class FormatFactory:
         # Apache Iceberg tables are addressed via the iceberg:// scheme
         if destination.startswith('iceberg://'):
             return _iceberg_mod.IcebergWriter(**kwargs)
+
+        # Kafka topics are addressed via the kafka:// scheme
+        if destination.startswith('kafka://'):
+            return _kafka_mod.KafkaWriter(**kwargs)
 
         ext = cls._get_extension(destination)
 
@@ -262,6 +271,14 @@ class FormatFactory:
                 'mime_type': 'application/octet-stream'
             }
 
+        # Kafka topics are addressed via the kafka:// scheme
+        if source.startswith('kafka://'):
+            return {
+                'format': 'kafka',
+                'extension': '',
+                'mime_type': 'application/json'
+            }
+
         ext = cls._get_extension(source)
 
         if ext in cls.FORMAT_MAP:
@@ -289,4 +306,5 @@ class FormatFactory:
             result[format_name] = ext
         # Scheme-addressed formats without a file extension
         result['iceberg'] = 'iceberg://'
+        result['kafka'] = 'kafka://'
         return result

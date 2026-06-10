@@ -1,10 +1,10 @@
 # SimpleETL
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/yourusername/simpleetl)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/yourusername/simpleetl)
 [![Python](https://img.shields.io/badge/python-3.9%2B-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-1883%20passed-brightgreen.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-2013%20passed-brightgreen.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen.svg)]()
 
 A **production-grade** ETL framework for Python. Designed to run on **local**, **AWS Glue**, **Databricks**, and **Azure Synapse** platforms. Supports all major data formats with a focus on simplicity, readability, and observability.
 
@@ -45,7 +45,7 @@ A **production-grade** ETL framework for Python. Designed to run on **local**, *
 
 - **Simple and Clean API**: Intuitive job lifecycle — `extract()`, `transform()`, `load()`
 - **Multi-Platform**: Runs locally, on AWS Glue, Databricks, and Azure Synapse with auto-detection
-- **Multiple Formats**: CSV, JSON, Parquet, Avro, ORC, XML, Excel, JDBC databases, DuckDB, Delta Lake, Apache Iceberg, and REST APIs
+- **Multiple Formats**: CSV, JSON, Parquet, Avro, ORC, XML, Excel, JDBC databases, DuckDB, Delta Lake, Apache Iceberg, REST APIs, and Kafka
 - **Cloud Storage**: S3, GCS, ABFS via fsspec with unified path handling
 - **Incremental Loading**: Watermark-based delta loading with checkpoint/resume
 - **Streaming & Chunked**: Process datasets larger than memory with chunked I/O
@@ -60,10 +60,13 @@ A **production-grade** ETL framework for Python. Designed to run on **local**, *
 - **Schema Drift Detection** *(v1.2)*: Automatic drift checks between runs with `fail`/`warn`/`evolve` policies
 - **OpenTelemetry Tracing** *(v1.2)*: Per-phase spans exported via OTLP
 - **Project Scaffolding** *(v1.2)*: `simpleetl --init` generates a runnable starter project
+- **Polars Interop** *(v1.3)*: Zero-copy pandas↔Polars bridges, `polars_transform` hot paths, Polars-powered CSV/Parquet IO
+- **Kafka Source & Sink** *(v1.3)*: Consume topics into DataFrames, produce rows as JSON messages
+- **Cloud Warehouses** *(v1.3)*: Snowflake and BigQuery dialects with native `MERGE` upserts and DDL generation
 - **Plugin System**: Extensible via hooks and entry_points-based discovery
 - **Production Ready**: Docker, Kubernetes, Prometheus metrics, structured logging
 - **Lightweight Core**: Only 6 core dependencies; cloud/spark/db as optional extras
-- **High Quality**: 1883 tests, 94% coverage, ruff + mypy clean
+- **High Quality**: 2013 tests, 95% coverage, ruff + mypy clean
 
 ## Installation
 
@@ -773,6 +776,9 @@ uv run python -m benchmarks.benchmark_dag
 | [Schema Drift](docs/schema_drift.md) | Schema drift detection guide |
 | [Iceberg](docs/iceberg.md) | Apache Iceberg format guide |
 | [Tracing](docs/tracing.md) | OpenTelemetry tracing guide |
+| [Polars](docs/polars.md) | Polars interop and IO acceleration guide |
+| [Kafka](docs/kafka.md) | Kafka source/sink guide |
+| [Warehouses](docs/warehouses.md) | Snowflake & BigQuery dialect guide |
 
 ---
 
@@ -847,9 +853,9 @@ simpleetl/
 │       ├── glue.py              # AWS Glue platform runner
 │       ├── databricks.py        # Databricks platform runner
 │       └── synapse.py           # Azure Synapse platform runner
-├── tests/                       # 1883 tests across 50 modules
+├── tests/                       # 2013 tests across 53 modules
 ├── benchmarks/                  # Performance benchmark suite
-├── docs/                        # Documentation (15 guides)
+├── docs/                        # Documentation (18 guides)
 ├── examples/                    # Example ETL jobs and configurations
 ├── configs/                     # Example environment configurations
 ├── k8s/                         # Kubernetes manifests
