@@ -293,6 +293,10 @@ class TestMaskPii:
 class TestColumnEncryptor:
     """Tests for ColumnEncryptor."""
 
+    @classmethod
+    def setup_class(cls):
+        pytest.importorskip("cryptography")
+
     def test_generate_key(self):
         key = ColumnEncryptor.generate_key()
         assert isinstance(key, bytes)

@@ -500,6 +500,7 @@ class TestCLIValidateConfig:
 
     def test_validate_config_with_param(self, tmp_path):
         """Test --validate-config renders --param template variables."""
+        pytest.importorskip("jinja2")
         config_file = tmp_path / "config.yaml"
         config_file.write_text(
             "name: job_{{ params.env }}\n"

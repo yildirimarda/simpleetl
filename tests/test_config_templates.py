@@ -7,6 +7,8 @@ from unittest.mock import patch
 
 import pytest
 
+pytest.importorskip("jinja2")
+
 from simpleetl.core.config import (
     ConfigTemplateError,
     load_config,

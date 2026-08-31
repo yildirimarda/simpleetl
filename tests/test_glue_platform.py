@@ -10,6 +10,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+pytest.importorskip("boto3")
+
 from simpleetl.core.job import ETLJob
 from simpleetl.formats.glue_catalog import (
     SUPPORTED_FORMATS,

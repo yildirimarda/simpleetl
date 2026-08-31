@@ -197,6 +197,10 @@ class TestParquet:
 class TestAvro:
     """Test Avro format support."""
 
+    @classmethod
+    def setup_class(cls):
+        pytest.importorskip("fastavro")
+
     def test_avro_writer_and_reader(self):
         """Test Avro roundtrip: write then read back."""
         df = pd.DataFrame(

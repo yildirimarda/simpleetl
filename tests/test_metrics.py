@@ -7,10 +7,8 @@ from datetime import datetime, timedelta
 
 import pytest
 
-try:
-    from prometheus_client import CollectorRegistry
-except ImportError:  # pragma: no cover - optional extra
-    CollectorRegistry = None  # type: ignore
+pytest.importorskip("prometheus_client")
+from prometheus_client import CollectorRegistry
 
 from simpleetl.core.metrics import MetricsCollector, get_metrics
 
