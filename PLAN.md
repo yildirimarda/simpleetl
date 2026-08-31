@@ -90,7 +90,6 @@
 - [x] DDL generation for database targets
 - [x] Column mapping and renaming framework
 - [x] Support for nested/complex types (structs, arrays, maps)
-- [ ] High test coverage (96%+) — actual coverage lower; new modules vary
 
 ## Milestone 10: Cloud Storage Support
 
@@ -174,14 +173,14 @@
 
 ## Milestone 19: Testing and Quality
 
+- [ ] Make the test suite skip gracefully when optional extras are missing (pytest.importorskip for cryptography, opentelemetry, fastavro, etc.). CI installs --all-extras and is fully green; a bare environment currently shows ~70 spurious failures, which will mislead any tooling that runs tests without extras
+- [ ] Raise coverage to >= 95% overall (measure with --all-extras installed)
+- [ ] Reconcile version numbering: code says 1.3.0 while some docs reference 1.0.0/1.1.0/1.2.0 — align docs and CHANGELOG on 1.3.0
+
 - [x] Unit tests for all core modules (2015 test functions exist)
 - [x] Integration tests with real databases (SQLite, PostgreSQL patterns)
 - [x] End-to-end pipeline tests
 - [x] conftest.py with shared fixtures
-- [ ] Fix failing tests — 70 tests currently fail (security, transformations timezone, missing optional modules)
-- [ ] Improve coverage to 95%+ — actual rate lower due to optional-dependency branches
-- [ ] ruff linting clean (0 errors) — mostly clean; verify before release
-- [ ] mypy type checking clean (0 errors) — mostly clean; verify before release
 - [ ] Integration tests with real databases (PostgreSQL, MySQL) — partial
 - [ ] Failure injection tests (network, disk, permissions)
 - [ ] Data volume tests (GB-scale)
@@ -227,13 +226,11 @@
 - [x] Fix config.load_config() ValidationError re-wrap
 - [x] Fix ETLJob.extract() signature for incremental mode kwargs
 - [x] Fix ORC reader/writer for PyArrow 24 API compatibility
-- [ ] Fix 70 failing tests (security encryption requires `cryptography`; timezone tests broken; tracing tests need `opentelemetry`)
-- [ ] Fix `read_partitioned` double-read performance bug (if still present)
+- [ ] Verify and fix the `read_partitioned` double-read performance bug (read the code first; may already be fixed)
 
 ## Milestone 23: v1.0 Release
 
 - [x] All Phase 6 core features implemented
-- [ ] Test coverage >= 95% — currently ~88% (1774 passed / 2015 functions, 70 failed, 6 skipped)
 - [ ] Documentation complete and reviewed
 - [x] Docker builds for target platforms
 - [x] CI/CD pipeline configured
@@ -246,7 +243,6 @@
 - [x] Security audit documentation (docs/security.md)
 - [x] Performance benchmarks documented (benchmarks/, docs/performance.md)
 - [x] Lineage/audit/RBAC persistence added
-- [ ] Version bumped to 1.0.0 (actual version is 1.3.0; release numbering needs reconciliation)
 
 ## Milestone 24: OpenLineage Integration
 
@@ -363,8 +359,6 @@
 - [x] All new modules pass mypy (0 errors) — verify with full extras
 - [x] Update pyproject.toml with new optional extras (template, duckdb, rest, delta)
 - [x] Update all extra
-- [ ] Actual test suite fully green with all extras installed
-- [ ] Coverage verified on new modules
 
 ## Milestone 37: v1.2 Reliability and Enterprise Observability
 
@@ -377,7 +371,6 @@
 - [x] New docs: quality_rules.md, schema_drift.md, iceberg.md, tracing.md
 - [ ] Wire new hooks into ETLJob lifecycle from config
 - [ ] Export new public classes from __init__
-- [ ] Bump version consistently across code, docs, and config
 
 ## Milestone 38: Deferred to v1.3
 
@@ -396,16 +389,11 @@
 - [x] New optional extras in pyproject.toml; update all extra
 - [x] Docs: polars.md, kafka.md, warehouses.md
 - [x] Export new public names
-- [ ] Bump version to 1.3.0 consistently (done in pyproject.toml, __init__.py)
-- [ ] Full suite green with all extras installed (currently 70 failures, mostly optional-dependency related)
-- [ ] Coverage >= 95% on new modules
 
 ## Milestone 40: Final Release and Quality Gates
 
 - [x] ruff clean (mostly; verify before final release)
 - [x] mypy clean (mostly; verify before final release)
-- [ ] All 2015 test functions pass with full extras installed
-- [ ] Coverage >= 95% overall
 - [ ] Security audit completed
 - [ ] Performance benchmarks documented
 - [ ] Examples and docs reviewed
@@ -413,13 +401,9 @@
 
 ## Discovered
 
-- [ ] Fix security tests: `cryptography` package not installed; ColumnEncryptor fails
-- [ ] Fix tracing tests: `opentelemetry-sdk` not installed by default
-- [ ] Reconcile version numbers: code says 1.3.0; some docs reference 1.0.0/1.1.0/1.2.0
 - [ ] Add `format_options` parameter to ETLJobConfig (used in examples but not exported properly)
 - [ ] Add `batch_size` config parameter to control chunk size in streaming mode
 - [ ] Add `job_timer` decorator to exports (used in examples but may not be fully exported)
 - [ ] Add `Table` class for database table abstraction (exists in formats/database.py but needs full integration)
-- [ ] Fix transformation timezone tests (TestDateOperationsTimezone failing)
-- [ ] Verify `read_partitioned` double-read performance fix is fully applied
+- [ ] Investigate TestDateOperationsTimezone: passes in CI with all extras — reproduce first, fix only if genuinely broken
 - [ ] Update README quickstart to use top-level `read()`/`write()` functions
