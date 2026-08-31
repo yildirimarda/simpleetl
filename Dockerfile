@@ -16,7 +16,7 @@ COPY uv.lock .
 
 # Install uv and dependencies
 RUN pip install uv && \
-    uv sync --frozen
+    uv sync --frozen --extra monitoring
 
 # Copy source code
 COPY src/ ./src/
@@ -35,5 +35,5 @@ USER etluser
 EXPOSE 8000
 
 # Set default command
-ENTRYPOINT ["uv", "run", "python", "-m", "simpleetl"]
+ENTRYPOINT ["uv", "run", "--no-sync", "python", "-m", "simpleetl"]
 CMD ["--help"]
