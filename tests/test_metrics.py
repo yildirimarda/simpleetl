@@ -6,7 +6,12 @@ import json
 from datetime import datetime, timedelta
 
 import pytest
-from prometheus_client import CollectorRegistry
+
+try:
+    from prometheus_client import CollectorRegistry
+except ImportError:  # pragma: no cover - optional extra
+    CollectorRegistry = None  # type: ignore
+
 from simpleetl.core.metrics import MetricsCollector, get_metrics
 
 
@@ -279,3 +284,105 @@ class TestGetMetrics:
             assert len(content) > 0
         finally:
             os.unlink(temp_file)
+
+
+class TestMetricsFallback:
+    """Test graceful no-op fallback when prometheus_client is absent."""
+
+    def test_fallback_no_op(self, monkeypatch):
+        """MetricsCollector works and is a no-op when missing."""
+        monkeypatch.setattr(
+            "simpleetl.core.metrics.is_metrics_available", lambda: False
+        )
+        collector = MetricsCollector()
+        assert collector._available is False
+        collector.inc_counter("etl_jobs_total", 1.0)
+        collector.set_gauge("etl_active_jobs", 5.0)
+        collector.observe_histogram("etl_job_duration_seconds", 1.5)
+        # Should not raise
+
+    def test_fallback_counter_returns_dummy(self, monkeypatch):
+        monkeypatch.setattr(
+            "simpleetl.core.metrics.is_metrics_available", lambda: False
+        )
+        collector = MetricsCollector()
+        counter = collector.counter("test", "desc")
+        assert counter is not None
+        counter.inc(1)
+
+    def test_fallback_gauge_returns_dummy(self, monkeypatch):
+        monkeypatch.setattr(
+            "simpleetl.core.metrics.is_metrics_available", lambda: False
+        )
+        collector = MetricsCollector()
+        gauge = collector.gauge("test", "desc")
+        assert gauge is not None
+        gauge.set(1)
+
+    def test_fallback_histogram_returns_dummy(self, monkeypatch):
+        monkeypatch.setattr(
+            "simpleetl.core.metrics.is_metrics_available", lambda: False
+        )
+        collector = MetricsCollector()
+        hist = collector.histogram("test", "desc")
+        assert hist is not None
+        hist.observe(1.0)
+
+    def test_fallback_text_metrics_empty(self, monkeypatch):
+        monkeypatch.setattr(
+            "simpleetl.core.metrics.is_metrics_available", lambda: False
+        )
+        collector = MetricsCollector()
+        text = collector.get_metrics("text")
+        assert text == ""
+
+    def test_fallback_json_metrics_empty(self, monkeypatch):
+        monkeypatch.setattr(
+            "simpleetl.core.metrics.is_metrics_available", lambda: False
+        )
+        collector = MetricsCollector()
+        payload = json.loads(collector.get_metrics("json"))
+        assert payload["metrics"] == []
+        assert "timestamp" in payload
+
+    def test_fallback_timer_context(self, monkeypatch):
+        monkeypatch.setattr(
+            "simpleetl.core.metrics.is_metrics_available", lambda: False
+        )
+        collector = MetricsCollector()
+        with collector.context_timer("test_timer"):
+            pass
+
+    def test_fallback_time_function_decorator(self, monkeypatch):
+        monkeypatch.setattr(
+            "simpleetl.core.metrics.is_metrics_available", lambda: False
+        )
+        collector = MetricsCollector()
+
+        @collector.time_function("test_timer")
+        def sample():
+            return 42
+
+        assert sample() == 42
+
+    def test_fallback_export_to_file(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(
+            "simpleetl.core.metrics.is_metrics_available", lambda: False
+        )
+        collector = MetricsCollector()
+        filepath = str(tmp_path / "metrics.json")
+        collector.export_to_file(filepath, format="json")
+        with open(filepath) as f:
+            payload = json.load(f)
+        assert payload["metrics"] == []
+
+    def test_fallback_get_metrics_global(self, monkeypatch):
+        monkeypatch.setattr(
+            "simpleetl.core.metrics.is_metrics_available", lambda: False
+        )
+        from simpleetl.core.metrics import get_metrics
+
+        result = get_metrics()
+        assert isinstance(result, MetricsCollector)
+        # The global instance was initialized before the monkeypatch,
+        # so we just verify it returns the same class.
