@@ -21,6 +21,7 @@ from simpleetl.core.lineage import (
 # Mock HTTP server helper
 # ---------------------------------------------------------------------------
 
+
 class MockOpenLineageHandler(BaseHTTPRequestHandler):
     """HTTP handler that collects POSTed OpenLineage RunEvents."""
 
@@ -43,9 +44,7 @@ class MockOpenLineageHandler(BaseHTTPRequestHandler):
         """Silence stderr output during tests."""
 
 
-def start_mock_server(
-    host: str = "127.0.0.1", port: int = 0
-) -> tuple[HTTPServer, str]:
+def start_mock_server(host: str = "127.0.0.1", port: int = 0) -> tuple[HTTPServer, str]:
     """Start a mock OpenLineage HTTP server.
 
     Returns the server instance and the base URL string.
@@ -454,11 +453,7 @@ class TestConfigureOpenlineage:
 
     def test_overwrite_previous(self):
         """Test that calling configure_openlineage overwrites the previous."""
-        configure_openlineage(
-            url="http://old:5000", namespace="old-ns"
-        )
-        new = configure_openlineage(
-            url="http://new:6000", namespace="new-ns"
-        )
+        configure_openlineage(url="http://old:5000", namespace="old-ns")
+        new = configure_openlineage(url="http://new:6000", namespace="new-ns")
         assert new.namespace == "new-ns"
         assert get_openlineage_converter() is new

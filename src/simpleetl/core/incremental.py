@@ -35,7 +35,9 @@ class Watermark:
     source: str
     column: str
     value: Any
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
 
 class WatermarkStore(ABC):

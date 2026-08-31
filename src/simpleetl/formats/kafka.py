@@ -72,10 +72,8 @@ def parse_kafka_uri(uri: str) -> Tuple[str, str]:
             missing the broker list or the topic.
     """
     if not uri.startswith(URI_PREFIX):
-        raise ValueError(
-            f"Not a Kafka URI (expected '{URI_PREFIX}' prefix): '{uri}'."
-        )
-    remainder = uri[len(URI_PREFIX):]
+        raise ValueError(f"Not a Kafka URI (expected '{URI_PREFIX}' prefix): '{uri}'.")
+    remainder = uri[len(URI_PREFIX) :]
     servers, sep, topic = remainder.partition("/")
     if not servers:
         raise ValueError(
@@ -123,9 +121,7 @@ def _resolve_target(
 
 def _is_missing(value: Any) -> bool:
     """True for missing scalar values (None, NaN, NaT, pd.NA)."""
-    return value is None or (
-        pd.api.types.is_scalar(value) and bool(pd.isna(value))
-    )
+    return value is None or (pd.api.types.is_scalar(value) and bool(pd.isna(value)))
 
 
 def _decode_key(raw: Any) -> Any:
@@ -304,9 +300,7 @@ class KafkaReader(DataReader):
             record["_kafka_key"] = _decode_key(message.key())
             yield record
         if skipped:
-            logger.warning(
-                "Skipped %d undecodable Kafka message(s) in total", skipped
-            )
+            logger.warning("Skipped %d undecodable Kafka message(s) in total", skipped)
 
     # ------------------------------------------------------------------
     # Public API

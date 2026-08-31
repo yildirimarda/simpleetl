@@ -41,7 +41,7 @@ def _parse_link_header(header: str) -> Dict[str, str]:
         url = segments[0].strip("<>")
         rel = None
         for seg in segments[1:]:
-            if seg.startswith('rel='):
+            if seg.startswith("rel="):
                 rel = seg[4:].strip('"')
         if rel:
             links[rel] = url
@@ -294,7 +294,9 @@ class RestApiReader(DataReader):
 
         if pagination == "none":
             resp = self._do_request(
-                session, method, source,
+                session,
+                method,
+                source,
                 params=self._build_params(params),
                 json_body=json_body,
             )
@@ -308,7 +310,9 @@ class RestApiReader(DataReader):
                     limit_param: effective_page_size,
                 }
                 resp = self._do_request(
-                    session, method, source,
+                    session,
+                    method,
+                    source,
                     params=self._build_params(params, offset_extra),
                     json_body=json_body,
                 )
@@ -327,7 +331,9 @@ class RestApiReader(DataReader):
                 if cursor:
                     cursor_extra[cursor_param] = cursor
                 resp = self._do_request(
-                    session, method, source,
+                    session,
+                    method,
+                    source,
                     params=self._build_params(params, cursor_extra),
                     json_body=json_body,
                 )
@@ -350,7 +356,9 @@ class RestApiReader(DataReader):
             while current_url:
                 req_params = self._build_params(params) if first else None
                 resp = self._do_request(
-                    session, method, current_url,
+                    session,
+                    method,
+                    current_url,
                     params=req_params,
                     json_body=json_body if first else None,
                 )

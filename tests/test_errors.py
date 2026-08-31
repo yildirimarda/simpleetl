@@ -106,13 +106,20 @@ class TestClassifyError:
     # Transient errors
 
     def test_connection_error_is_transient(self):
-        assert classify_error(ConnectionError("conn refused")) == ErrorClassification.TRANSIENT
+        assert (
+            classify_error(ConnectionError("conn refused"))
+            == ErrorClassification.TRANSIENT
+        )
 
     def test_timeout_error_is_transient(self):
-        assert classify_error(TimeoutError("timed out")) == ErrorClassification.TRANSIENT
+        assert (
+            classify_error(TimeoutError("timed out")) == ErrorClassification.TRANSIENT
+        )
 
     def test_socket_timeout_is_transient(self):
-        assert classify_error(socket.timeout("timed out")) == ErrorClassification.TRANSIENT
+        assert (
+            classify_error(socket.timeout("timed out")) == ErrorClassification.TRANSIENT
+        )
 
     def test_broken_pipe_is_transient(self):
         assert classify_error(BrokenPipeError()) == ErrorClassification.TRANSIENT
@@ -133,10 +140,15 @@ class TestClassifyError:
     # Permanent errors
 
     def test_file_not_found_is_permanent(self):
-        assert classify_error(FileNotFoundError("no such file")) == ErrorClassification.PERMANENT
+        assert (
+            classify_error(FileNotFoundError("no such file"))
+            == ErrorClassification.PERMANENT
+        )
 
     def test_permission_error_is_permanent(self):
-        assert classify_error(PermissionError("denied")) == ErrorClassification.PERMANENT
+        assert (
+            classify_error(PermissionError("denied")) == ErrorClassification.PERMANENT
+        )
 
     def test_value_error_is_permanent(self):
         assert classify_error(ValueError("bad value")) == ErrorClassification.PERMANENT
@@ -173,7 +185,9 @@ class TestClassifyError:
         assert classify_error(RuntimeError("oops")) == ErrorClassification.UNKNOWN
 
     def test_arithmetic_error_is_unknown(self):
-        assert classify_error(ArithmeticError("div zero")) == ErrorClassification.UNKNOWN
+        assert (
+            classify_error(ArithmeticError("div zero")) == ErrorClassification.UNKNOWN
+        )
 
     # Chained errors
 

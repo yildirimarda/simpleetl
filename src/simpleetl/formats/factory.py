@@ -65,51 +65,51 @@ class FormatFactory:
 
     # Mapping of file extensions to reader/writer classes
     FORMAT_MAP: dict[str, dict[str, Any]] = {
-        '.csv': {
-            'reader': csv.CSVReader,
-            'writer': csv.CSVWriter,
-            'mime_type': 'text/csv'
+        ".csv": {
+            "reader": csv.CSVReader,
+            "writer": csv.CSVWriter,
+            "mime_type": "text/csv",
         },
-        '.json': {
-            'reader': json.JSONReader,
-            'writer': json.JSONWriter,
-            'mime_type': 'application/json'
+        ".json": {
+            "reader": json.JSONReader,
+            "writer": json.JSONWriter,
+            "mime_type": "application/json",
         },
-        '.parquet': {
-            'reader': parquet.ParquetReader,
-            'writer': parquet.ParquetWriter,
-            'mime_type': 'application/octet-stream'
+        ".parquet": {
+            "reader": parquet.ParquetReader,
+            "writer": parquet.ParquetWriter,
+            "mime_type": "application/octet-stream",
         },
-        '.avro': {
-            'reader': avro.AvroReader,
-            'writer': avro.AvroWriter,
-            'mime_type': 'application/octet-stream'
+        ".avro": {
+            "reader": avro.AvroReader,
+            "writer": avro.AvroWriter,
+            "mime_type": "application/octet-stream",
         },
-        '.orc': {
-            'reader': orc.OrcReader,
-            'writer': orc.OrcWriter,
-            'mime_type': 'application/octet-stream'
+        ".orc": {
+            "reader": orc.OrcReader,
+            "writer": orc.OrcWriter,
+            "mime_type": "application/octet-stream",
         },
-        '.xml': {
-            'reader': xml.XMLReader,
-            'writer': xml.XMLWriter,
-            'mime_type': 'application/xml'
+        ".xml": {
+            "reader": xml.XMLReader,
+            "writer": xml.XMLWriter,
+            "mime_type": "application/xml",
         },
-        '.xlsx': {
-            'reader': excel.ExcelReader,
-            'writer': excel.ExcelWriter,
-            'mime_type': 'application/vnd.openxmlformats-officedocument'
-                         '.spreadsheetml.sheet'
+        ".xlsx": {
+            "reader": excel.ExcelReader,
+            "writer": excel.ExcelWriter,
+            "mime_type": "application/vnd.openxmlformats-officedocument"
+            ".spreadsheetml.sheet",
         },
-        '.xls': {
-            'reader': excel.ExcelReader,
-            'writer': excel.ExcelWriter,
-            'mime_type': 'application/vnd.ms-excel'
+        ".xls": {
+            "reader": excel.ExcelReader,
+            "writer": excel.ExcelWriter,
+            "mime_type": "application/vnd.ms-excel",
         },
-        '.duckdb': {
-            'reader': _duckdb_mod.DuckDBReader,
-            'writer': _duckdb_mod.DuckDBWriter,
-            'mime_type': 'application/octet-stream',
+        ".duckdb": {
+            "reader": _duckdb_mod.DuckDBReader,
+            "writer": _duckdb_mod.DuckDBWriter,
+            "mime_type": "application/octet-stream",
         },
     }
 
@@ -128,7 +128,7 @@ class FormatFactory:
             Lowercase file extension including the dot.
         """
         # Strip query parameters and fragments from cloud URLs
-        clean_path = path.split('?')[0].split('#')[0]
+        clean_path = path.split("?")[0].split("#")[0]
         _, ext = os.path.splitext(clean_path)
         return ext.lower()
 
@@ -150,23 +150,21 @@ class FormatFactory:
             Appropriate DataReader instance.
         """
         # Check if it's a database connection
-        if source.startswith(
-            ('postgresql://', 'mysql://', 'mssql://', 'sqlite://')
-        ):
+        if source.startswith(("postgresql://", "mysql://", "mssql://", "sqlite://")):
             return database.DatabaseReader(**kwargs)
 
         # Apache Iceberg tables are addressed via the iceberg:// scheme
-        if source.startswith('iceberg://'):
+        if source.startswith("iceberg://"):
             return _iceberg_mod.IcebergReader(**kwargs)
 
         # Kafka topics are addressed via the kafka:// scheme
-        if source.startswith('kafka://'):
+        if source.startswith("kafka://"):
             return _kafka_mod.KafkaReader(**kwargs)
 
         ext = cls._get_extension(source)
 
         if ext in cls.FORMAT_MAP:
-            reader_class = cls.FORMAT_MAP[ext]['reader']
+            reader_class = cls.FORMAT_MAP[ext]["reader"]
             return reader_class(**kwargs)
 
         # Check PluginRegistry for custom formats
@@ -177,6 +175,7 @@ class FormatFactory:
 
         # If no extension found on cloud path, raise an error
         from ..core.filesystem import is_cloud_path
+
         if is_cloud_path(source):
             raise ValueError(
                 f"Cannot detect format from cloud path '{source}': "
@@ -206,22 +205,22 @@ class FormatFactory:
         """
         # Check if it's a database connection
         if destination.startswith(
-            ('postgresql://', 'mysql://', 'mssql://', 'sqlite://')
+            ("postgresql://", "mysql://", "mssql://", "sqlite://")
         ):
             return database.DatabaseWriter(**kwargs)
 
         # Apache Iceberg tables are addressed via the iceberg:// scheme
-        if destination.startswith('iceberg://'):
+        if destination.startswith("iceberg://"):
             return _iceberg_mod.IcebergWriter(**kwargs)
 
         # Kafka topics are addressed via the kafka:// scheme
-        if destination.startswith('kafka://'):
+        if destination.startswith("kafka://"):
             return _kafka_mod.KafkaWriter(**kwargs)
 
         ext = cls._get_extension(destination)
 
         if ext in cls.FORMAT_MAP:
-            writer_class = cls.FORMAT_MAP[ext]['writer']
+            writer_class = cls.FORMAT_MAP[ext]["writer"]
             return writer_class(**kwargs)
 
         # Check PluginRegistry for custom formats
@@ -232,6 +231,7 @@ class FormatFactory:
 
         # If no extension found on cloud path, raise an error
         from ..core.filesystem import is_cloud_path
+
         if is_cloud_path(destination):
             raise ValueError(
                 f"Cannot detect format from cloud path '{destination}': "
@@ -254,43 +254,37 @@ class FormatFactory:
             Dictionary containing format information.
         """
         # Check if it's a database connection
-        if source.startswith(
-            ('postgresql://', 'mysql://', 'mssql://', 'sqlite://')
-        ):
+        if source.startswith(("postgresql://", "mysql://", "mssql://", "sqlite://")):
             return {
-                'format': 'database',
-                'extension': '.db',
-                'mime_type': 'application/x-sqlite3'
+                "format": "database",
+                "extension": ".db",
+                "mime_type": "application/x-sqlite3",
             }
 
         # Apache Iceberg tables are addressed via the iceberg:// scheme
-        if source.startswith('iceberg://'):
+        if source.startswith("iceberg://"):
             return {
-                'format': 'iceberg',
-                'extension': '',
-                'mime_type': 'application/octet-stream'
+                "format": "iceberg",
+                "extension": "",
+                "mime_type": "application/octet-stream",
             }
 
         # Kafka topics are addressed via the kafka:// scheme
-        if source.startswith('kafka://'):
-            return {
-                'format': 'kafka',
-                'extension': '',
-                'mime_type': 'application/json'
-            }
+        if source.startswith("kafka://"):
+            return {"format": "kafka", "extension": "", "mime_type": "application/json"}
 
         ext = cls._get_extension(source)
 
         if ext in cls.FORMAT_MAP:
             format_info = cls.FORMAT_MAP[ext].copy()
-            format_info['extension'] = ext
-            format_info['format'] = ext[1:]  # Remove the dot
+            format_info["extension"] = ext
+            format_info["format"] = ext[1:]  # Remove the dot
             return format_info
         else:
             return {
-                'format': 'unknown',
-                'extension': ext,
-                'mime_type': 'application/octet-stream'
+                "format": "unknown",
+                "extension": ext,
+                "mime_type": "application/octet-stream",
             }
 
     @classmethod
@@ -305,6 +299,6 @@ class FormatFactory:
             format_name = ext[1:]  # Remove the dot
             result[format_name] = ext
         # Scheme-addressed formats without a file extension
-        result['iceberg'] = 'iceberg://'
-        result['kafka'] = 'kafka://'
+        result["iceberg"] = "iceberg://"
+        result["kafka"] = "kafka://"
         return result

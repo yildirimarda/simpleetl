@@ -17,27 +17,48 @@ class JSONFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON."""
         log_entry = {
-            'timestamp': datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
-            'level': record.levelname,
-            'logger': record.name,
-            'message': record.getMessage(),
-            'module': record.module,
-            'function': record.funcName,
-            'line': record.lineno,
+            "timestamp": datetime.fromtimestamp(
+                record.created, tz=timezone.utc
+            ).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "module": record.module,
+            "function": record.funcName,
+            "line": record.lineno,
         }
 
         # Add exception info if present
         if record.exc_info:
-            log_entry['exception'] = self.formatException(record.exc_info)
+            log_entry["exception"] = self.formatException(record.exc_info)
             if record.stack_info:
-                log_entry['stack_trace'] = record.stack_info
+                log_entry["stack_trace"] = record.stack_info
 
         # Add extra fields (skip standard LogRecord attributes)
         _skip = {
-            'args', 'exc_info', 'message', 'msg', 'created', 'relativeCreated',
-            'exc_text', 'stack_info', 'lineno', 'funcName', 'created', 'msecs',
-            'process', 'processName', 'thread', 'threadName', 'taskName',
-            'name', 'levelno', 'levelname', 'pathname', 'filename', 'module',
+            "args",
+            "exc_info",
+            "message",
+            "msg",
+            "created",
+            "relativeCreated",
+            "exc_text",
+            "stack_info",
+            "lineno",
+            "funcName",
+            "created",
+            "msecs",
+            "process",
+            "processName",
+            "thread",
+            "threadName",
+            "taskName",
+            "name",
+            "levelno",
+            "levelname",
+            "pathname",
+            "filename",
+            "module",
         }
         for key, value in record.__dict__.items():
             if key not in _skip:
@@ -57,7 +78,7 @@ class JSONFormatter(logging.Formatter):
 class StructuredLogger:
     """Structured logger with JSON formatting."""
 
-    def __init__(self, name: str = 'simpleetl', level: str = 'INFO'):
+    def __init__(self, name: str = "simpleetl", level: str = "INFO"):
         """Initialize structured logger."""
         self.logger = logging.getLogger(name)
         self.logger.setLevel(getattr(logging, level.upper()))
@@ -74,12 +95,12 @@ class StructuredLogger:
         self.logger.addHandler(console_handler)
 
         # File handler (if logs directory exists)
-        logs_dir = Path('logs')
+        logs_dir = Path("logs")
         if logs_dir.exists():
             file_handler = logging.handlers.RotatingFileHandler(
-                logs_dir / 'etl.log',
+                logs_dir / "etl.log",
                 maxBytes=10 * 1024 * 1024,  # 10MB
-                backupCount=5
+                backupCount=5,
             )
             file_handler.setFormatter(JSONFormatter())
             self.logger.addHandler(file_handler)
@@ -108,52 +129,54 @@ class StructuredLogger:
         """Log job start event."""
         self.info(
             f"Starting job: {job_name}",
-            event='job_start',
+            event="job_start",
             job_name=job_name,
             job_id=job_id,
-            **kwargs
+            **kwargs,
         )
 
-    def log_job_complete(self, job_name: str, job_id: str, duration: float, **kwargs) -> None:
+    def log_job_complete(
+        self, job_name: str, job_id: str, duration: float, **kwargs
+    ) -> None:
         """Log job completion event."""
         self.info(
             f"Completed job: {job_name} in {duration:.2f}s",
-            event='job_complete',
+            event="job_complete",
             job_name=job_name,
             job_id=job_id,
             duration=duration,
-            **kwargs
+            **kwargs,
         )
 
     def log_job_error(self, job_name: str, job_id: str, error: str, **kwargs) -> None:
         """Log job error event."""
         self.error(
             f"Job failed: {job_name}",
-            event='job_error',
+            event="job_error",
             job_name=job_name,
             job_id=job_id,
             error=error,
-            **kwargs
+            **kwargs,
         )
 
     def log_data_read(self, source: str, record_count: int, **kwargs) -> None:
         """Log data read event."""
         self.info(
             f"Read {record_count} records from {source}",
-            event='data_read',
+            event="data_read",
             source=source,
             record_count=record_count,
-            **kwargs
+            **kwargs,
         )
 
     def log_data_write(self, destination: str, record_count: int, **kwargs) -> None:
         """Log data write event."""
         self.info(
             f"Wrote {record_count} records to {destination}",
-            event='data_write',
+            event="data_write",
             destination=destination,
             record_count=record_count,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -161,6 +184,6 @@ class StructuredLogger:
 logger = StructuredLogger()
 
 
-def get_logger(name: str = 'simpleetl') -> StructuredLogger:
+def get_logger(name: str = "simpleetl") -> StructuredLogger:
     """Get a structured logger instance."""
     return StructuredLogger(name)

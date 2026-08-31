@@ -25,17 +25,15 @@ class ExcelReader(DataReader):
         Returns:
             pandas DataFrame containing the data.
         """
-        sheet_name = kwargs.pop('sheet_name', 0)
+        sheet_name = kwargs.pop("sheet_name", 0)
 
         if is_cloud_path(source):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(source)
-            with filesystem.open(source, 'rb') as f:
+            with filesystem.open(source, "rb") as f:
                 content = f.read()
-            df = pd.read_excel(
-                BytesIO(content), sheet_name=sheet_name, **kwargs
-            )
+            df = pd.read_excel(BytesIO(content), sheet_name=sheet_name, **kwargs)
         else:
             df = pd.read_excel(source, sheet_name=sheet_name, **kwargs)
 
@@ -60,44 +58,28 @@ class ExcelWriter(DataWriter):
             **kwargs: Additional arguments for Excel writing.
                 Supports 'filesystem' for an fsspec filesystem instance.
         """
-        sheet_name = kwargs.pop('sheet_name', 'Sheet1')
+        sheet_name = kwargs.pop("sheet_name", "Sheet1")
 
         if is_cloud_path(destination):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(destination)
             buffer = BytesIO()
             if isinstance(data, dict):
-                with pd.ExcelWriter(
-                    buffer, engine='openpyxl', **kwargs
-                ) as writer:
+                with pd.ExcelWriter(buffer, engine="openpyxl", **kwargs) as writer:
                     for sname, df in data.items():
-                        df.to_excel(
-                            writer, sheet_name=sname, index=False
-                        )
+                        df.to_excel(writer, sheet_name=sname, index=False)
             else:
-                with pd.ExcelWriter(
-                    buffer, engine='openpyxl', **kwargs
-                ) as writer:
-                    data.to_excel(
-                        writer, sheet_name=sheet_name, index=False
-                    )
+                with pd.ExcelWriter(buffer, engine="openpyxl", **kwargs) as writer:
+                    data.to_excel(writer, sheet_name=sheet_name, index=False)
             buffer.seek(0)
-            with filesystem.open(destination, 'wb') as f:
+            with filesystem.open(destination, "wb") as f:
                 f.write(buffer.getvalue())
         else:
             if isinstance(data, dict):
-                with pd.ExcelWriter(
-                    destination, engine='openpyxl', **kwargs
-                ) as writer:
+                with pd.ExcelWriter(destination, engine="openpyxl", **kwargs) as writer:
                     for sname, df in data.items():
-                        df.to_excel(
-                            writer, sheet_name=sname, index=False
-                        )
+                        df.to_excel(writer, sheet_name=sname, index=False)
             else:
-                with pd.ExcelWriter(
-                    destination, engine='openpyxl', **kwargs
-                ) as writer:
-                    data.to_excel(
-                        writer, sheet_name=sheet_name, index=False
-                    )
+                with pd.ExcelWriter(destination, engine="openpyxl", **kwargs) as writer:
+                    data.to_excel(writer, sheet_name=sheet_name, index=False)

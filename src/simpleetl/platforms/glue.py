@@ -258,11 +258,9 @@ def resolve_s3_path(path: str) -> str:
         's3://my-bucket/data/file.csv'
     """
     if path.startswith("s3a://"):
-        path = "s3://" + path[len("s3a://"):]
+        path = "s3://" + path[len("s3a://") :]
     if not path.startswith("s3://"):
-        raise ValueError(
-            f"Expected an S3 path (s3:// or s3a://), got: {path}"
-        )
+        raise ValueError(f"Expected an S3 path (s3:// or s3a://), got: {path}")
     return path
 
 
@@ -313,9 +311,7 @@ def get_job_args(
     if required_keys:
         missing = [k for k in required_keys if k not in parsed]
         if missing:
-            raise KeyError(
-                f"Missing required Glue job arguments: {missing}"
-            )
+            raise KeyError(f"Missing required Glue job arguments: {missing}")
 
     return parsed
 
@@ -391,8 +387,7 @@ class GluePlatformRunner(PlatformRunner):
     def _run_locally(self, job: ETLJob) -> None:
         """Fall back to local execution with a warning."""
         logger.warning(
-            "Not running in AWS Glue environment. "
-            "Executing job '%s' locally instead.",
+            "Not running in AWS Glue environment. Executing job '%s' locally instead.",
             job.config.name,
         )
         job.run_with_error_handling()
@@ -426,16 +421,13 @@ class GluePlatformRunner(PlatformRunner):
             glue_context = self.context_manager.glue_context
         except RuntimeError as exc:
             logger.warning(
-                "GlueContext unavailable; skipping bookmark init for "
-                "'%s': %s",
+                "GlueContext unavailable; skipping bookmark init for '%s': %s",
                 job_name,
                 exc,
             )
             return
         if glue_context is None:
-            logger.debug(
-                "No GlueContext available; skipping Glue Job bookmark init"
-            )
+            logger.debug("No GlueContext available; skipping Glue Job bookmark init")
             return
 
         try:
@@ -452,9 +444,7 @@ class GluePlatformRunner(PlatformRunner):
             glue_job = Job(glue_context)
             glue_job.init(job_name, self.job_args)
             self._glue_job = glue_job
-            logger.debug(
-                "Glue Job initialized for bookmark tracking: %s", job_name
-            )
+            logger.debug("Glue Job initialized for bookmark tracking: %s", job_name)
         except Exception as exc:
             logger.warning(
                 "Failed to initialize Glue job bookmarks for '%s': %s",
@@ -486,9 +476,7 @@ class GluePlatformRunner(PlatformRunner):
                 )
                 return
         else:
-            logger.debug(
-                "No initialized Glue Job; skipping bookmark commit"
-            )
+            logger.debug("No initialized Glue Job; skipping bookmark commit")
         logger.info("Glue job bookmark updated for: %s", job_name)
 
     # -- convenience methods for Glue-based ETL logic -------------------------

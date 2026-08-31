@@ -55,9 +55,7 @@ def base_df() -> pd.DataFrame:
 
 @pytest.fixture
 def added_column_df() -> pd.DataFrame:
-    return pd.DataFrame(
-        {"id": [1, 2], "name": ["a", "b"], "email": ["x@y", "z@y"]}
-    )
+    return pd.DataFrame({"id": [1, 2], "name": ["a", "b"], "email": ["x@y", "z@y"]})
 
 
 @pytest.fixture
@@ -118,9 +116,7 @@ class TestDriftReport:
         assert d["drifted"] is True
 
     def test_summary_no_drift(self):
-        report = DriftReport(
-            schema_name="users", drifted=False, action_taken="none"
-        )
+        report = DriftReport(schema_name="users", drifted=False, action_taken="none")
         summary = report.summary()
         assert "users" in summary
         assert "no drift" in summary
@@ -211,9 +207,7 @@ class TestFirstRun:
         assert report.action_taken == "none"
         assert detector.registry.list_schemas() == []
 
-    def test_empty_version_dir_treated_as_no_baseline(
-        self, tmp_path, base_df
-    ):
+    def test_empty_version_dir_treated_as_no_baseline(self, tmp_path, base_df):
         config = make_config(tmp_path)
         detector = SchemaDriftDetector(config)
         # Create an empty schema directory: list_versions returns []
@@ -289,9 +283,7 @@ class TestDriftWarn:
 
 
 class TestDriftFail:
-    def test_fail_raises_with_summary(
-        self, tmp_path, base_df, added_column_df
-    ):
+    def test_fail_raises_with_summary(self, tmp_path, base_df, added_column_df):
         config = make_config(tmp_path, on_drift="fail")
         detector = SchemaDriftDetector(config)
         detector.check(base_df, "users")
@@ -306,9 +298,7 @@ class TestDriftFail:
 
 
 class TestDriftEvolve:
-    def test_evolve_registers_new_version(
-        self, tmp_path, base_df, added_column_df
-    ):
+    def test_evolve_registers_new_version(self, tmp_path, base_df, added_column_df):
         config = make_config(tmp_path, on_drift="evolve")
         detector = SchemaDriftDetector(config)
         detector.check(base_df, "users")
@@ -337,9 +327,7 @@ class TestDriftEvolve:
         assert id_col.dtype == str(changed_df["id"].dtype)
         assert id_col.dtype != "int64"
 
-    def test_no_drift_after_evolve(
-        self, tmp_path, base_df, added_column_df
-    ):
+    def test_no_drift_after_evolve(self, tmp_path, base_df, added_column_df):
         config = make_config(tmp_path, on_drift="evolve")
         detector = SchemaDriftDetector(config)
         detector.check(base_df, "users")
@@ -360,9 +348,7 @@ class TestSchemaDriftHook:
     def test_stores_report_in_metadata(self, tmp_path, base_df, mock_job):
         config = make_config(tmp_path)
         hook = SchemaDriftHook(config)
-        context = HookContext(
-            job=mock_job, phase=POST_EXTRACT, data=base_df
-        )
+        context = HookContext(job=mock_job, phase=POST_EXTRACT, data=base_df)
         hook.execute(context)
 
         report = context.metadata["schema_drift_report"]
@@ -373,9 +359,7 @@ class TestSchemaDriftHook:
     def test_ignores_non_dataframe_data(self, tmp_path, mock_job):
         config = make_config(tmp_path)
         hook = SchemaDriftHook(config)
-        context = HookContext(
-            job=mock_job, phase=POST_EXTRACT, data={"not": "a df"}
-        )
+        context = HookContext(job=mock_job, phase=POST_EXTRACT, data={"not": "a df"})
         hook.execute(context)
         assert "schema_drift_report" not in context.metadata
 
@@ -386,44 +370,28 @@ class TestSchemaDriftHook:
         hook.execute(context)
         assert "schema_drift_report" not in context.metadata
 
-    def test_config_schema_name_takes_precedence(
-        self, tmp_path, base_df, mock_job
-    ):
+    def test_config_schema_name_takes_precedence(self, tmp_path, base_df, mock_job):
         config = make_config(tmp_path, schema_name="configured")
         hook = SchemaDriftHook(config)
-        context = HookContext(
-            job=mock_job, phase=POST_EXTRACT, data=base_df
-        )
+        context = HookContext(job=mock_job, phase=POST_EXTRACT, data=base_df)
         hook.execute(context)
-        assert context.metadata["schema_drift_report"].schema_name == (
-            "configured"
-        )
+        assert context.metadata["schema_drift_report"].schema_name == ("configured")
 
-    def test_constructor_override_beats_config(
-        self, tmp_path, base_df, mock_job
-    ):
+    def test_constructor_override_beats_config(self, tmp_path, base_df, mock_job):
         config = make_config(tmp_path, schema_name="configured")
         hook = SchemaDriftHook(config, schema_name="override")
-        context = HookContext(
-            job=mock_job, phase=POST_EXTRACT, data=base_df
-        )
+        context = HookContext(job=mock_job, phase=POST_EXTRACT, data=base_df)
         hook.execute(context)
-        assert context.metadata["schema_drift_report"].schema_name == (
-            "override"
-        )
+        assert context.metadata["schema_drift_report"].schema_name == ("override")
 
     def test_fallback_to_default_without_job(self, tmp_path, base_df):
         config = make_config(tmp_path)
         hook = SchemaDriftHook(config)
         context = HookContext(job=None, phase=POST_EXTRACT, data=base_df)
         hook.execute(context)
-        assert context.metadata["schema_drift_report"].schema_name == (
-            "default"
-        )
+        assert context.metadata["schema_drift_report"].schema_name == ("default")
 
-    def test_fallback_to_default_with_nameless_job(
-        self, tmp_path, base_df
-    ):
+    def test_fallback_to_default_with_nameless_job(self, tmp_path, base_df):
         class NamelessJob:
             config = None
 
@@ -435,9 +403,7 @@ class TestSchemaDriftHook:
             data=base_df,
         )
         hook.execute(context)
-        assert context.metadata["schema_drift_report"].schema_name == (
-            "default"
-        )
+        assert context.metadata["schema_drift_report"].schema_name == ("default")
 
     def test_invalid_on_drift_raises_at_construction(self, tmp_path):
         config = make_config(tmp_path, on_drift="bogus")
@@ -452,9 +418,7 @@ class TestSchemaDriftHook:
         first = HookContext(job=mock_job, phase=POST_EXTRACT, data=base_df)
         hook.execute(first)
 
-        second = HookContext(
-            job=mock_job, phase=POST_EXTRACT, data=added_column_df
-        )
+        second = HookContext(job=mock_job, phase=POST_EXTRACT, data=added_column_df)
         with pytest.raises(SchemaDriftError):
             hook.execute(second)
 
@@ -462,22 +426,16 @@ class TestSchemaDriftHook:
         injected = FileSchemaRegistry(tmp_path / "custom")
         config = make_config(tmp_path)
         hook = SchemaDriftHook(config, registry=injected)
-        context = HookContext(
-            job=mock_job, phase=POST_EXTRACT, data=base_df
-        )
+        context = HookContext(job=mock_job, phase=POST_EXTRACT, data=base_df)
         hook.execute(context)
         assert injected.list_versions("mock_job") == [1]
 
-    def test_registered_in_hook_registry(
-        self, tmp_path, base_df, mock_job
-    ):
+    def test_registered_in_hook_registry(self, tmp_path, base_df, mock_job):
         config = make_config(tmp_path)
         hook = SchemaDriftHook(config)
         register_hook(POST_EXTRACT, hook)
 
-        context = HookContext(
-            job=mock_job, phase=POST_EXTRACT, data=base_df
-        )
+        context = HookContext(job=mock_job, phase=POST_EXTRACT, data=base_df)
         execute_hooks(POST_EXTRACT, context)
 
         report = context.metadata["schema_drift_report"]

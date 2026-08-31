@@ -29,6 +29,7 @@ import pandas as pd
 # Concrete test implementations
 # ---------------------------------------------------------------------------
 
+
 class DummyReader(DataReader):
     """Minimal DataReader for testing."""
 
@@ -105,6 +106,7 @@ class AnotherFormatPlugin(FormatPlugin):
 # Helper to reset singleton between tests
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(autouse=True)
 def reset_registry():
     """Reset the PluginRegistry singleton before and after each test."""
@@ -117,6 +119,7 @@ def reset_registry():
 # ---------------------------------------------------------------------------
 # Tests for Plugin abstract class
 # ---------------------------------------------------------------------------
+
 
 class TestPluginAbstract:
     def test_cannot_instantiate_directly(self):
@@ -155,6 +158,7 @@ class TestPluginAbstract:
 # Tests for FormatPlugin abstract class
 # ---------------------------------------------------------------------------
 
+
 class TestFormatPluginAbstract:
     def test_cannot_instantiate_directly(self):
         """FormatPlugin is abstract and cannot be instantiated."""
@@ -173,6 +177,7 @@ class TestFormatPluginAbstract:
 # ---------------------------------------------------------------------------
 # Tests for PluginRegistry singleton
 # ---------------------------------------------------------------------------
+
 
 class TestPluginRegistrySingleton:
     def test_singleton_identity(self):
@@ -203,6 +208,7 @@ class TestPluginRegistrySingleton:
 # ---------------------------------------------------------------------------
 # Tests for PluginRegistry.register()
 # ---------------------------------------------------------------------------
+
 
 class TestPluginRegistryRegister:
     def test_register_plugin(self):
@@ -247,6 +253,7 @@ class TestPluginRegistryRegister:
 # Tests for PluginRegistry.get()
 # ---------------------------------------------------------------------------
 
+
 class TestPluginRegistryGet:
     def test_get_existing_plugin(self):
         """get() returns the plugin instance for a registered name."""
@@ -265,6 +272,7 @@ class TestPluginRegistryGet:
 # ---------------------------------------------------------------------------
 # Tests for PluginRegistry.get_format_for_extension()
 # ---------------------------------------------------------------------------
+
 
 class TestPluginRegistryGetFormatForExtension:
     def test_with_leading_dot(self):
@@ -293,6 +301,7 @@ class TestPluginRegistryGetFormatForExtension:
 # Tests for PluginRegistry.list_plugins()
 # ---------------------------------------------------------------------------
 
+
 class TestPluginRegistryListPlugins:
     def test_empty_list(self):
         """list_plugins() returns an empty list when no plugins are registered."""
@@ -314,6 +323,7 @@ class TestPluginRegistryListPlugins:
 # Tests for PluginRegistry.list_format_extensions()
 # ---------------------------------------------------------------------------
 
+
 class TestPluginRegistryListFormatExtensions:
     def test_empty_list(self):
         """list_format_extensions() returns an empty list when no format plugins are registered."""
@@ -333,6 +343,7 @@ class TestPluginRegistryListFormatExtensions:
 # ---------------------------------------------------------------------------
 # Tests for PluginRegistry.reset()
 # ---------------------------------------------------------------------------
+
 
 class TestPluginRegistryReset:
     def test_reset_clears_plugins(self):
@@ -361,6 +372,7 @@ class TestPluginRegistryReset:
 # ---------------------------------------------------------------------------
 # Tests for PluginRegistry.discover_entry_points()
 # ---------------------------------------------------------------------------
+
 
 class TestPluginRegistryDiscoverEntryPoints:
     def test_no_entry_points_returns_zero(self):
@@ -419,6 +431,7 @@ class TestPluginRegistryDiscoverEntryPoints:
 # Tests for module-level convenience functions
 # ---------------------------------------------------------------------------
 
+
 class TestModuleLevelFunctions:
     def test_register_plugin(self):
         """register_plugin() registers a plugin in the global registry."""
@@ -454,6 +467,7 @@ class TestModuleLevelFunctions:
 # ---------------------------------------------------------------------------
 # Tests for register_format() convenience function
 # ---------------------------------------------------------------------------
+
 
 class TestRegisterFormat:
     def test_register_format_creates_and_registers_plugin(self):

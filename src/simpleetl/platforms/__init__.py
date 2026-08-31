@@ -14,14 +14,14 @@ from .detector import (
 )
 
 __all__ = [
-    'PlatformRunner',
-    'LocalPlatformRunner',
-    'GluePlatformRunner',
-    'DatabricksPlatformRunner',
-    'SynapsePlatformRunner',
-    'is_aws_glue',
-    'is_databricks',
-    'is_azure_synapse',
-    'get_current_platform',
-    'get_platform_info',
+    "PlatformRunner",
+    "LocalPlatformRunner",
+    "GluePlatformRunner",
+    "DatabricksPlatformRunner",
+    "SynapsePlatformRunner",
+    "is_aws_glue",
+    "is_databricks",
+    "is_azure_synapse",
+    "get_current_platform",
+    "get_platform_info",
 ]

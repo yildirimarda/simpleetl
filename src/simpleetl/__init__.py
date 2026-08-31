@@ -480,8 +480,7 @@ def _detect_format(path: str) -> str:
     if fmt and fmt != "unknown":
         return fmt
     raise ValueError(
-        f"Cannot auto-detect format for '{path}'. "
-        "Please specify format explicitly."
+        f"Cannot auto-detect format for '{path}'. Please specify format explicitly."
     )
 
 

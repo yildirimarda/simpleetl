@@ -24,6 +24,7 @@ logger = __import__("logging").getLogger(__name__)
 
 class NodeStatus(str, Enum):
     """Status of a single job node in the DAG."""
+
     PENDING = "pending"
     RUNNING = "running"
     SUCCESS = "success"
@@ -118,11 +119,13 @@ class DAGResult:
 
 class DAGCycleError(Exception):
     """Raised when a cycle is detected in the DAG."""
+
     pass
 
 
 class DAGMissingDependencyError(Exception):
     """Raised when a node depends on a non-existent node."""
+
     pass
 
 
@@ -177,13 +180,9 @@ class DAG:
             DAGMissingDependencyError: If either node does not exist.
         """
         if from_node not in self._nodes:
-            raise DAGMissingDependencyError(
-                f"Node '{from_node}' not found in DAG"
-            )
+            raise DAGMissingDependencyError(f"Node '{from_node}' not found in DAG")
         if to_node not in self._nodes:
-            raise DAGMissingDependencyError(
-                f"Node '{to_node}' not found in DAG"
-            )
+            raise DAGMissingDependencyError(f"Node '{to_node}' not found in DAG")
         self._nodes[from_node].downstream.add(to_node)
         self._nodes[to_node].upstream.add(from_node)
 
@@ -237,8 +236,7 @@ class DAG:
             for downstream_name in self._nodes[node_name].downstream:
                 if color[downstream_name] == GRAY:
                     raise DAGCycleError(
-                        f"Cycle detected: '{node_name}' -> "
-                        f"'{downstream_name}'"
+                        f"Cycle detected: '{node_name}' -> '{downstream_name}'"
                     )
                 if color[downstream_name] == WHITE:
                     _dfs(downstream_name)
@@ -262,9 +260,7 @@ class DAG:
         in_degree: Dict[str, int] = {
             name: len(node.upstream) for name, node in self._nodes.items()
         }
-        queue: List[str] = [
-            name for name, deg in in_degree.items() if deg == 0
-        ]
+        queue: List[str] = [name for name, deg in in_degree.items() if deg == 0]
         order: List[str] = []
 
         while queue:
@@ -272,17 +268,13 @@ class DAG:
             queue.sort()
             current = queue.pop(0)
             order.append(current)
-            for downstream_name in sorted(
-                self._nodes[current].downstream
-            ):
+            for downstream_name in sorted(self._nodes[current].downstream):
                 in_degree[downstream_name] -= 1
                 if in_degree[downstream_name] == 0:
                     queue.append(downstream_name)
 
         if len(order) != len(self._nodes):
-            raise DAGCycleError(
-                "Cycle detected during topological sort"
-            )
+            raise DAGCycleError("Cycle detected during topological sort")
 
         return order
 
@@ -302,13 +294,9 @@ class DAG:
         groups: List[List[str]] = []
 
         while remaining:
-            group = sorted(
-                [name for name, deg in remaining.items() if deg == 0]
-            )
+            group = sorted([name for name, deg in remaining.items() if deg == 0])
             if not group:
-                raise DAGCycleError(
-                    "Cycle detected while computing parallel groups"
-                )
+                raise DAGCycleError("Cycle detected while computing parallel groups")
             groups.append(group)
             for name in group:
                 del remaining[name]
@@ -448,9 +436,7 @@ class DAGRunner:
             for name in group:
                 node = dag.get_node(name)
                 # Check if any upstream dependency failed or was skipped
-                upstream_failed = any(
-                    dep in failed_set for dep in node.upstream
-                )
+                upstream_failed = any(dep in failed_set for dep in node.upstream)
                 if upstream_failed:
                     node.status = NodeStatus.SKIPPED
                     node_results[name] = NodeResult(
@@ -482,15 +468,11 @@ class DAGRunner:
                 failed_set.update(group_failures)
                 if self.fail_fast:
                     # Mark all remaining nodes as skipped
-                    self._skip_remaining(
-                        dag, groups, group, node_results, failed_set
-                    )
+                    self._skip_remaining(dag, groups, group, node_results, failed_set)
                     break
 
         overall_duration = time.time() - overall_start
-        overall_status = (
-            "failed" if failed_set else "success"
-        )
+        overall_status = "failed" if failed_set else "success"
 
         return DAGResult(
             status=overall_status,
@@ -498,25 +480,18 @@ class DAGRunner:
             duration=overall_duration,
         )
 
-    def _run_group(
-        self, dag: DAG, node_names: List[str]
-    ) -> Dict[str, NodeResult]:
+    def _run_group(self, dag: DAG, node_names: List[str]) -> Dict[str, NodeResult]:
         """Execute a group of independent nodes.
 
         Uses ``ThreadPoolExecutor`` when ``max_parallel > 1``.
         """
         if self.max_parallel <= 1:
-            return {
-                name: self._execute_node(dag.get_node(name))
-                for name in node_names
-            }
+            return {name: self._execute_node(dag.get_node(name)) for name in node_names}
 
         results: Dict[str, NodeResult] = {}
         with ThreadPoolExecutor(max_workers=self.max_parallel) as executor:
             future_to_name = {
-                executor.submit(
-                    self._execute_node, dag.get_node(name)
-                ): name
+                executor.submit(self._execute_node, dag.get_node(name)): name
                 for name in node_names
             }
             for future in as_completed(future_to_name):
@@ -571,7 +546,9 @@ class DAGRunner:
 
             node.status = NodeStatus.SUCCESS
             duration = time.time() - start
-            logger.info("Node '%s' completed successfully in %.2fs", node.name, duration)
+            logger.info(
+                "Node '%s' completed successfully in %.2fs", node.name, duration
+            )
             return NodeResult(
                 node_name=node.name,
                 status=NodeStatus.SUCCESS,

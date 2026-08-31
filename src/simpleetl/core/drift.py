@@ -82,17 +82,12 @@ class DriftReport:
         ]
         if self.diff is not None:
             if self.diff.added_columns:
-                lines.append(
-                    f"  added columns: {self.diff.added_columns}"
-                )
+                lines.append(f"  added columns: {self.diff.added_columns}")
             if self.diff.removed_columns:
-                lines.append(
-                    f"  removed columns: {self.diff.removed_columns}"
-                )
+                lines.append(f"  removed columns: {self.diff.removed_columns}")
             for name, change in self.diff.type_changes.items():
                 lines.append(
-                    f"  type change '{name}': "
-                    f"{change['old']} -> {change['new']}"
+                    f"  type change '{name}': {change['old']} -> {change['new']}"
                 )
             for name, nchange in self.diff.nullability_changes.items():
                 lines.append(
@@ -226,15 +221,11 @@ class SchemaDriftDetector:
         logger.warning("Schema drift detected: %s", report.summary())
         return report
 
-    def _handle_no_baseline(
-        self, current: Schema, schema_name: str
-    ) -> DriftReport:
+    def _handle_no_baseline(self, current: Schema, schema_name: str) -> DriftReport:
         """Handle the first run when no baseline schema is registered."""
         if self._config.auto_register:
             self._registry.register_schema(schema_name, 1, current)
-            logger.info(
-                "Registered baseline schema '%s' version 1", schema_name
-            )
+            logger.info("Registered baseline schema '%s' version 1", schema_name)
             return DriftReport(
                 schema_name=schema_name,
                 drifted=False,

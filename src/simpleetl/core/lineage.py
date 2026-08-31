@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 # LineageEvent
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class LineageEvent:
     """Represents a single lineage event (a transformation step).
@@ -57,9 +58,7 @@ class LineageEvent:
     """
 
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    timestamp: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     job_name: str = ""
     phase: str = ""
     source: str = ""
@@ -149,6 +148,7 @@ class ProvenanceTracker:
 # LineageTracker
 # ---------------------------------------------------------------------------
 
+
 class LineageTracker:
     """Collects and stores lineage events during ETL execution.
 
@@ -175,9 +175,7 @@ class LineageTracker:
             event.phase,
         )
 
-    def get_events(
-        self, job_name: Optional[str] = None
-    ) -> List[LineageEvent]:
+    def get_events(self, job_name: Optional[str] = None) -> List[LineageEvent]:
         """Retrieve lineage events, optionally filtered by job name.
 
         Args:
@@ -255,12 +253,8 @@ class LineageTracker:
         jobs = list(dict.fromkeys(e.job_name for e in self._events))
         return {
             "total_events": len(self._events),
-            "total_rows_processed": sum(
-                e.output_rows for e in self._events
-            ),
-            "total_duration_seconds": sum(
-                e.duration_seconds for e in self._events
-            ),
+            "total_rows_processed": sum(e.output_rows for e in self._events),
+            "total_duration_seconds": sum(e.duration_seconds for e in self._events),
             "jobs": jobs,
         }
 
@@ -376,9 +370,7 @@ class LineageTracker:
                     record_provenance=data.get("record_provenance", {}),
                 )
                 tracker._events.append(event)
-        logger.info(
-            "Loaded %d lineage events from %s", len(tracker._events), path
-        )
+        logger.info("Loaded %d lineage events from %s", len(tracker._events), path)
         return tracker
 
     def emit_openlineage(
@@ -420,8 +412,7 @@ class LineageTracker:
                         emitted += 1
                     else:
                         logger.warning(
-                            "OpenLineage emit returned HTTP %d for "
-                            "event %s",
+                            "OpenLineage emit returned HTTP %d for event %s",
                             resp.status,
                             event.event_id,
                         )
@@ -486,19 +477,14 @@ class OpenLineageConverter:
         outputs: list[Dict[str, Any]] = []
 
         if event.source:
-            inputs.append(
-                self._build_dataset(event.source, event.input_schema)
-            )
+            inputs.append(self._build_dataset(event.source, event.input_schema))
         if event.destination:
-            outputs.append(
-                self._build_dataset(event.destination, event.output_schema)
-            )
+            outputs.append(self._build_dataset(event.destination, event.output_schema))
 
         return {
             "producer": self.producer,
             "schemaURL": (
-                "https://openlineage.io/spec/1-0-5/OpenLineage.json"
-                "#/$defs/RunEvent"
+                "https://openlineage.io/spec/1-0-5/OpenLineage.json#/$defs/RunEvent"
             ),
             "eventType": "COMPLETE",
             "eventTime": event.timestamp.isoformat(),
@@ -650,9 +636,7 @@ class FileLineageStore:
     def _flush_event(self, event: LineageEvent) -> None:
         """Write a single event to the file."""
         try:
-            self._fh.write(
-                json.dumps(event.to_dict(), default=str) + "\n"
-            )
+            self._fh.write(json.dumps(event.to_dict(), default=str) + "\n")
             self._fh.flush()
         except OSError as exc:
             logger.error("Failed to write lineage event to file: %s", exc)
@@ -678,9 +662,7 @@ class FileLineageStore:
             self._fh.close()
             logger.debug("Closed FileLineageStore file handle.")
 
-    def get_events(
-        self, job_name: Optional[str] = None
-    ) -> List[LineageEvent]:
+    def get_events(self, job_name: Optional[str] = None) -> List[LineageEvent]:
         """Delegate to the underlying tracker's ``get_events``."""
         return self._tracker.get_events(job_name)
 
@@ -694,6 +676,7 @@ class FileLineageStore:
 # ---------------------------------------------------------------------------
 # LineageHook
 # ---------------------------------------------------------------------------
+
 
 class LineageHook(Hook):
     """Hook that automatically records lineage events at each ETL phase.
@@ -748,10 +731,7 @@ class LineageHook(Hook):
             import pandas as pd
 
             if isinstance(data, pd.DataFrame):
-                schema = {
-                    str(col): str(dtype)
-                    for col, dtype in data.dtypes.items()
-                }
+                schema = {str(col): str(dtype) for col, dtype in data.dtypes.items()}
                 return len(data), schema
         except ImportError:
             pass
@@ -878,10 +858,7 @@ class ProvenanceHook(Hook):
 
             if isinstance(data, pd.DataFrame):
                 if self._record_id_column in data.columns:
-                    return [
-                        str(v)
-                        for v in data[self._record_id_column].tolist()
-                    ]
+                    return [str(v) for v in data[self._record_id_column].tolist()]
         except ImportError:
             pass
         if isinstance(data, list):
@@ -927,6 +904,7 @@ class ProvenanceHook(Hook):
 # ---------------------------------------------------------------------------
 # DataFreshnessTracker
 # ---------------------------------------------------------------------------
+
 
 class DataFreshnessTracker:
     """Tracks data freshness (last update time) for data sources.
@@ -1021,6 +999,7 @@ class DataFreshnessTracker:
 # AlertRule
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AlertRule:
     """Defines an alert condition for monitoring.
@@ -1041,9 +1020,7 @@ class AlertRule:
     severity: str = "warning"
     message_template: str = "Alert '{name}' triggered"
     channels: List[str] = field(default_factory=list)
-    channel_instances: List[AlertChannel] = field(
-        default_factory=list, repr=False
-    )
+    channel_instances: List[AlertChannel] = field(default_factory=list, repr=False)
 
     def evaluate(self, context: Dict[str, Any]) -> Optional[str]:
         """Evaluate the rule against a context.
@@ -1057,9 +1034,7 @@ class AlertRule:
                     name=self.name, severity=self.severity, **context
                 )
         except Exception as exc:
-            logger.warning(
-                "Error evaluating alert rule '%s': %s", self.name, exc
-            )
+            logger.warning("Error evaluating alert rule '%s': %s", self.name, exc)
         return None
 
     def dispatch(self, message: str) -> Dict[str, bool]:
@@ -1071,9 +1046,7 @@ class AlertRule:
         results: Dict[str, bool] = {}
         for channel in self.channel_instances:
             channel_name = type(channel).__name__
-            results[channel_name] = channel.send(
-                message, self.severity, self.name
-            )
+            results[channel_name] = channel.send(message, self.severity, self.name)
         return results
 
 
@@ -1127,9 +1100,7 @@ class WebhookChannel(AlertChannel):
             method="POST",
         )
         try:
-            with urllib.request.urlopen(
-                req, timeout=self.timeout
-            ) as resp:
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 return resp.status == 200
         except Exception:
             return False
@@ -1247,8 +1218,7 @@ class EmailChannel(AlertChannel):
         """
         if not self._configured:
             logger.info(
-                "[EMAIL ALERT] To: %s | Severity: %s | Rule: %s | "
-                "Message: %s",
+                "[EMAIL ALERT] To: %s | Severity: %s | Rule: %s | Message: %s",
                 self.recipients,
                 severity,
                 rule_name,
@@ -1289,9 +1259,7 @@ class EmailChannel(AlertChannel):
     ) -> EmailMessage:
         """Construct the plain-text alert email."""
         msg = EmailMessage()
-        msg["Subject"] = (
-            f"{self.subject_prefix} {severity.upper()} alert: {rule_name}"
-        )
+        msg["Subject"] = f"{self.subject_prefix} {severity.upper()} alert: {rule_name}"
         msg["From"] = self.from_addr
         msg["To"] = ", ".join(self.recipients)
         msg.set_content(
@@ -1303,9 +1271,7 @@ class EmailChannel(AlertChannel):
         )
         return msg
 
-    def _authenticate_and_send(
-        self, server: smtplib.SMTP, msg: EmailMessage
-    ) -> None:
+    def _authenticate_and_send(self, server: smtplib.SMTP, msg: EmailMessage) -> None:
         """Log in when credentials are configured, then send."""
         if self.username and self.password:
             server.login(self.username, self.password)
@@ -1315,6 +1281,7 @@ class EmailChannel(AlertChannel):
 # ---------------------------------------------------------------------------
 # AlertManager
 # ---------------------------------------------------------------------------
+
 
 class AlertManager:
     """Manages alert rules and triggers alerts based on conditions.
@@ -1335,9 +1302,7 @@ class AlertManager:
             rule: The ``AlertRule`` to add.
         """
         self._rules.append(rule)
-        logger.debug(
-            "Added alert rule '%s' (severity=%s)", rule.name, rule.severity
-        )
+        logger.debug("Added alert rule '%s' (severity=%s)", rule.name, rule.severity)
 
     def check_alerts(self, context: Dict[str, Any]) -> List[str]:
         """Evaluate all rules against the given context.
@@ -1364,14 +1329,10 @@ class AlertManager:
                         msg,
                     )
             except Exception as exc:
-                logger.warning(
-                    "Error evaluating alert rule '%s': %s", rule.name, exc
-                )
+                logger.warning("Error evaluating alert rule '%s': %s", rule.name, exc)
         return triggered
 
-    def check_and_dispatch(
-        self, context: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    def check_and_dispatch(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Evaluate all rules and dispatch alerts for triggered rules.
 
         Returns:
@@ -1460,9 +1421,7 @@ def configure_lineage_persistence(
     global _file_lineage_store, _lineage_persistence_path  # noqa: PLW0603
     tracker = get_lineage_tracker()
     _lineage_persistence_path = path
-    _file_lineage_store = FileLineageStore(
-        file_path=path, lineage_tracker=tracker
-    )
+    _file_lineage_store = FileLineageStore(file_path=path, lineage_tracker=tracker)
     _file_lineage_store._write_on_record = auto_flush
     return _file_lineage_store
 

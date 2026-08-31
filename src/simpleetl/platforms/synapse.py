@@ -29,6 +29,7 @@ class SynapsePlatformRunner(PlatformRunner):
             # Not in Synapse environment - simulate or delegate
             # For now, we'll run locally with a warning
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(
                 "Not running in Azure Synapse environment. Executing job locally instead."

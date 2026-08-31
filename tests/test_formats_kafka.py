@@ -232,17 +232,13 @@ class TestKafkaReaderRead:
         assert config["bootstrap.servers"] == "h1:9092,h2:9093"
         assert config["group.id"] == "simpleetl"
         assert config["enable.auto.commit"] is False
-        fake_kafka.Consumer.return_value.subscribe.assert_called_once_with(
-            ["events"]
-        )
+        fake_kafka.Consumer.return_value.subscribe.assert_called_once_with(["events"])
         assert len(df) == 1
 
     def test_read_bare_topic_source(self, fake_kafka):
         _queue_messages(fake_kafka, [FakeMessage(b'{"x": 1}')])
         KafkaReader("localhost:9092", max_messages=1).read("clicks")
-        fake_kafka.Consumer.return_value.subscribe.assert_called_once_with(
-            ["clicks"]
-        )
+        fake_kafka.Consumer.return_value.subscribe.assert_called_once_with(["clicks"])
 
     def test_read_consumer_config_merged(self, fake_kafka):
         reader = KafkaReader(
@@ -273,9 +269,7 @@ class TestKafkaReaderRead:
         assert consumer.poll.called
         assert consumer.close.called
 
-    def test_read_json_decode_errors_skipped_with_warning(
-        self, fake_kafka, caplog
-    ):
+    def test_read_json_decode_errors_skipped_with_warning(self, fake_kafka, caplog):
         _queue_messages(
             fake_kafka,
             [
@@ -342,9 +336,7 @@ class TestKafkaReaderRead:
 
     def test_read_does_not_commit_when_disabled(self, fake_kafka):
         consumer = _queue_messages(fake_kafka, [FakeMessage(b'{"a": 1}')])
-        KafkaReader(
-            "localhost:9092", "orders", max_messages=1, commit=False
-        ).read()
+        KafkaReader("localhost:9092", "orders", max_messages=1, commit=False).read()
         assert not consumer.commit.called
 
     def test_read_does_not_commit_when_nothing_consumed(self, fake_kafka):
@@ -398,9 +390,7 @@ class TestKafkaReaderReadChunks:
             fake_kafka,
             [FakeMessage(json.dumps({"n": i}).encode()) for i in range(4)],
         )
-        reader = KafkaReader(
-            "localhost:9092", "orders", max_messages=4, commit=False
-        )
+        reader = KafkaReader("localhost:9092", "orders", max_messages=4, commit=False)
         list(reader.read_chunks(chunk_size=2))
         assert not consumer.commit.called
 
@@ -436,9 +426,7 @@ class TestKafkaWriter:
     def test_write_key_column_used_and_kept_in_payload(self, fake_kafka):
         producer = fake_kafka.Producer.return_value
         df = pd.DataFrame({"id": [7, None], "v": ["x", "y"]})
-        KafkaWriter(
-            "localhost:9092", "orders", key_column="id"
-        ).write(df)
+        KafkaWriter("localhost:9092", "orders", key_column="id").write(df)
 
         calls = producer.produce.call_args_list
         assert calls[0][1]["key"] == "7.0"  # None upcasts the column to float
@@ -494,9 +482,7 @@ class TestKafkaWriter:
         fake_kafka.Producer.return_value.flush.return_value = 2
         df = pd.DataFrame({"a": [1, 2, 3]})
         writer = KafkaWriter("localhost:9092", "orders", flush_timeout=1.5)
-        with pytest.raises(
-            RuntimeError, match="2 message\\(s\\) still undelivered"
-        ):
+        with pytest.raises(RuntimeError, match="2 message\\(s\\) still undelivered"):
             writer.write(df)
 
     def test_write_empty_dataframe(self, fake_kafka):

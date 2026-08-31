@@ -126,6 +126,7 @@ class TestIcebergWriter:
         try:
             with pytest.raises(ImportError, match=r"simpleetl\[iceberg\]"):
                 from simpleetl.formats.iceberg import _require_pyiceberg
+
                 _require_pyiceberg()
         finally:
             if original is not None:
@@ -178,9 +179,7 @@ class TestIcebergReader:
         _write(wh, df2, mode="append")
 
         first_snapshot = _load_table(wh).history()[0].snapshot_id
-        df_old = IcebergReader().read(
-            str(wh), table=TABLE, snapshot_id=first_snapshot
-        )
+        df_old = IcebergReader().read(str(wh), table=TABLE, snapshot_id=first_snapshot)
         assert len(df_old) == 3
 
     def test_read_latest_snapshot(self, tmp_path):
@@ -205,26 +204,20 @@ class TestIcebergReaderChunks:
     def test_read_chunks_yields_dataframes(self, tmp_path):
         wh = tmp_path / "wh"
         _write(wh, _sample_df())
-        chunks = list(
-            IcebergReader().read_chunks(str(wh), chunk_size=2, table=TABLE)
-        )
+        chunks = list(IcebergReader().read_chunks(str(wh), chunk_size=2, table=TABLE))
         assert all(isinstance(c, pd.DataFrame) for c in chunks)
 
     def test_read_chunks_respects_chunk_size(self, tmp_path):
         wh = tmp_path / "wh"
         _write(wh, _sample_df())
-        chunks = list(
-            IcebergReader().read_chunks(str(wh), chunk_size=2, table=TABLE)
-        )
+        chunks = list(IcebergReader().read_chunks(str(wh), chunk_size=2, table=TABLE))
         assert all(len(c) <= 2 for c in chunks)
         assert sum(len(c) for c in chunks) == 3
 
     def test_read_chunks_single_chunk(self, tmp_path):
         wh = tmp_path / "wh"
         _write(wh, _sample_df())
-        chunks = list(
-            IcebergReader().read_chunks(str(wh), chunk_size=100, table=TABLE)
-        )
+        chunks = list(IcebergReader().read_chunks(str(wh), chunk_size=100, table=TABLE))
         assert sum(len(c) for c in chunks) == 3
 
     def test_read_chunks_column_subset(self, tmp_path):

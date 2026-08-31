@@ -45,6 +45,7 @@ from simpleetl.transformations import (
 # join_data
 # ---------------------------------------------------------------------------
 
+
 class TestJoinData:
     def test_inner_join(self):
         left = pd.DataFrame({"id": [1, 2, 3], "name": ["A", "B", "C"]})
@@ -120,6 +121,7 @@ class TestJoinData:
 # union_data
 # ---------------------------------------------------------------------------
 
+
 class TestUnionData:
     def test_basic_union(self):
         df1 = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
@@ -151,6 +153,7 @@ class TestUnionData:
 # ---------------------------------------------------------------------------
 # deduplicate_data
 # ---------------------------------------------------------------------------
+
 
 class TestDeduplicateData:
     def test_no_subset(self):
@@ -188,6 +191,7 @@ class TestDeduplicateData:
 # with_column
 # ---------------------------------------------------------------------------
 
+
 class TestWithColumn:
     def test_scalar_value(self):
         df = pd.DataFrame({"a": [1, 2, 3]})
@@ -211,13 +215,16 @@ class TestWithColumn:
 
     def test_in_chain(self):
         df = pd.DataFrame({"a": [1, 2, 3]})
-        result = TransformationChain(df).with_column("b", lambda d: d["a"] + 10).result()
+        result = (
+            TransformationChain(df).with_column("b", lambda d: d["a"] + 10).result()
+        )
         assert result["b"].tolist() == [11, 12, 13]
 
 
 # ---------------------------------------------------------------------------
 # rename_columns
 # ---------------------------------------------------------------------------
+
 
 class TestRenameColumns:
     def test_basic_rename(self):
@@ -241,6 +248,7 @@ class TestRenameColumns:
 # ---------------------------------------------------------------------------
 # select_columns
 # ---------------------------------------------------------------------------
+
 
 class TestSelectColumns:
     def test_basic_select(self):
@@ -268,6 +276,7 @@ class TestSelectColumns:
 # drop_columns
 # ---------------------------------------------------------------------------
 
+
 class TestDropColumns:
     def test_single_column(self):
         df = pd.DataFrame({"a": [1], "b": [2], "c": [3]})
@@ -293,6 +302,7 @@ class TestDropColumns:
 # ---------------------------------------------------------------------------
 # fill_na
 # ---------------------------------------------------------------------------
+
 
 class TestFillNa:
     def test_scalar_fill(self):
@@ -333,6 +343,7 @@ class TestFillNa:
 # drop_na
 # ---------------------------------------------------------------------------
 
+
 class TestDropNa:
     def test_how_any(self):
         df = pd.DataFrame({"a": [1, None, 3], "b": [4, 5, None]})
@@ -369,6 +380,7 @@ class TestDropNa:
 # sort_data
 # ---------------------------------------------------------------------------
 
+
 class TestSortData:
     def test_single_column_ascending(self):
         df = pd.DataFrame({"a": [3, 1, 2]})
@@ -399,6 +411,7 @@ class TestSortData:
 # ---------------------------------------------------------------------------
 # limit_rows
 # ---------------------------------------------------------------------------
+
 
 class TestLimitRows:
     def test_basic_limit(self):
@@ -431,6 +444,7 @@ class TestLimitRows:
 # sample_data
 # ---------------------------------------------------------------------------
 
+
 class TestSampleData:
     def test_sample_n(self):
         df = pd.DataFrame({"a": range(100)})
@@ -462,6 +476,7 @@ class TestSampleData:
 # distinct_data
 # ---------------------------------------------------------------------------
 
+
 class TestDistinctData:
     def test_basic(self):
         df = pd.DataFrame({"a": [1, 1, 2, 3, 3]})
@@ -487,6 +502,7 @@ class TestDistinctData:
 # ---------------------------------------------------------------------------
 # cast_columns
 # ---------------------------------------------------------------------------
+
 
 class TestCastColumns:
     def test_int_cast(self):
@@ -523,6 +539,7 @@ class TestCastColumns:
 # ---------------------------------------------------------------------------
 # when_otherwise
 # ---------------------------------------------------------------------------
+
 
 class TestWhenOtherwise:
     def test_basic(self):
@@ -570,6 +587,7 @@ class TestWhenOtherwise:
 # add_computed_column
 # ---------------------------------------------------------------------------
 
+
 class TestAddComputedColumn:
     def test_basic_expression(self):
         df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
@@ -591,34 +609,39 @@ class TestAddComputedColumn:
 # group_by_aggregate_data
 # ---------------------------------------------------------------------------
 
+
 class TestGroupByAggregateData:
     def test_single_agg(self):
-        df = pd.DataFrame({
-            "dept": ["A", "A", "B", "B"],
-            "salary": [50000, 60000, 45000, 55000],
-        })
+        df = pd.DataFrame(
+            {
+                "dept": ["A", "A", "B", "B"],
+                "salary": [50000, 60000, 45000, 55000],
+            }
+        )
         result = group_by_aggregate_data(df, "dept", {"salary": "mean"})
         assert len(result) == 2
         assert "salary" in result.columns
 
     def test_list_of_aggs(self):
-        df = pd.DataFrame({
-            "dept": ["A", "A", "B", "B"],
-            "salary": [50000, 60000, 45000, 55000],
-        })
+        df = pd.DataFrame(
+            {
+                "dept": ["A", "A", "B", "B"],
+                "salary": [50000, 60000, 45000, 55000],
+            }
+        )
         result = group_by_aggregate_data(df, "dept", {"salary": ["mean", "sum"]})
         assert len(result) == 2
         assert "salary_mean" in result.columns
         assert "salary_sum" in result.columns
 
     def test_named_agg_dict(self):
-        df = pd.DataFrame({
-            "dept": ["A", "A", "B", "B"],
-            "salary": [50000, 60000, 45000, 55000],
-        })
-        result = group_by_aggregate_data(
-            df, "dept", {"salary": ["mean", "sum"]}
+        df = pd.DataFrame(
+            {
+                "dept": ["A", "A", "B", "B"],
+                "salary": [50000, 60000, 45000, 55000],
+            }
         )
+        result = group_by_aggregate_data(df, "dept", {"salary": ["mean", "sum"]})
         assert len(result) == 2
         assert "salary_mean" in result.columns
         assert "salary_sum" in result.columns
@@ -634,11 +657,13 @@ class TestGroupByAggregateData:
             group_by_aggregate_data(df, "dept", {"nonexistent": "mean"})
 
     def test_multi_groupby(self):
-        df = pd.DataFrame({
-            "dept": ["A", "A", "B", "B"],
-            "region": ["X", "Y", "X", "Y"],
-            "salary": [50000, 60000, 45000, 55000],
-        })
+        df = pd.DataFrame(
+            {
+                "dept": ["A", "A", "B", "B"],
+                "region": ["X", "Y", "X", "Y"],
+                "salary": [50000, 60000, 45000, 55000],
+            }
+        )
         result = group_by_aggregate_data(df, ["dept", "region"], {"salary": "mean"})
         assert len(result) == 4
 
@@ -647,13 +672,16 @@ class TestGroupByAggregateData:
 # pivot_data
 # ---------------------------------------------------------------------------
 
+
 class TestPivotData:
     def test_basic_pivot(self):
-        df = pd.DataFrame({
-            "date": ["2024-01", "2024-01", "2024-02", "2024-02"],
-            "product": ["A", "B", "A", "B"],
-            "sales": [100, 200, 150, 250],
-        })
+        df = pd.DataFrame(
+            {
+                "date": ["2024-01", "2024-01", "2024-02", "2024-02"],
+                "product": ["A", "B", "A", "B"],
+                "sales": [100, 200, 150, 250],
+            }
+        )
         result = pivot_data(df, index="date", columns="product", values="sales")
         # Pivot with single values col may keep value name in MultiIndex
         cols = list(result.columns)
@@ -665,20 +693,25 @@ class TestPivotData:
             pivot_data(df, index="nonexistent", columns="product", values="sales")
 
     def test_in_chain(self):
-        df = pd.DataFrame({
-            "date": ["2024-01", "2024-01", "2024-02", "2024-02"],
-            "product": ["A", "B", "A", "B"],
-            "sales": [100, 200, 150, 250],
-        })
-        result = TransformationChain(df).pivot(
-            index="date", columns="product", values="sales"
-        ).result()
+        df = pd.DataFrame(
+            {
+                "date": ["2024-01", "2024-01", "2024-02", "2024-02"],
+                "product": ["A", "B", "A", "B"],
+                "sales": [100, 200, 150, 250],
+            }
+        )
+        result = (
+            TransformationChain(df)
+            .pivot(index="date", columns="product", values="sales")
+            .result()
+        )
         assert len(result) == 2
 
 
 # ---------------------------------------------------------------------------
 # unpivot_data
 # ---------------------------------------------------------------------------
+
 
 class TestUnpivotData:
     def test_basic_melt(self):
@@ -725,6 +758,7 @@ class TestUnpivotData:
 # transform_chain
 # ---------------------------------------------------------------------------
 
+
 class TestTransformChain:
     def test_basic_chain(self):
         df = pd.DataFrame({"a": [1, 2, 3, 4, 5]})
@@ -755,6 +789,7 @@ class TestTransformChain:
 # date_operations — timezone coverage
 # ---------------------------------------------------------------------------
 
+
 class TestDateOperationsTimezone:
     def test_timezone_naive(self):
         """Test timezone operation on a naive datetime column."""
@@ -781,9 +816,7 @@ class TestDateOperationsTimezone:
     def test_in_chain(self):
         df = pd.DataFrame({"dt": ["2024-03-15 12:00"]})
         result = (
-            TransformationChain(df)
-            .date_op("dt", "add", value=5, unit="days")
-            .result()
+            TransformationChain(df).date_op("dt", "add", value=5, unit="days").result()
         )
         assert "dt_added" in result.columns
 
@@ -792,10 +825,15 @@ class TestDateOperationsTimezone:
 # TransformationChain — additional methods
 # ---------------------------------------------------------------------------
 
+
 class TestTransformationChainExtras:
     def test_map_with_dict(self):
         df = pd.DataFrame({"cat": ["A", "B", "C"]})
-        result = TransformationChain(df).map("cat", {"A": "Alpha", "B": "Beta", "C": "Gamma"}).result()
+        result = (
+            TransformationChain(df)
+            .map("cat", {"A": "Alpha", "B": "Beta", "C": "Gamma"})
+            .result()
+        )
         assert result["cat"].tolist() == ["Alpha", "Beta", "Gamma"]
 
     def test_map_with_function(self):
@@ -806,19 +844,17 @@ class TestTransformationChainExtras:
     def test_join_in_chain(self):
         left = pd.DataFrame({"id": [1, 2, 3], "name": ["A", "B", "C"]})
         right = pd.DataFrame({"id": [2, 3], "val": [20, 30]})
-        result = (
-            TransformationChain(left)
-            .join(right, on="id", how="inner")
-            .result()
-        )
+        result = TransformationChain(left).join(right, on="id", how="inner").result()
         assert len(result) == 2
 
     def test_pivot_in_chain(self):
-        df = pd.DataFrame({
-            "date": ["2024-01", "2024-01", "2024-02", "2024-02"],
-            "product": ["A", "B", "A", "B"],
-            "sales": [100, 200, 150, 250],
-        })
+        df = pd.DataFrame(
+            {
+                "date": ["2024-01", "2024-01", "2024-02", "2024-02"],
+                "product": ["A", "B", "A", "B"],
+                "sales": [100, 200, 150, 250],
+            }
+        )
         result = (
             TransformationChain(df)
             .pivot(index="date", columns="product", values="sales")
@@ -836,10 +872,12 @@ class TestTransformationChainExtras:
         assert len(result) == 4
 
     def test_window_in_chain(self):
-        df = pd.DataFrame({
-            "dept": ["A", "A", "B", "B"],
-            "salary": [50000, 60000, 45000, 55000],
-        })
+        df = pd.DataFrame(
+            {
+                "dept": ["A", "A", "B", "B"],
+                "salary": [50000, 60000, 45000, 55000],
+            }
+        )
         result = (
             TransformationChain(df)
             .window("dept", "salary", {"rn": {"function": "row_number"}})
@@ -854,11 +892,13 @@ class TestTransformationChainExtras:
         date_df = pd.DataFrame({"dt": ["2024-03-15"]})
         win_df = pd.DataFrame({"d": ["A", "A"], "s": [50000, 60000]})
         join_right = pd.DataFrame({"a": [1, 3], "c": [10, 30]})
-        pivot_df = pd.DataFrame({
-            "date": ["2024-01", "2024-01", "2024-02", "2024-02"],
-            "product": ["A", "B", "A", "B"],
-            "sales": [100, 200, 150, 250],
-        })
+        pivot_df = pd.DataFrame(
+            {
+                "date": ["2024-01", "2024-01", "2024-02", "2024-02"],
+                "product": ["A", "B", "A", "B"],
+                "sales": [100, 200, 150, 250],
+            }
+        )
         unpivot_df = pd.DataFrame({"id": [1, 2], "x": [10, 20], "y": [30, 40]})
 
         assert TransformationChain(df).filter(column="a", min_value=1) is not None
@@ -877,18 +917,26 @@ class TestTransformationChainExtras:
         assert TransformationChain(df).with_column("c", 1) is not None
         assert TransformationChain(df).union(df) is not None
         assert TransformationChain(df).join(right=join_right, on="a") is not None
-        assert TransformationChain(pivot_df).pivot(
-            index="date", columns="product", values="sales"
-        ) is not None
-        assert TransformationChain(unpivot_df).unpivot(
-            id_vars="id", value_vars=["x", "y"]
-        ) is not None
-        assert TransformationChain(win_df).window(
-            "d", "s", {"rn": {"function": "row_number"}}
-        ) is not None
-        assert TransformationChain(date_df).date_op(
-            "dt", "extract", part="year"
-        ) is not None
+        assert (
+            TransformationChain(pivot_df).pivot(
+                index="date", columns="product", values="sales"
+            )
+            is not None
+        )
+        assert (
+            TransformationChain(unpivot_df).unpivot(id_vars="id", value_vars=["x", "y"])
+            is not None
+        )
+        assert (
+            TransformationChain(win_df).window(
+                "d", "s", {"rn": {"function": "row_number"}}
+            )
+            is not None
+        )
+        assert (
+            TransformationChain(date_df).date_op("dt", "extract", part="year")
+            is not None
+        )
 
     def test_union_in_chain(self):
         df1 = pd.DataFrame({"a": [1, 2]})

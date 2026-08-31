@@ -18,22 +18,20 @@ logger = logging.getLogger(__name__)
 # pandas.read_parquet kwargs that translate directly to polars.read_parquet.
 # Anything else triggers a fallback to the pandas path (with a debug log).
 _POLARS_READ_KWARGS = {
-    'columns': 'columns',
+    "columns": "columns",
 }
 
 # pandas.DataFrame.to_parquet kwargs that translate directly to
 # polars.DataFrame.write_parquet.
 _POLARS_WRITE_KWARGS = {
-    'compression': 'compression',
+    "compression": "compression",
 }
 
 
 class ParquetReader(DataReader):
     """Read data from Parquet files, including cloud storage paths."""
 
-    def read(
-        self, source: str, engine: str = "pandas", **kwargs
-    ) -> pd.DataFrame:
+    def read(self, source: str, engine: str = "pandas", **kwargs) -> pd.DataFrame:
         """
         Read data from a Parquet file.
 
@@ -62,10 +60,10 @@ class ParquetReader(DataReader):
             result = self._read_polars(source, kwargs)
             if result is not None:
                 return result
-        kwargs['engine'] = 'pyarrow'
+        kwargs["engine"] = "pyarrow"
 
         if is_cloud_path(source):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(source)
             return pd.read_parquet(source, filesystem=filesystem, **kwargs)
@@ -86,7 +84,8 @@ class ParquetReader(DataReader):
         if is_cloud_path(source):
             logger.debug(
                 "polars Parquet fast path supports local paths only; "
-                "falling back to pandas for %s", source,
+                "falling back to pandas for %s",
+                source,
             )
             return None
         pl_kwargs: Dict[str, Any] = {}
@@ -95,7 +94,8 @@ class ParquetReader(DataReader):
             if mapped is None:
                 logger.debug(
                     "Parquet option %r has no polars equivalent; "
-                    "falling back to pandas.", key,
+                    "falling back to pandas.",
+                    key,
                 )
                 return None
             pl_kwargs[mapped] = value
@@ -104,8 +104,7 @@ class ParquetReader(DataReader):
         return pl.read_parquet(source, **pl_kwargs).to_pandas()
 
     def read_chunks(
-        self, source: str, chunk_size: int = 10000,
-        engine: str = "pandas", **kwargs
+        self, source: str, chunk_size: int = 10000, engine: str = "pandas", **kwargs
     ) -> Iterator[pd.DataFrame]:
         """
         Read Parquet data in row-group chunks.
@@ -128,24 +127,19 @@ class ParquetReader(DataReader):
         validate_engine(engine)
         if engine == "polars":
             logger.debug(
-                "Chunked Parquet reads always use pyarrow; ignoring "
-                "engine='polars'."
+                "Chunked Parquet reads always use pyarrow; ignoring engine='polars'."
             )
-        columns = kwargs.pop('columns', None)
+        columns = kwargs.pop("columns", None)
 
         if is_cloud_path(source):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(source)
-            parquet_file = pq.ParquetFile(
-                source, filesystem=filesystem
-            )
+            parquet_file = pq.ParquetFile(source, filesystem=filesystem)
         else:
             parquet_file = pq.ParquetFile(source)
 
-        for batch in parquet_file.iter_batches(
-            batch_size=chunk_size, columns=columns
-        ):
+        for batch in parquet_file.iter_batches(batch_size=chunk_size, columns=columns):
             yield batch.to_pandas()
 
 
@@ -153,8 +147,7 @@ class ParquetWriter(DataWriter):
     """Write data to Parquet files, including cloud storage paths."""
 
     def write(
-        self, data: pd.DataFrame, destination: str,
-        engine: str = "pandas", **kwargs
+        self, data: pd.DataFrame, destination: str, engine: str = "pandas", **kwargs
     ) -> None:
         """
         Write data to a Parquet file.
@@ -178,16 +171,14 @@ class ParquetWriter(DataWriter):
             ValueError: If *engine* is not ``"pandas"`` or ``"polars"``.
         """
         validate_engine(engine)
-        if engine == "polars" and self._write_polars(
-            data, destination, kwargs
-        ):
+        if engine == "polars" and self._write_polars(data, destination, kwargs):
             return
-        kwargs['engine'] = 'pyarrow'
-        if 'compression' not in kwargs:
-            kwargs['compression'] = 'snappy'
+        kwargs["engine"] = "pyarrow"
+        if "compression" not in kwargs:
+            kwargs["compression"] = "snappy"
 
         if is_cloud_path(destination):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(destination)
             data.to_parquet(destination, filesystem=filesystem, **kwargs)
@@ -208,16 +199,18 @@ class ParquetWriter(DataWriter):
         if is_cloud_path(destination):
             logger.debug(
                 "polars Parquet fast path supports local paths only; "
-                "falling back to pandas for %s", destination,
+                "falling back to pandas for %s",
+                destination,
             )
             return False
-        pl_kwargs: Dict[str, Any] = {'compression': 'snappy'}
+        pl_kwargs: Dict[str, Any] = {"compression": "snappy"}
         for key, value in kwargs.items():
             mapped = _POLARS_WRITE_KWARGS.get(key)
             if mapped is None:
                 logger.debug(
                     "Parquet option %r has no polars equivalent; "
-                    "falling back to pandas.", key,
+                    "falling back to pandas.",
+                    key,
                 )
                 return False
             pl_kwargs[mapped] = value
@@ -227,8 +220,11 @@ class ParquetWriter(DataWriter):
         return True
 
     def write_chunks(
-        self, data_iterator: Iterator[pd.DataFrame], destination: str,
-        engine: str = "pandas", **kwargs
+        self,
+        data_iterator: Iterator[pd.DataFrame],
+        destination: str,
+        engine: str = "pandas",
+        **kwargs,
     ) -> None:
         """
         Write Parquet data in chunks using PyArrow writer.
@@ -248,13 +244,12 @@ class ParquetWriter(DataWriter):
         validate_engine(engine)
         if engine == "polars":
             logger.debug(
-                "Chunked Parquet writes always use pyarrow; ignoring "
-                "engine='polars'."
+                "Chunked Parquet writes always use pyarrow; ignoring engine='polars'."
             )
-        compression = kwargs.pop('compression', 'snappy')
+        compression = kwargs.pop("compression", "snappy")
 
         if is_cloud_path(destination):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(destination)
             dst = destination
@@ -268,7 +263,8 @@ class ParquetWriter(DataWriter):
                 table = pa.Table.from_pandas(chunk)
                 if writer is None:
                     writer = pq.ParquetWriter(
-                        dst, table.schema,
+                        dst,
+                        table.schema,
                         compression=compression,
                         filesystem=filesystem,
                         **kwargs,

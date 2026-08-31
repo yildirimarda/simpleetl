@@ -45,6 +45,7 @@ ALL_HOOK_POINTS = [
 # HookContext
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class HookContext:
     """Context object passed to every hook invocation.
@@ -72,6 +73,7 @@ class HookContext:
 # Hook base class
 # ---------------------------------------------------------------------------
 
+
 class Hook(ABC):
     """Base class for all hooks.
 
@@ -95,6 +97,7 @@ class Hook(ABC):
 # ---------------------------------------------------------------------------
 # HookRegistry
 # ---------------------------------------------------------------------------
+
 
 class HookRegistry:
     """Global hook registry.
@@ -125,8 +128,7 @@ class HookRegistry:
         """
         if hook_point not in ALL_HOOK_POINTS:
             raise ValueError(
-                f"Unknown hook point '{hook_point}'. "
-                f"Valid points: {ALL_HOOK_POINTS}"
+                f"Unknown hook point '{hook_point}'. Valid points: {ALL_HOOK_POINTS}"
             )
         hook.priority = priority
         self._hooks[hook_point].append(hook)
@@ -154,9 +156,7 @@ class HookRegistry:
         if not hooks:
             return
 
-        logger.debug(
-            "Executing %d hook(s) for '%s'", len(hooks), hook_point
-        )
+        logger.debug("Executing %d hook(s) for '%s'", len(hooks), hook_point)
         for hook in hooks:
             try:
                 hook.execute(context)
@@ -227,6 +227,7 @@ def get_hook_registry() -> HookRegistry:
 # ---------------------------------------------------------------------------
 # Built-in hooks
 # ---------------------------------------------------------------------------
+
 
 class LoggingHook(Hook):
     """Logs hook point invocations."""
@@ -337,9 +338,7 @@ class QualityCheckHook(Hook):
 
         # Schema check
         if self._required_columns:
-            missing = [
-                c for c in self._required_columns if c not in df.columns
-            ]
+            missing = [c for c in self._required_columns if c not in df.columns]
             if missing:
                 self._logger.warning(
                     "[QualityCheckHook] Job '%s' missing columns: %s",
@@ -351,10 +350,7 @@ class QualityCheckHook(Hook):
                 context.metadata["quality_schema_ok"] = True
 
         # Null check
-        null_fractions = {
-            col: float(df[col].isna().mean())
-            for col in df.columns
-        }
+        null_fractions = {col: float(df[col].isna().mean()) for col in df.columns}
         context.metadata["quality_null_fractions"] = null_fractions
 
         # Duplicate check

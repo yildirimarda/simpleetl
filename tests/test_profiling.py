@@ -148,8 +148,11 @@ class TestProfileReportFormats:
         report = profiler.profile(sample_df)
         d = report.to_dict()
         assert set(d.keys()) >= {
-            "row_count", "column_count", "memory_mb",
-            "duplicate_row_count", "columns",
+            "row_count",
+            "column_count",
+            "memory_mb",
+            "duplicate_row_count",
+            "columns",
         }
 
     def test_to_dict_columns_list(self, profiler, sample_df):

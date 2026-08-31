@@ -51,11 +51,13 @@ class TestMergeSnowflake:
     """Tests for DatabaseWriter._merge_snowflake SQL generation."""
 
     def _make_df(self):
-        return pd.DataFrame({
-            "id": [1, 2],
-            "name": ["Alice", "Bob"],
-            "value": [10, 20],
-        })
+        return pd.DataFrame(
+            {
+                "id": [1, 2],
+                "name": ["Alice", "Bob"],
+                "value": [10, 20],
+            }
+        )
 
     def test_merge_sql_shape(self):
         engine, conn = _make_mock_engine(rowcount=2)
@@ -120,15 +122,11 @@ class TestMergeSnowflake:
             engine, self._make_df(), "users", ["id", "name"], ["value"]
         )
         merge = [s for s in _executed_sql(conn) if "MERGE INTO" in s][0]
-        assert (
-            "ON target.id = source.id AND target.name = source.name"
-        ) in merge
+        assert ("ON target.id = source.id AND target.name = source.name") in merge
 
     def test_no_update_columns_omits_when_matched(self):
         engine, conn = _make_mock_engine()
-        DatabaseWriter._merge_snowflake(
-            engine, self._make_df(), "users", ["id"], []
-        )
+        DatabaseWriter._merge_snowflake(engine, self._make_df(), "users", ["id"], [])
         merge = [s for s in _executed_sql(conn) if "MERGE INTO" in s][0]
         assert "WHEN MATCHED" not in merge
         assert "WHEN NOT MATCHED THEN INSERT" in merge
@@ -148,9 +146,7 @@ class TestMergeSnowflake:
             DatabaseWriter._merge_snowflake(
                 engine, self._make_df(), "users", ["id"], ["name"]
             )
-        assert any(
-            "DROP TABLE IF EXISTS" in s for s in _executed_sql(conn)
-        )
+        assert any("DROP TABLE IF EXISTS" in s for s in _executed_sql(conn))
 
 
 # ---------------------------------------------------------------------------
@@ -162,10 +158,12 @@ class TestMergeBigQuery:
     """Tests for DatabaseWriter._merge_bigquery SQL generation."""
 
     def _make_df(self):
-        return pd.DataFrame({
-            "id": [1, 2],
-            "name": ["Alice", "Bob"],
-        })
+        return pd.DataFrame(
+            {
+                "id": [1, 2],
+                "name": ["Alice", "Bob"],
+            }
+        )
 
     def test_merge_sql_shape_with_backtick_quoting(self):
         engine, conn = _make_mock_engine(rowcount=2)
@@ -220,19 +218,13 @@ class TestMergeBigQuery:
     def test_composite_key_conditions(self):
         engine, conn = _make_mock_engine()
         df = pd.DataFrame({"id": [1], "name": ["A"], "value": [9]})
-        DatabaseWriter._merge_bigquery(
-            engine, df, "users", ["id", "name"], ["value"]
-        )
+        DatabaseWriter._merge_bigquery(engine, df, "users", ["id", "name"], ["value"])
         merge = [s for s in _executed_sql(conn) if "MERGE INTO" in s][0]
-        assert (
-            "ON target.id = source.id AND target.name = source.name"
-        ) in merge
+        assert ("ON target.id = source.id AND target.name = source.name") in merge
 
     def test_no_update_columns_omits_when_matched(self):
         engine, conn = _make_mock_engine()
-        DatabaseWriter._merge_bigquery(
-            engine, self._make_df(), "users", ["id"], []
-        )
+        DatabaseWriter._merge_bigquery(engine, self._make_df(), "users", ["id"], [])
         merge = [s for s in _executed_sql(conn) if "MERGE INTO" in s][0]
         assert "WHEN MATCHED" not in merge
         assert "WHEN NOT MATCHED THEN INSERT" in merge
@@ -252,9 +244,7 @@ class TestMergeBigQuery:
             DatabaseWriter._merge_bigquery(
                 engine, self._make_df(), "users", ["id"], ["name"]
             )
-        assert any(
-            "DROP TABLE IF EXISTS" in s for s in _executed_sql(conn)
-        )
+        assert any("DROP TABLE IF EXISTS" in s for s in _executed_sql(conn))
 
 
 # ---------------------------------------------------------------------------
@@ -289,18 +279,14 @@ class TestMergeDispatch:
         return mock_merge
 
     def test_dispatch_snowflake(self):
-        mock_merge = self._dispatch_with_dialect(
-            "snowflake", "_merge_snowflake"
-        )
+        mock_merge = self._dispatch_with_dialect("snowflake", "_merge_snowflake")
         args = mock_merge.call_args.args
         assert args[2] == "users"
         assert args[3] == ["id"]
         assert args[4] == ["name"]
 
     def test_dispatch_bigquery(self):
-        mock_merge = self._dispatch_with_dialect(
-            "bigquery", "_merge_bigquery"
-        )
+        mock_merge = self._dispatch_with_dialect("bigquery", "_merge_bigquery")
         args = mock_merge.call_args.args
         assert args[2] == "users"
         assert args[3] == ["id"]
@@ -350,9 +336,7 @@ class TestUrlDetection:
             DatabaseWriter._resolve_engine("just_a_table_name")
 
     def test_error_message_lists_warehouse_prefixes(self):
-        with pytest.raises(
-            ValueError, match=r"snowflake://.*bigquery://"
-        ):
+        with pytest.raises(ValueError, match=r"snowflake://.*bigquery://"):
             DatabaseReader._resolve_engine("not-a-url")
 
 
@@ -405,9 +389,7 @@ class TestSnowflakeDdl:
 
     def test_no_if_not_exists(self):
         schema = Schema(columns=[ColumnDef("id", "int64")])
-        ddl = generate_ddl(
-            schema, "users", dialect="snowflake", if_not_exists=False
-        )
+        ddl = generate_ddl(schema, "users", dialect="snowflake", if_not_exists=False)
         assert "IF NOT EXISTS" not in ddl
         assert "CREATE TABLE users" in ddl
 

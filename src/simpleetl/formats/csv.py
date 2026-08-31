@@ -15,26 +15,24 @@ logger = logging.getLogger(__name__)
 # pandas.read_csv kwargs that translate directly to polars.read_csv.
 # Anything else triggers a fallback to the pandas path (with a debug log).
 _POLARS_READ_KWARGS = {
-    'usecols': 'columns',
-    'sep': 'separator',
-    'delimiter': 'separator',
-    'nrows': 'n_rows',
+    "usecols": "columns",
+    "sep": "separator",
+    "delimiter": "separator",
+    "nrows": "n_rows",
 }
 
 # pandas.DataFrame.to_csv kwargs that translate directly to
 # polars.DataFrame.write_csv.  'columns' is handled separately via a select.
 _POLARS_WRITE_KWARGS = {
-    'sep': 'separator',
-    'header': 'include_header',
+    "sep": "separator",
+    "header": "include_header",
 }
 
 
 class CSVReader(DataReader):
     """Read data from CSV files, including cloud storage paths."""
 
-    def read(
-        self, source: str, engine: str = "pandas", **kwargs
-    ) -> pd.DataFrame:
+    def read(self, source: str, engine: str = "pandas", **kwargs) -> pd.DataFrame:
         """
         Read data from a CSV file.
 
@@ -63,10 +61,10 @@ class CSVReader(DataReader):
             if result is not None:
                 return result
         if is_cloud_path(source):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(source)
-            with filesystem.open(source, 'r') as f:
+            with filesystem.open(source, "r") as f:
                 return pd.read_csv(f, **kwargs)
         return pd.read_csv(source, **kwargs)
 
@@ -84,7 +82,8 @@ class CSVReader(DataReader):
         if is_cloud_path(source):
             logger.debug(
                 "polars CSV fast path supports local paths only; "
-                "falling back to pandas for %s", source,
+                "falling back to pandas for %s",
+                source,
             )
             return None
         pl_kwargs: Dict[str, Any] = {}
@@ -92,8 +91,8 @@ class CSVReader(DataReader):
             mapped = _POLARS_READ_KWARGS.get(key)
             if mapped is None:
                 logger.debug(
-                    "CSV option %r has no polars equivalent; "
-                    "falling back to pandas.", key,
+                    "CSV option %r has no polars equivalent; falling back to pandas.",
+                    key,
                 )
                 return None
             pl_kwargs[mapped] = value
@@ -102,8 +101,7 @@ class CSVReader(DataReader):
         return pl.read_csv(source, **pl_kwargs).to_pandas()
 
     def read_chunks(
-        self, source: str, chunk_size: int = 10000,
-        engine: str = "pandas", **kwargs
+        self, source: str, chunk_size: int = 10000, engine: str = "pandas", **kwargs
     ) -> Iterator[pd.DataFrame]:
         """
         Read CSV data in chunks.
@@ -126,22 +124,17 @@ class CSVReader(DataReader):
         validate_engine(engine)
         if engine == "polars":
             logger.debug(
-                "Chunked CSV reads always use pandas; ignoring "
-                "engine='polars'."
+                "Chunked CSV reads always use pandas; ignoring engine='polars'."
             )
         if is_cloud_path(source):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(source)
-            with filesystem.open(source, 'r') as f:
-                for chunk in pd.read_csv(
-                    f, chunksize=chunk_size, **kwargs
-                ):
+            with filesystem.open(source, "r") as f:
+                for chunk in pd.read_csv(f, chunksize=chunk_size, **kwargs):
                     yield chunk
         else:
-            for chunk in pd.read_csv(
-                source, chunksize=chunk_size, **kwargs
-            ):
+            for chunk in pd.read_csv(source, chunksize=chunk_size, **kwargs):
                 yield chunk
 
 
@@ -149,8 +142,7 @@ class CSVWriter(DataWriter):
     """Write data to CSV files, including cloud storage paths."""
 
     def write(
-        self, data: pd.DataFrame, destination: str,
-        engine: str = "pandas", **kwargs
+        self, data: pd.DataFrame, destination: str, engine: str = "pandas", **kwargs
     ) -> None:
         """
         Write data to a CSV file.
@@ -173,15 +165,13 @@ class CSVWriter(DataWriter):
             ValueError: If *engine* is not ``"pandas"`` or ``"polars"``.
         """
         validate_engine(engine)
-        if engine == "polars" and self._write_polars(
-            data, destination, kwargs
-        ):
+        if engine == "polars" and self._write_polars(data, destination, kwargs):
             return
         if is_cloud_path(destination):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(destination)
-            with filesystem.open(destination, 'w') as f:
+            with filesystem.open(destination, "w") as f:
                 data.to_csv(f, index=False, **kwargs)
         else:
             data.to_csv(destination, index=False, **kwargs)
@@ -200,20 +190,21 @@ class CSVWriter(DataWriter):
         if is_cloud_path(destination):
             logger.debug(
                 "polars CSV fast path supports local paths only; "
-                "falling back to pandas for %s", destination,
+                "falling back to pandas for %s",
+                destination,
             )
             return False
         pl_kwargs: Dict[str, Any] = {}
         columns = None
         for key, value in kwargs.items():
-            if key == 'columns':
+            if key == "columns":
                 columns = value
                 continue
             mapped = _POLARS_WRITE_KWARGS.get(key)
             if mapped is None:
                 logger.debug(
-                    "CSV option %r has no polars equivalent; "
-                    "falling back to pandas.", key,
+                    "CSV option %r has no polars equivalent; falling back to pandas.",
+                    key,
                 )
                 return False
             pl_kwargs[mapped] = value
@@ -226,8 +217,11 @@ class CSVWriter(DataWriter):
         return True
 
     def write_chunks(
-        self, data_iterator: Iterator[pd.DataFrame], destination: str,
-        engine: str = "pandas", **kwargs
+        self,
+        data_iterator: Iterator[pd.DataFrame],
+        destination: str,
+        engine: str = "pandas",
+        **kwargs,
     ) -> None:
         """
         Write CSV data in chunks. Appends after the first chunk.
@@ -247,23 +241,18 @@ class CSVWriter(DataWriter):
         validate_engine(engine)
         if engine == "polars":
             logger.debug(
-                "Chunked CSV writes always use pandas; ignoring "
-                "engine='polars'."
+                "Chunked CSV writes always use pandas; ignoring engine='polars'."
             )
         first = True
         if is_cloud_path(destination):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(destination)
-            with filesystem.open(destination, 'w') as f:
+            with filesystem.open(destination, "w") as f:
                 for chunk in data_iterator:
-                    chunk.to_csv(
-                        f, index=False, header=first, mode='a', **kwargs
-                    )
+                    chunk.to_csv(f, index=False, header=first, mode="a", **kwargs)
                     first = False
         else:
             for chunk in data_iterator:
-                chunk.to_csv(
-                    destination, index=False, header=first, mode='a', **kwargs
-                )
+                chunk.to_csv(destination, index=False, header=first, mode="a", **kwargs)
                 first = False

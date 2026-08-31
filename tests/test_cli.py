@@ -96,8 +96,9 @@ class TestCLICommands:
             "output_format": "csv",
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             import yaml
+
             yaml.dump(config_data, f)
             temp_path = f.name
 
@@ -117,8 +118,9 @@ class TestCLICommands:
             "output_format": "csv",
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             import yaml
+
             yaml.dump(config_data, f)
             temp_path = f.name
 
@@ -141,8 +143,9 @@ class TestCLICommands:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             import yaml
+
             yaml.dump(config_data, f)
             temp_path = f.name
 
@@ -164,8 +167,9 @@ class TestCLICommands:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             import yaml
+
             yaml.dump(config_data, f)
             temp_path = f.name
 
@@ -182,7 +186,7 @@ class TestCLIMain:
 
     def test_main_list_formats(self):
         """Test main with --list-formats."""
-        with patch.object(sys, 'argv', ['simpleetl', '--list-formats']):
+        with patch.object(sys, "argv", ["simpleetl", "--list-formats"]):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 main()
             output = mock_stdout.getvalue()
@@ -190,7 +194,7 @@ class TestCLIMain:
 
     def test_main_detect_platform(self):
         """Test main with --detect-platform."""
-        with patch.object(sys, 'argv', ['simpleetl', '--detect-platform']):
+        with patch.object(sys, "argv", ["simpleetl", "--detect-platform"]):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 main()
             output = mock_stdout.getvalue()
@@ -198,7 +202,9 @@ class TestCLIMain:
 
     def test_main_config_not_found(self):
         """Test main exits when config file does not exist."""
-        with patch.object(sys, 'argv', ['simpleetl', '--config', '/nonexistent/path.yaml']):
+        with patch.object(
+            sys, "argv", ["simpleetl", "--config", "/nonexistent/path.yaml"]
+        ):
             with pytest.raises(SystemExit):
                 main()
 
@@ -211,13 +217,16 @@ class TestCLIMain:
             "output_format": "csv",
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             import yaml
+
             yaml.dump(config_data, f)
             temp_path = f.name
 
         try:
-            with patch.object(sys, 'argv', ['simpleetl', '--config', temp_path, '--dry-run']):
+            with patch.object(
+                sys, "argv", ["simpleetl", "--config", temp_path, "--dry-run"]
+            ):
                 with patch("sys.stdout", new_callable=StringIO):
                     main()
         finally:
@@ -232,13 +241,14 @@ class TestCLIMain:
             "output_format": "csv",
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             import yaml
+
             yaml.dump(config_data, f)
             temp_path = f.name
 
         try:
-            with patch.object(sys, 'argv', ['simpleetl', '--config', temp_path]):
+            with patch.object(sys, "argv", ["simpleetl", "--config", temp_path]):
                 with patch("sys.stdout", new_callable=StringIO):
                     main()
         finally:
@@ -246,11 +256,15 @@ class TestCLIMain:
 
     def test_main_no_args_prints_help(self):
         """Test main with no arguments prints help."""
-        with patch.object(sys, 'argv', ['simpleetl']):
+        with patch.object(sys, "argv", ["simpleetl"]):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                 main()
             output = mock_stdout.getvalue()
-            assert "usage" in output.lower() or "help" in output.lower() or "simpleetl" in output.lower()
+            assert (
+                "usage" in output.lower()
+                or "help" in output.lower()
+                or "simpleetl" in output.lower()
+            )
 
 
 class TestCLIMainModule:
@@ -263,9 +277,10 @@ class TestCLIMainModule:
         # We just verify the module has the guard by checking the source
         import inspect
         from simpleetl import cli as cli_module
+
         source = inspect.getsource(cli_module)
         assert 'if __name__ == "__main__":' in source
-        assert 'main()' in source
+        assert "main()" in source
 
     def test_cli_main_guard_via_subprocess(self):
         """Test cli.py __main__ guard by running `python -m simpleetl` in subprocess."""
@@ -495,8 +510,10 @@ class TestCLIValidateConfig:
 
         argv = [
             "simpleetl",
-            "--validate-config", str(config_file),
-            "--param", "env=prod",
+            "--validate-config",
+            str(config_file),
+            "--param",
+            "env=prod",
         ]
         with patch.object(sys, "argv", argv):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:

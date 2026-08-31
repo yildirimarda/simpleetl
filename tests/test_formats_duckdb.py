@@ -95,6 +95,7 @@ class TestDuckDBReader:
         try:
             from importlib import reload
             import simpleetl.formats.duckdb as mod
+
             reload(mod)
             with pytest.raises(ImportError, match="duckdb"):
                 mod.DuckDBReader().read(str(tmp_path / "x.duckdb"), table="t")
@@ -187,18 +188,19 @@ class TestSqlTransform:
         assert list(result["a"]) == [2, 3]
 
     def test_aggregation(self):
-        df = pd.DataFrame(
-            {"category": ["A", "A", "B", "B"], "value": [10, 20, 5, 15]}
-        )
+        df = pd.DataFrame({"category": ["A", "A", "B", "B"], "value": [10, 20, 5, 15]})
         result = sql_transform(
-            df, "SELECT category, SUM(value) AS total FROM data GROUP BY category ORDER BY category"
+            df,
+            "SELECT category, SUM(value) AS total FROM data GROUP BY category ORDER BY category",
         )
         assert list(result["category"]) == ["A", "B"]
         assert list(result["total"]) == [30, 20]
 
     def test_custom_table_name(self):
         df = pd.DataFrame({"n": [1, 2, 3]})
-        result = sql_transform(df, "SELECT n * 2 AS doubled FROM my_table", table_name="my_table")
+        result = sql_transform(
+            df, "SELECT n * 2 AS doubled FROM my_table", table_name="my_table"
+        )
         assert list(result["doubled"]) == [2, 4, 6]
 
     def test_returns_dataframe(self):
@@ -221,12 +223,15 @@ class TestSqlTransform:
     def test_join_two_registrations(self):
         """DuckDB in-memory can be used for more complex transformations."""
         import duckdb as _duckdb
+
         conn = _duckdb.connect(":memory:")
         df_a = pd.DataFrame({"id": [1, 2], "name": ["Alice", "Bob"]})
         df_b = pd.DataFrame({"id": [1, 2], "score": [90, 80]})
         conn.register("a", df_a)
         conn.register("b", df_b)
-        result = conn.execute("SELECT a.name, b.score FROM a JOIN b ON a.id = b.id").df()
+        result = conn.execute(
+            "SELECT a.name, b.score FROM a JOIN b ON a.id = b.id"
+        ).df()
         assert list(result["name"]) == ["Alice", "Bob"]
 
     def test_import_error_when_duckdb_missing(self):

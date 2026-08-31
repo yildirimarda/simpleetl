@@ -234,9 +234,7 @@ class SchemaDiff:
     added_columns: List[str] = field(default_factory=list)
     removed_columns: List[str] = field(default_factory=list)
     type_changes: Dict[str, Dict[str, str]] = field(default_factory=dict)
-    nullability_changes: Dict[str, Dict[str, bool]] = field(
-        default_factory=dict
-    )
+    nullability_changes: Dict[str, Dict[str, bool]] = field(default_factory=dict)
 
     @property
     def has_changes(self) -> bool:
@@ -356,9 +354,7 @@ class Schema:
         for col_name in df.columns:
             col_series = df[col_name]
             dtype = str(col_series.dtype)
-            is_nullable = nullable.get(
-                col_name, bool(col_series.isna().any())
-            )
+            is_nullable = nullable.get(col_name, bool(col_series.isna().any()))
 
             # Build a base ColumnDef first
             col_def = ColumnDef(
@@ -475,16 +471,12 @@ class Schema:
 
         missing = schema_cols - df_cols
         if missing:
-            errors.append(
-                f"Missing columns: {sorted(missing)}"
-            )
+            errors.append(f"Missing columns: {sorted(missing)}")
 
         # Check for extra columns (informational, not an error by default)
         extra = df_cols - schema_cols
         if extra:
-            errors.append(
-                f"Extra columns not in schema: {sorted(extra)}"
-            )
+            errors.append(f"Extra columns not in schema: {sorted(extra)}")
 
         # Type and nullability checks on columns that exist in both
         for col_def in self._columns:
@@ -533,12 +525,8 @@ class Schema:
         self_cols = {c.name: c for c in self._columns}
         other_cols = {c.name: c for c in other._columns}
 
-        added = [
-            name for name in other_cols if name not in self_cols
-        ]
-        removed = [
-            name for name in self_cols if name not in other_cols
-        ]
+        added = [name for name in other_cols if name not in self_cols]
+        removed = [name for name in self_cols if name not in other_cols]
 
         type_changes: Dict[str, Dict[str, str]] = {}
         nullability_changes: Dict[str, Dict[str, bool]] = {}
@@ -879,8 +867,7 @@ def generate_ddl(
     supported = {d.value for d in SQLDialect}
     if dialect not in supported:
         raise ValueError(
-            f"Unsupported dialect '{dialect}'. "
-            f"Supported: {sorted(supported)}"
+            f"Unsupported dialect '{dialect}'. Supported: {sorted(supported)}"
         )
 
     col_defs: List[str] = []
@@ -903,8 +890,4 @@ def generate_ddl(
     else:
         exists_clause = ""
 
-    return (
-        f"CREATE TABLE {exists_clause}{table_name} (\n"
-        f"{cols_sql}\n"
-        f");"
-    )
+    return f"CREATE TABLE {exists_clause}{table_name} (\n{cols_sql}\n);"

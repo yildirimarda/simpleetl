@@ -26,14 +26,14 @@ class JSONReader(DataReader):
             pandas DataFrame containing the data.
         """
         # Check if source is a JSON string or file path
-        if source.strip().startswith('{') or source.strip().startswith('['):
+        if source.strip().startswith("{") or source.strip().startswith("["):
             return pd.read_json(StringIO(source), **kwargs)
 
         if is_cloud_path(source):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(source)
-            with filesystem.open(source, 'r') as f:
+            with filesystem.open(source, "r") as f:
                 return pd.read_json(f, **kwargs)
 
         return pd.read_json(source, **kwargs)
@@ -55,20 +55,20 @@ class JSONWriter(DataWriter):
                 Supports 'filesystem' for an fsspec filesystem instance.
         """
         # Default to orient='records' for better JSON structure
-        if 'orient' not in kwargs:
-            kwargs['orient'] = 'records'
-        if 'lines' not in kwargs:
-            kwargs['lines'] = True
+        if "orient" not in kwargs:
+            kwargs["orient"] = "records"
+        if "lines" not in kwargs:
+            kwargs["lines"] = True
 
         # If writing to string, handle differently
-        if destination == '-':
+        if destination == "-":
             json_str = data.to_json(**kwargs)
-            print(json_str, end='')
+            print(json_str, end="")
         elif is_cloud_path(destination):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(destination)
-            with filesystem.open(destination, 'w') as f:
+            with filesystem.open(destination, "w") as f:
                 data.to_json(f, **kwargs)
         else:
             data.to_json(destination, **kwargs)

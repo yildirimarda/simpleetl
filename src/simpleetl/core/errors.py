@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 
 class ErrorClassification(enum.Enum):
     """Classification of errors for retry and handling decisions."""
+
     TRANSIENT = "transient"
     PERMANENT = "permanent"
     UNKNOWN = "unknown"
@@ -104,10 +105,7 @@ class PartialFailureError(ETLError):
 
     def __str__(self) -> str:
         base = super().__str__()
-        return (
-            f"{base} | successes={self.success_count} "
-            f"failures={self.failure_count}"
-        )
+        return f"{base} | successes={self.success_count} failures={self.failure_count}"
 
 
 def classify_error(exception: BaseException) -> ErrorClassification:
@@ -172,9 +170,9 @@ def classify_error(exception: BaseException) -> ErrorClassification:
             if exception.errno in (
                 errno.ENOENT,  # No such file or directory
                 errno.EACCES,  # Permission denied
-                errno.EPERM,   # Operation not permitted
+                errno.EPERM,  # Operation not permitted
                 errno.EISDIR,  # Is a directory
-                errno.ENOTDIR, # Not a directory
+                errno.ENOTDIR,  # Not a directory
                 errno.EINVAL,  # Invalid argument
                 errno.ENAMETOOLONG,  # File name too long
             ):

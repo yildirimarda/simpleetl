@@ -192,9 +192,7 @@ class ETLJob(ABC):
         return self._schema_registry
 
     @schema_registry.setter
-    def schema_registry(
-        self, registry: Union[SchemaRegistry, str, Path, None]
-    ) -> None:
+    def schema_registry(self, registry: Union[SchemaRegistry, str, Path, None]) -> None:
         """Set the schema registry.
 
         Args:
@@ -228,9 +226,7 @@ class ETLJob(ABC):
 
         if self._schema_registry is not None:
             self._schema_registry.register_schema(name, version, schema)
-            self.logger.info(
-                "Registered output schema '%s' version %d", name, version
-            )
+            self.logger.info("Registered output schema '%s' version %d", name, version)
         else:
             self.logger.debug(
                 "Stored output schema '%s' in-memory (no registry configured)",
@@ -269,9 +265,7 @@ class ETLJob(ABC):
             strict_nullability=strict_nullability,
             strict_types=strict_types,
         )
-        self.logger.info(
-            "DataFrame validated successfully against schema '%s'", name
-        )
+        self.logger.info("DataFrame validated successfully against schema '%s'", name)
 
     # -- format options helpers ------------------------------------------------
 
@@ -301,9 +295,7 @@ class ETLJob(ABC):
 
     # -- hook helpers -------------------------------------------------------
 
-    def register_hook(
-        self, hook_point: str, hook: Hook, priority: int = 0
-    ) -> None:
+    def register_hook(self, hook_point: str, hook: Hook, priority: int = 0) -> None:
         """Register a hook on this job's hook registry.
 
         Args:
@@ -428,7 +420,7 @@ class ETLJob(ABC):
             Sleep duration in seconds.
         """
         cap = 60.0  # Maximum backoff cap
-        exp_delay = base_delay * (2 ** attempt)
+        exp_delay = base_delay * (2**attempt)
         capped = min(exp_delay, cap)
         return random.uniform(0, capped)
 
@@ -450,7 +442,9 @@ class ETLJob(ABC):
             if checkpoint:
                 self.logger.info(
                     "Resuming job '%s' from checkpoint: phase=%s, records=%d",
-                    self.config.name, checkpoint.phase, checkpoint.records_processed,
+                    self.config.name,
+                    checkpoint.phase,
+                    checkpoint.records_processed,
                 )
 
         for attempt in range(max_retries + 1):
@@ -458,7 +452,9 @@ class ETLJob(ABC):
                 if attempt > 0:
                     self.logger.info(
                         "Starting ETL job attempt %d/%d: %s",
-                        attempt + 1, max_retries + 1, self.config.name,
+                        attempt + 1,
+                        max_retries + 1,
+                        self.config.name,
                     )
                 else:
                     self.logger.info("Starting ETL job: %s", self.config.name)
@@ -468,7 +464,8 @@ class ETLJob(ABC):
                 if attempt > 0:
                     self.logger.info(
                         "ETL job completed successfully on attempt %d: %s",
-                        attempt + 1, self.config.name,
+                        attempt + 1,
+                        self.config.name,
                     )
                 else:
                     self.logger.info(
@@ -488,7 +485,10 @@ class ETLJob(ABC):
                 classification = classify_error(e)
                 self.logger.warning(
                     "ETL job attempt %d/%d failed (classification=%s): %s",
-                    attempt + 1, max_retries + 1, classification.value, str(e),
+                    attempt + 1,
+                    max_retries + 1,
+                    classification.value,
+                    str(e),
                 )
 
                 # Execute on_error hooks
@@ -509,7 +509,9 @@ class ETLJob(ABC):
                 else:
                     self.logger.error(
                         "ETL job failed after %d attempts: %s",
-                        max_retries + 1, self.config.name, exc_info=True,
+                        max_retries + 1,
+                        self.config.name,
+                        exc_info=True,
                     )
                     raise
 
@@ -554,7 +556,9 @@ class ETLJob(ABC):
 
         self.logger.info(
             "Processing %d records with partial failure handling (mode=%s, max_errors=%d)",
-            total, self.error_mode, self.max_errors,
+            total,
+            self.error_mode,
+            self.max_errors,
         )
 
         for idx, record in enumerate(records):
@@ -584,9 +588,7 @@ class ETLJob(ABC):
                         record_index=idx,
                     )
 
-                self.logger.warning(
-                    "Record %d failed: %s", idx, error_msg
-                )
+                self.logger.warning("Record %d failed: %s", idx, error_msg)
 
                 # In strict mode, fail immediately
                 if self.error_mode == "strict":
@@ -610,7 +612,8 @@ class ETLJob(ABC):
             self.dlq.write_to_dlq(self.dlq_path, format="jsonl")
             self.logger.info(
                 "Wrote %d failed records to DLQ: %s",
-                self.dlq.count, self.dlq_path,
+                self.dlq.count,
+                self.dlq_path,
             )
 
         result = {
@@ -622,7 +625,9 @@ class ETLJob(ABC):
 
         self.logger.info(
             "Partial failure processing complete: %d succeeded, %d failed out of %d total",
-            succeeded, len(failed_records), total,
+            succeeded,
+            len(failed_records),
+            total,
         )
 
         # Raise PartialFailureError if any records failed
@@ -724,9 +729,7 @@ class ETLJob(ABC):
                     column=inc_col,
                     value=max_value,
                 )
-                self.logger.info(
-                    "Watermark updated: %s = %s", inc_col, max_value
-                )
+                self.logger.info("Watermark updated: %s = %s", inc_col, max_value)
             else:
                 self.logger.warning(
                     "Incremental column '%s' not found in output data. "

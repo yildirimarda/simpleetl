@@ -119,9 +119,7 @@ def _parse_params(param_list: list) -> Dict[str, str]:
     result: Dict[str, str] = {}
     for item in param_list or []:
         if "=" not in item:
-            raise SystemExit(
-                f"Invalid --param format '{item}'. Expected 'key=value'."
-            )
+            raise SystemExit(f"Invalid --param format '{item}'. Expected 'key=value'.")
         k, v = item.split("=", 1)
         result[k.strip()] = v.strip()
     return result
@@ -133,16 +131,16 @@ def create_parser() -> argparse.ArgumentParser:
         prog="simpleetl",
         description="SimpleETL - A lightweight ETL framework",
     )
+    parser.add_argument("--version", action="version", version="%(prog)s 1.3.0")
     parser.add_argument(
-        "--version", action="version", version="%(prog)s 1.3.0"
-    )
-    parser.add_argument(
-        "--config", "-c",
+        "--config",
+        "-c",
         type=str,
         help="Path to the ETL job configuration file (YAML or JSON)",
     )
     parser.add_argument(
-        "--platform", "-p",
+        "--platform",
+        "-p",
         type=str,
         choices=["local", "glue", "databricks", "synapse"],
         default=None,
@@ -214,8 +212,7 @@ def create_parser() -> argparse.ArgumentParser:
         nargs="?",
         metavar="FILE",
         help=(
-            "Profile a data file and print statistics. "
-            "Usage: simpleetl profile <file>"
+            "Profile a data file and print statistics. Usage: simpleetl profile <file>"
         ),
     )
     parser.add_argument(
@@ -373,16 +370,12 @@ def validate_config_file(
                 QualityRuleEngine,
             )
         except ImportError:
-            logger.debug(
-                "quality_rules module unavailable; skipping rule check"
-            )
+            logger.debug("quality_rules module unavailable; skipping rule check")
         else:
             try:
                 QualityRuleEngine(config.validation_rules)
             except ValueError as exc:
-                print(
-                    f"Invalid validation_rules: {exc}", file=sys.stderr
-                )
+                print(f"Invalid validation_rules: {exc}", file=sys.stderr)
                 sys.exit(1)
 
     def _on_off(flag: bool) -> str:
@@ -399,8 +392,11 @@ def validate_config_file(
     print(f"  Tracing:          {_on_off(config.tracing.enabled)}")
 
 
-def run_job(config_path: str, platform_override: Optional[str] = None,
-            template_vars: Optional[Dict[str, str]] = None) -> None:
+def run_job(
+    config_path: str,
+    platform_override: Optional[str] = None,
+    template_vars: Optional[Dict[str, str]] = None,
+) -> None:
     """
     Run an ETL job from a configuration file.
 
@@ -421,7 +417,7 @@ def run_job(config_path: str, platform_override: Optional[str] = None,
         config.platform = platform_override
 
     metrics = get_metrics()
-    metrics.inc_counter('etl_jobs_total')
+    metrics.inc_counter("etl_jobs_total")
 
     job_class_path = config.params.get("job_class")
     if not job_class_path:
@@ -498,8 +494,7 @@ def main() -> None:
         args.config or args.dag or args.profile or args.profile_file
     ):
         parser.error(
-            "--validate-config cannot be combined with "
-            "--config, --dag, or --profile"
+            "--validate-config cannot be combined with --config, --dag, or --profile"
         )
 
     if args.init:

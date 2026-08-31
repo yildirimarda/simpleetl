@@ -23,7 +23,9 @@ class ParallelReader:
     Uses ThreadPoolExecutor for I/O-bound parallel reads.
     """
 
-    def __init__(self, max_workers: int = 4, reader_class: Optional[Type[DataReader]] = None):
+    def __init__(
+        self, max_workers: int = 4, reader_class: Optional[Type[DataReader]] = None
+    ):
         """Initialize the ParallelReader.
 
         Args:
@@ -148,7 +150,9 @@ class ParallelWriter:
     in parallel.
     """
 
-    def __init__(self, max_workers: int = 4, writer_class: Optional[Type[DataWriter]] = None):
+    def __init__(
+        self, max_workers: int = 4, writer_class: Optional[Type[DataWriter]] = None
+    ):
         """Initialize the ParallelWriter.
 
         Args:

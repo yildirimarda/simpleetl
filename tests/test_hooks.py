@@ -194,11 +194,13 @@ class TestHookRegistryExecute:
 
         class H1(Hook):
             name = "h1"
+
             def execute(self, ctx):
                 calls.append("h1")
 
         class H2(Hook):
             name = "h2"
+
             def execute(self, ctx):
                 calls.append("h2")
 
@@ -221,6 +223,7 @@ class TestHookRegistryExecute:
 
         class BadHook(Hook):
             name = "bad"
+
             def execute(self, ctx):
                 raise RuntimeError("hook failure")
 
@@ -236,6 +239,7 @@ class TestHookRegistryExecute:
 
         class BadHook(Hook):
             name = "bad"
+
             def execute(self, ctx):
                 raise RuntimeError("hook failure")
 
@@ -533,7 +537,14 @@ class TestQualityCheckHook:
 
         hook = QualityCheckHook()
         df = pd.DataFrame({"a": [1]})
-        for phase in (PRE_EXTRACT, PRE_TRANSFORM, PRE_LOAD, POST_LOAD, ON_ERROR, ON_COMPLETE):
+        for phase in (
+            PRE_EXTRACT,
+            PRE_TRANSFORM,
+            PRE_LOAD,
+            POST_LOAD,
+            ON_ERROR,
+            ON_COMPLETE,
+        ):
             ctx = HookContext(job=mock_job, phase=phase, data=df)
             hook.execute(ctx)
         # No quality metadata should have been set

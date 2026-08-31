@@ -34,6 +34,7 @@ from simpleetl.core.hooks import (
 # LineageEvent tests
 # ---------------------------------------------------------------------------
 
+
 class TestLineageEvent:
     """Test LineageEvent creation and serialization."""
 
@@ -126,6 +127,7 @@ class TestLineageEvent:
 # LineageTracker tests
 # ---------------------------------------------------------------------------
 
+
 class TestLineageTracker:
     """Test LineageTracker operations."""
 
@@ -144,41 +146,27 @@ class TestLineageTracker:
     def test_record_multiple_events(self):
         """Test recording multiple events."""
         for i in range(5):
-            self.tracker.record_event(
-                LineageEvent(job_name="job1", phase=POST_EXTRACT)
-            )
+            self.tracker.record_event(LineageEvent(job_name="job1", phase=POST_EXTRACT))
         assert len(self.tracker.get_events()) == 5
 
     def test_get_events_filter_by_job(self):
         """Test filtering events by job name."""
-        self.tracker.record_event(
-            LineageEvent(job_name="job_a", phase=POST_EXTRACT)
-        )
-        self.tracker.record_event(
-            LineageEvent(job_name="job_b", phase=POST_EXTRACT)
-        )
-        self.tracker.record_event(
-            LineageEvent(job_name="job_a", phase=POST_LOAD)
-        )
+        self.tracker.record_event(LineageEvent(job_name="job_a", phase=POST_EXTRACT))
+        self.tracker.record_event(LineageEvent(job_name="job_b", phase=POST_EXTRACT))
+        self.tracker.record_event(LineageEvent(job_name="job_a", phase=POST_LOAD))
         job_a_events = self.tracker.get_events("job_a")
         assert len(job_a_events) == 2
         assert all(e.job_name == "job_a" for e in job_a_events)
 
     def test_get_events_no_filter(self):
         """Test getting all events without filter."""
-        self.tracker.record_event(
-            LineageEvent(job_name="x", phase=POST_EXTRACT)
-        )
-        self.tracker.record_event(
-            LineageEvent(job_name="y", phase=POST_LOAD)
-        )
+        self.tracker.record_event(LineageEvent(job_name="x", phase=POST_EXTRACT))
+        self.tracker.record_event(LineageEvent(job_name="y", phase=POST_LOAD))
         assert len(self.tracker.get_events()) == 2
 
     def test_get_events_nonexistent_job(self):
         """Test filtering by a job name with no events."""
-        self.tracker.record_event(
-            LineageEvent(job_name="real_job", phase=POST_EXTRACT)
-        )
+        self.tracker.record_event(LineageEvent(job_name="real_job", phase=POST_EXTRACT))
         assert self.tracker.get_events("nonexistent") == []
 
     def test_get_lineage(self):
@@ -210,9 +198,7 @@ class TestLineageTracker:
         lineage = self.tracker.get_lineage("my_job")
         assert lineage["job_name"] == "my_job"
         assert len(lineage["events"]) == 3
-        assert lineage["phases"] == [
-            POST_EXTRACT, POST_TRANSFORM, POST_LOAD
-        ]
+        assert lineage["phases"] == [POST_EXTRACT, POST_TRANSFORM, POST_LOAD]
         assert lineage["total_rows_processed"] == 290
         assert lineage["total_duration_seconds"] == 3.5
 
@@ -227,9 +213,7 @@ class TestLineageTracker:
 
     def test_to_dict(self):
         """Test serializing tracker to dict."""
-        self.tracker.record_event(
-            LineageEvent(job_name="j1", phase=POST_EXTRACT)
-        )
+        self.tracker.record_event(LineageEvent(job_name="j1", phase=POST_EXTRACT))
         d = self.tracker.to_dict()
         assert "events" in d
         assert len(d["events"]) == 1
@@ -237,21 +221,15 @@ class TestLineageTracker:
 
     def test_to_json(self):
         """Test serializing tracker to JSON."""
-        self.tracker.record_event(
-            LineageEvent(job_name="j1", phase=POST_EXTRACT)
-        )
+        self.tracker.record_event(LineageEvent(job_name="j1", phase=POST_EXTRACT))
         json_str = self.tracker.to_json()
         parsed = json.loads(json_str)
         assert len(parsed["events"]) == 1
 
     def test_clear(self):
         """Test clearing all events."""
-        self.tracker.record_event(
-            LineageEvent(job_name="j1", phase=POST_EXTRACT)
-        )
-        self.tracker.record_event(
-            LineageEvent(job_name="j2", phase=POST_LOAD)
-        )
+        self.tracker.record_event(LineageEvent(job_name="j1", phase=POST_EXTRACT))
+        self.tracker.record_event(LineageEvent(job_name="j2", phase=POST_LOAD))
         assert len(self.tracker.get_events()) == 2
         self.tracker.clear()
         assert len(self.tracker.get_events()) == 0
@@ -300,6 +278,7 @@ class TestLineageTracker:
 # ---------------------------------------------------------------------------
 # LineageHook tests
 # ---------------------------------------------------------------------------
+
 
 class TestLineageHook:
     """Test LineageHook integration with the hook system."""
@@ -421,6 +400,7 @@ class TestLineageHook:
 # DataFreshnessTracker tests
 # ---------------------------------------------------------------------------
 
+
 class TestDataFreshnessTracker:
     """Test DataFreshnessTracker operations."""
 
@@ -454,9 +434,7 @@ class TestDataFreshnessTracker:
     def test_is_stale_fresh_source(self):
         """Test that a recently updated source is not stale."""
         self.tracker.record_freshness("fresh_source")
-        assert not self.tracker.is_stale(
-            "fresh_source", max_age_seconds=60
-        )
+        assert not self.tracker.is_stale("fresh_source", max_age_seconds=60)
 
     def test_is_stale_old_source(self):
         """Test that an old source is considered stale."""
@@ -469,9 +447,7 @@ class TestDataFreshnessTracker:
         old_ts = datetime.now(timezone.utc) - timedelta(seconds=60)
         self.tracker.record_freshness("boundary_source", timestamp=old_ts)
         # At 60s with max_age_seconds=120 (generous buffer), should not be stale
-        assert not self.tracker.is_stale(
-            "boundary_source", max_age_seconds=120
-        )
+        assert not self.tracker.is_stale("boundary_source", max_age_seconds=120)
 
     def test_get_all_freshness(self):
         """Test getting all freshness records."""
@@ -519,6 +495,7 @@ class TestDataFreshnessTracker:
 # AlertRule tests
 # ---------------------------------------------------------------------------
 
+
 class TestAlertRule:
     """Test AlertRule creation."""
 
@@ -552,6 +529,7 @@ class TestAlertRule:
 # AlertManager tests
 # ---------------------------------------------------------------------------
 
+
 class TestAlertManager:
     """Test AlertManager operations."""
 
@@ -567,12 +545,8 @@ class TestAlertManager:
 
     def test_add_multiple_rules(self):
         """Test adding multiple alert rules."""
-        self.manager.add_rule(
-            AlertRule(name="r1", condition=lambda ctx: True)
-        )
-        self.manager.add_rule(
-            AlertRule(name="r2", condition=lambda ctx: False)
-        )
+        self.manager.add_rule(AlertRule(name="r1", condition=lambda ctx: True))
+        self.manager.add_rule(AlertRule(name="r2", condition=lambda ctx: False))
         assert len(self.manager._rules) == 2
 
     def test_check_alerts_no_rules(self):
@@ -652,23 +626,18 @@ class TestAlertManager:
 
     def test_clear_rules(self):
         """Test clearing all rules."""
-        self.manager.add_rule(
-            AlertRule(name="r1", condition=lambda ctx: True)
-        )
-        self.manager.add_rule(
-            AlertRule(name="r2", condition=lambda ctx: True)
-        )
+        self.manager.add_rule(AlertRule(name="r1", condition=lambda ctx: True))
+        self.manager.add_rule(AlertRule(name="r2", condition=lambda ctx: True))
         self.manager.clear_rules()
         assert len(self.manager._rules) == 0
 
     def test_condition_exception_handled(self):
         """Test that exceptions in conditions are handled gracefully."""
+
         def bad_condition(ctx):
             raise ValueError("boom")
 
-        self.manager.add_rule(
-            AlertRule(name="bad", condition=bad_condition)
-        )
+        self.manager.add_rule(AlertRule(name="bad", condition=bad_condition))
         result = self.manager.check_alerts({})
         assert result == []
 
@@ -689,6 +658,7 @@ class TestAlertManager:
 # ---------------------------------------------------------------------------
 # Module-level singleton tests
 # ---------------------------------------------------------------------------
+
 
 class TestSingletons:
     """Test module-level singleton functions."""

@@ -79,9 +79,7 @@ def render_config_template(
     try:
         return env.from_string(content).render(**ctx)
     except TemplateError as exc:
-        raise ConfigTemplateError(
-            f"Failed to render config template: {exc}"
-        ) from exc
+        raise ConfigTemplateError(f"Failed to render config template: {exc}") from exc
 
 
 def resolve_env_vars(
@@ -139,8 +137,7 @@ def _resolve_env_vars_in_string(value: str) -> str:
         if env_value is not None:
             return env_value
         raise EnvVarResolutionError(
-            f"Environment variable '{var_name}' is not set in config value: "
-            f"{value!r}"
+            f"Environment variable '{var_name}' is not set in config value: {value!r}"
         )
 
     # Process braced references first, then bare ones.
@@ -222,8 +219,9 @@ class ETLJobConfig(BaseModel):
     tracing: TracingConfig = TracingConfig()
 
 
-def _apply_env_prefix(config_data: Dict[str, Any],
-                      prefix: Optional[str]) -> Dict[str, Any]:
+def _apply_env_prefix(
+    config_data: Dict[str, Any], prefix: Optional[str]
+) -> Dict[str, Any]:
     """
     Auto-load environment variables with the given prefix into config params.
 
@@ -245,7 +243,7 @@ def _apply_env_prefix(config_data: Dict[str, Any],
     prefix_upper = prefix.upper()
     for key, value in os.environ.items():
         if key.startswith(prefix_upper):
-            param_key = key[len(prefix_upper):].lower()
+            param_key = key[len(prefix_upper) :].lower()
             if param_key not in params:
                 params[param_key] = value
 
@@ -297,9 +295,7 @@ def load_config(
     """
     config_path = Path(config_path)
     if not config_path.exists():
-        raise FileNotFoundError(
-            f"Configuration file not found: {config_path}"
-        )
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
     with open(config_path, "r") as f:
         raw_content = f.read()
@@ -323,8 +319,7 @@ def load_config(
         )
 
     if not isinstance(config_data, dict):
-        raise ValueError("Configuration file must contain a mapping at the "
-                         "top level")
+        raise ValueError("Configuration file must contain a mapping at the top level")
 
     # Step 1: env_prefix auto-loading (before env var resolution so that
     # prefixed vars can also be referenced via ${VAR} syntax).
@@ -334,9 +329,7 @@ def load_config(
     # Step 2: resolve environment variable references
     config_data = resolve_env_vars(config_data)
     if not isinstance(config_data, dict):
-        raise ValueError(
-            "Configuration must be a mapping after env var resolution"
-        )
+        raise ValueError("Configuration must be a mapping after env var resolution")
 
     # Step 3: resolve secrets if a provider is available
     if secrets_provider is not None:
@@ -344,9 +337,7 @@ def load_config(
     elif config_data.get("secrets_provider"):
         provider_name = config_data["secrets_provider"]
         if provider_name == "env":
-            config_data = resolve_secrets(
-                config_data, EnvSecretsProvider()
-            )
+            config_data = resolve_secrets(config_data, EnvSecretsProvider())
 
     return ETLJobConfig(**config_data)
 

@@ -68,9 +68,7 @@ class TestValidationRulesWiring:
         assert job._config_hooks == {}
 
     def test_rules_register_quality_hook_at_post_transform(self, frame):
-        config = _config(
-            validation_rules=[{"type": "not_null", "column": "id"}]
-        )
+        config = _config(validation_rules=[{"type": "not_null", "column": "id"}])
         job = PassthroughJob(config, frame)
         hooks = job._config_hooks[POST_TRANSFORM]
         assert any(isinstance(h, QualityRuleHook) for h in hooks)
@@ -88,9 +86,7 @@ class TestValidationRulesWiring:
 
     def test_error_rule_failure_aborts_job(self):
         bad = pd.DataFrame({"id": [1, None], "value": [1.0, 2.0]})
-        config = _config(
-            validation_rules=[{"type": "not_null", "column": "id"}]
-        )
+        config = _config(validation_rules=[{"type": "not_null", "column": "id"}])
         job = PassthroughJob(config, bad)
         with pytest.raises(QualityRuleError):
             job.run()

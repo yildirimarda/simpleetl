@@ -116,9 +116,7 @@ class TestPolarsTransform:
 
     def test_eager_return(self, df):
         """fn may return an eager polars DataFrame."""
-        result = polars_transform(
-            df, lambda pldf: pldf.filter(pl.col("age") > 25)
-        )
+        result = polars_transform(df, lambda pldf: pldf.filter(pl.col("age") > 25))
         assert isinstance(result, pd.DataFrame)
         assert list(result["name"]) == ["Bob", "Charlie"]
 
@@ -134,9 +132,7 @@ class TestPolarsTransform:
 
     def test_bad_return_type(self, df):
         """fn returning anything else raises TypeError."""
-        with pytest.raises(
-            TypeError, match="DataFrame or LazyFrame, got dict"
-        ):
+        with pytest.raises(TypeError, match="DataFrame or LazyFrame, got dict"):
             polars_transform(df, lambda pldf: {"not": "a frame"})
 
     def test_import_error(self, df, monkeypatch):
@@ -194,9 +190,7 @@ class TestCSVPolarsEngine:
         """usecols maps to polars column selection."""
         path = str(tmp_path / "data.csv")
         CSVWriter().write(df, path)
-        result = CSVReader().read(
-            path, engine="polars", usecols=["name", "score"]
-        )
+        result = CSVReader().read(path, engine="polars", usecols=["name", "score"])
         assert list(result.columns) == ["name", "score"]
         assert list(result["name"]) == ["Alice", "Bob", "Charlie"]
 
@@ -214,54 +208,38 @@ class TestCSVPolarsEngine:
         result = pd.read_csv(path, sep="|")
         pd.testing.assert_frame_equal(result, df)
 
-    def test_reader_untranslatable_kwarg_falls_back(
-        self, df, tmp_path, caplog
-    ):
+    def test_reader_untranslatable_kwarg_falls_back(self, df, tmp_path, caplog):
         """Unmapped kwargs fall back to pandas with a debug log."""
         path = str(tmp_path / "data.csv")
         CSVWriter().write(df, path)
         with caplog.at_level(logging.DEBUG, logger="simpleetl.formats.csv"):
-            result = CSVReader().read(
-                path, engine="polars", dtype={"age": "int64"}
-            )
+            result = CSVReader().read(path, engine="polars", dtype={"age": "int64"})
         assert "no polars equivalent" in caplog.text
         pd.testing.assert_frame_equal(result, df)
 
-    def test_writer_untranslatable_kwarg_falls_back(
-        self, df, tmp_path, caplog
-    ):
+    def test_writer_untranslatable_kwarg_falls_back(self, df, tmp_path, caplog):
         """Unmapped writer kwargs fall back to pandas with a debug log."""
         path = str(tmp_path / "data.csv")
         with caplog.at_level(logging.DEBUG, logger="simpleetl.formats.csv"):
-            CSVWriter().write(
-                df, path, engine="polars", lineterminator="\n"
-            )
+            CSVWriter().write(df, path, engine="polars", lineterminator="\n")
         assert "no polars equivalent" in caplog.text
         pd.testing.assert_frame_equal(pd.read_csv(path), df)
 
-    def test_reader_missing_polars_warns(
-        self, df, tmp_path, monkeypatch, caplog
-    ):
+    def test_reader_missing_polars_warns(self, df, tmp_path, monkeypatch, caplog):
         """engine='polars' without polars warns and uses pandas."""
         path = str(tmp_path / "data.csv")
         CSVWriter().write(df, path)
         monkeypatch.setitem(sys.modules, "polars", None)
-        with caplog.at_level(
-            logging.WARNING, logger="simpleetl.formats.csv"
-        ):
+        with caplog.at_level(logging.WARNING, logger="simpleetl.formats.csv"):
             result = CSVReader().read(path, engine="polars")
         assert "falling back to pandas" in caplog.text
         pd.testing.assert_frame_equal(result, df)
 
-    def test_writer_missing_polars_warns(
-        self, df, tmp_path, monkeypatch, caplog
-    ):
+    def test_writer_missing_polars_warns(self, df, tmp_path, monkeypatch, caplog):
         """Writer warns and falls back to pandas without polars."""
         path = str(tmp_path / "data.csv")
         monkeypatch.setitem(sys.modules, "polars", None)
-        with caplog.at_level(
-            logging.WARNING, logger="simpleetl.formats.csv"
-        ):
+        with caplog.at_level(logging.WARNING, logger="simpleetl.formats.csv"):
             CSVWriter().write(df, path, engine="polars")
         assert "falling back to pandas" in caplog.text
         pd.testing.assert_frame_equal(pd.read_csv(path), df)
@@ -291,9 +269,7 @@ class TestCSVPolarsEngine:
         """Cloud destinations skip the polars fast path."""
         local = str(tmp_path / "out.csv")
         fs = FakeFilesystem(local)
-        CSVWriter().write(
-            df, "s3://bucket/out.csv", engine="polars", filesystem=fs
-        )
+        CSVWriter().write(df, "s3://bucket/out.csv", engine="polars", filesystem=fs)
         assert fs.opened == [("s3://bucket/out.csv", "w")]
         pd.testing.assert_frame_equal(pd.read_csv(local), df)
 
@@ -301,9 +277,7 @@ class TestCSVPolarsEngine:
         """Chunked reads accept engine='polars' but stay on pandas."""
         path = str(tmp_path / "data.csv")
         CSVWriter().write(df, path)
-        chunks = list(
-            CSVReader().read_chunks(path, chunk_size=2, engine="polars")
-        )
+        chunks = list(CSVReader().read_chunks(path, chunk_size=2, engine="polars"))
         assert len(chunks) == 2
         result = pd.concat(chunks, ignore_index=True)
         pd.testing.assert_frame_equal(result, df)
@@ -311,11 +285,7 @@ class TestCSVPolarsEngine:
     def test_read_chunks_unknown_engine_raises(self, tmp_path):
         """Chunked reads validate the engine name too."""
         with pytest.raises(ValueError, match="Unknown engine"):
-            list(
-                CSVReader().read_chunks(
-                    str(tmp_path / "x.csv"), engine="dask"
-                )
-            )
+            list(CSVReader().read_chunks(str(tmp_path / "x.csv"), engine="dask"))
 
     def test_write_chunks_ignores_polars_engine(self, df, tmp_path):
         """Chunked writes accept engine='polars' but stay on pandas."""
@@ -353,69 +323,47 @@ class TestParquetPolarsEngine:
         """The 'columns' option maps directly to polars."""
         path = str(tmp_path / "data.parquet")
         ParquetWriter().write(df, path)
-        result = ParquetReader().read(
-            path, engine="polars", columns=["name", "age"]
-        )
+        result = ParquetReader().read(path, engine="polars", columns=["name", "age"])
         assert list(result.columns) == ["name", "age"]
 
     def test_writer_compression_option(self, df, tmp_path):
         """The 'compression' option maps directly to polars."""
         path = str(tmp_path / "data.parquet")
-        ParquetWriter().write(
-            df, path, engine="polars", compression="zstd"
-        )
+        ParquetWriter().write(df, path, engine="polars", compression="zstd")
         pd.testing.assert_frame_equal(ParquetReader().read(path), df)
 
-    def test_reader_untranslatable_kwarg_falls_back(
-        self, df, tmp_path, caplog
-    ):
+    def test_reader_untranslatable_kwarg_falls_back(self, df, tmp_path, caplog):
         """Unmapped kwargs fall back to pandas with a debug log."""
         path = str(tmp_path / "data.parquet")
         ParquetWriter().write(df, path)
-        with caplog.at_level(
-            logging.DEBUG, logger="simpleetl.formats.parquet"
-        ):
-            result = ParquetReader().read(
-                path, engine="polars", filters=None
-            )
+        with caplog.at_level(logging.DEBUG, logger="simpleetl.formats.parquet"):
+            result = ParquetReader().read(path, engine="polars", filters=None)
         assert "no polars equivalent" in caplog.text
         pd.testing.assert_frame_equal(result, df)
 
-    def test_writer_untranslatable_kwarg_falls_back(
-        self, df, tmp_path, caplog
-    ):
+    def test_writer_untranslatable_kwarg_falls_back(self, df, tmp_path, caplog):
         """Unmapped writer kwargs fall back to pandas with a debug log."""
         path = str(tmp_path / "data.parquet")
-        with caplog.at_level(
-            logging.DEBUG, logger="simpleetl.formats.parquet"
-        ):
+        with caplog.at_level(logging.DEBUG, logger="simpleetl.formats.parquet"):
             ParquetWriter().write(df, path, engine="polars", index=False)
         assert "no polars equivalent" in caplog.text
         pd.testing.assert_frame_equal(ParquetReader().read(path), df)
 
-    def test_reader_missing_polars_warns(
-        self, df, tmp_path, monkeypatch, caplog
-    ):
+    def test_reader_missing_polars_warns(self, df, tmp_path, monkeypatch, caplog):
         """engine='polars' without polars warns and uses pandas."""
         path = str(tmp_path / "data.parquet")
         ParquetWriter().write(df, path)
         monkeypatch.setitem(sys.modules, "polars", None)
-        with caplog.at_level(
-            logging.WARNING, logger="simpleetl.formats.parquet"
-        ):
+        with caplog.at_level(logging.WARNING, logger="simpleetl.formats.parquet"):
             result = ParquetReader().read(path, engine="polars")
         assert "falling back to pandas" in caplog.text
         pd.testing.assert_frame_equal(result, df)
 
-    def test_writer_missing_polars_warns(
-        self, df, tmp_path, monkeypatch, caplog
-    ):
+    def test_writer_missing_polars_warns(self, df, tmp_path, monkeypatch, caplog):
         """Writer warns and falls back to pandas without polars."""
         path = str(tmp_path / "data.parquet")
         monkeypatch.setitem(sys.modules, "polars", None)
-        with caplog.at_level(
-            logging.WARNING, logger="simpleetl.formats.parquet"
-        ):
+        with caplog.at_level(logging.WARNING, logger="simpleetl.formats.parquet"):
             ParquetWriter().write(df, path, engine="polars")
         assert "falling back to pandas" in caplog.text
         pd.testing.assert_frame_equal(ParquetReader().read(path), df)
@@ -434,9 +382,7 @@ class TestParquetPolarsEngine:
         with mock.patch.object(
             parquet_module.pd, "read_parquet", return_value=df
         ) as read_parquet:
-            with caplog.at_level(
-                logging.DEBUG, logger="simpleetl.formats.parquet"
-            ):
+            with caplog.at_level(logging.DEBUG, logger="simpleetl.formats.parquet"):
                 result = ParquetReader().read(
                     "s3://bucket/data.parquet",
                     engine="polars",
@@ -450,9 +396,7 @@ class TestParquetPolarsEngine:
     def test_writer_cloud_path_falls_back(self, df):
         """Cloud destinations skip the polars fast path."""
         fake_fs = FakeFilesystem("unused")
-        with mock.patch.object(
-            parquet_module.pd.DataFrame, "to_parquet"
-        ) as to_parquet:
+        with mock.patch.object(parquet_module.pd.DataFrame, "to_parquet") as to_parquet:
             ParquetWriter().write(
                 df,
                 "s3://bucket/out.parquet",
@@ -466,9 +410,7 @@ class TestParquetPolarsEngine:
         """Chunked reads accept engine='polars' but stay on pyarrow."""
         path = str(tmp_path / "data.parquet")
         ParquetWriter().write(df, path)
-        chunks = list(
-            ParquetReader().read_chunks(path, chunk_size=2, engine="polars")
-        )
+        chunks = list(ParquetReader().read_chunks(path, chunk_size=2, engine="polars"))
         result = pd.concat(chunks, ignore_index=True)
         pd.testing.assert_frame_equal(result, df)
 
@@ -479,6 +421,4 @@ class TestParquetPolarsEngine:
             iter([df.iloc[:2], df.iloc[2:]]), path, engine="polars"
         )
         result = ParquetReader().read(path)
-        pd.testing.assert_frame_equal(
-            result.reset_index(drop=True), df
-        )
+        pd.testing.assert_frame_equal(result.reset_index(drop=True), df)

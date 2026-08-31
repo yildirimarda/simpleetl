@@ -32,71 +32,75 @@ from simpleetl.core.security import (
 @pytest.fixture
 def pii_df():
     """A DataFrame containing PII columns and values."""
-    return pd.DataFrame({
-        "id": [1, 2, 3, 4, 5],
-        "email": [
-            "alice@example.com",
-            "bob@test.org",
-            "charlie@demo.net",
-            "diana@work.com",
-            "eve@mail.io",
-        ],
-        "phone": [
-            "+1234567890",
-            "+0987654321",
-            "555-123-4567",
-            "8005551234",
-            "+44 20 7946 0958",
-        ],
-        "ssn": [
-            "123-45-6789",
-            "987-65-4321",
-            "111-22-3333",
-            "444-55-6666",
-            "777-88-9999",
-        ],
-        "credit_card": [
-            "1234567890123456",
-            "9876543210987654",
-            "1234-5678-9012-3456",
-            "9876 5432 1098 7654",
-            "1111222233334444",
-        ],
-        "ip_address": [
-            "192.168.1.1",
-            "10.0.0.1",
-            "172.16.0.1",
-            "8.8.8.8",
-            "1.1.1.1",
-        ],
-        "first_name": ["Alice", "Bob", "Charlie", "Diana", "Eve"],
-        "last_name": ["Smith", "Jones", "Brown", "Davis", "Wilson"],
-        "address": [
-            "123 Main St",
-            "456 Oak Ave",
-            "789 Pine Rd",
-            "321 Elm St",
-            "654 Maple Dr",
-        ],
-        "date_of_birth": [
-            "1990-01-15",
-            "1985-06-20",
-            "1992-11-30",
-            "1988-03-25",
-            "1995-09-10",
-        ],
-        "score": [88.5, 92.0, 76.3, 95.1, 81.7],
-    })
+    return pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            "email": [
+                "alice@example.com",
+                "bob@test.org",
+                "charlie@demo.net",
+                "diana@work.com",
+                "eve@mail.io",
+            ],
+            "phone": [
+                "+1234567890",
+                "+0987654321",
+                "555-123-4567",
+                "8005551234",
+                "+44 20 7946 0958",
+            ],
+            "ssn": [
+                "123-45-6789",
+                "987-65-4321",
+                "111-22-3333",
+                "444-55-6666",
+                "777-88-9999",
+            ],
+            "credit_card": [
+                "1234567890123456",
+                "9876543210987654",
+                "1234-5678-9012-3456",
+                "9876 5432 1098 7654",
+                "1111222233334444",
+            ],
+            "ip_address": [
+                "192.168.1.1",
+                "10.0.0.1",
+                "172.16.0.1",
+                "8.8.8.8",
+                "1.1.1.1",
+            ],
+            "first_name": ["Alice", "Bob", "Charlie", "Diana", "Eve"],
+            "last_name": ["Smith", "Jones", "Brown", "Davis", "Wilson"],
+            "address": [
+                "123 Main St",
+                "456 Oak Ave",
+                "789 Pine Rd",
+                "321 Elm St",
+                "654 Maple Dr",
+            ],
+            "date_of_birth": [
+                "1990-01-15",
+                "1985-06-20",
+                "1992-11-30",
+                "1988-03-25",
+                "1995-09-10",
+            ],
+            "score": [88.5, 92.0, 76.3, 95.1, 81.7],
+        }
+    )
 
 
 @pytest.fixture
 def simple_df():
     """A simple DataFrame for basic tests."""
-    return pd.DataFrame({
-        "id": [1, 2, 3],
-        "name": ["Alice", "Bob", "Charlie"],
-        "value": [10, 20, 30],
-    })
+    return pd.DataFrame(
+        {
+            "id": [1, 2, 3],
+            "name": ["Alice", "Bob", "Charlie"],
+            "value": [10, 20, 30],
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -173,9 +177,7 @@ class TestDetectPiiValues:
         assert result == {}
 
     def test_sample_size_limits_rows(self, pii_df):
-        result = detect_pii_values(
-            pii_df, columns=["email"], sample_size=2
-        )
+        result = detect_pii_values(pii_df, columns=["email"], sample_size=2)
         assert result["email"]["email"] == 2
 
 
@@ -243,33 +245,23 @@ class TestMaskPii:
     """Tests for the mask_pii function."""
 
     def test_redact_method(self, pii_df):
-        result = mask_pii(
-            pii_df, columns={"email": "email"}, method="redact"
-        )
+        result = mask_pii(pii_df, columns={"email": "email"}, method="redact")
         assert all(v == "***@***.***" for v in result["email"])
 
     def test_hash_method(self, pii_df):
-        result = mask_pii(
-            pii_df, columns={"email": "email"}, method="hash"
-        )
+        result = mask_pii(pii_df, columns={"email": "email"}, method="hash")
         # SHA-256 produces 64-char hex strings
         assert all(len(str(v)) == 64 for v in result["email"])
 
     def test_partial_method_email(self, pii_df):
-        result = mask_pii(
-            pii_df, columns={"email": "email"}, method="partial"
-        )
+        result = mask_pii(pii_df, columns={"email": "email"}, method="partial")
         assert result["email"].iloc[0] == "a***@example.com"
 
     def test_tokenize_method(self, pii_df):
         _reset_token_cache()
-        result = mask_pii(
-            pii_df, columns={"email": "email"}, method="tokenize"
-        )
+        result = mask_pii(pii_df, columns={"email": "email"}, method="tokenize")
         # All values should be tokenized
-        assert all(
-            str(v).startswith("<EMAIL_") for v in result["email"]
-        )
+        assert all(str(v).startswith("<EMAIL_") for v in result["email"])
 
     def test_invalid_method_raises(self, pii_df):
         with pytest.raises(ValueError, match="Unsupported masking method"):
@@ -360,9 +352,7 @@ class TestAuditLogger:
 
     def test_log_transformation_stores_entry(self):
         audit = AuditLogger()
-        audit.log_transformation(
-            "bob", "etl_job", "mask", "raw", "masked"
-        )
+        audit.log_transformation("bob", "etl_job", "mask", "raw", "masked")
         trail = audit.get_audit_trail()
         assert len(trail) == 1
         assert trail[0]["event_type"] == "transformation"
@@ -387,9 +377,7 @@ class TestAuditLogger:
         assert len(trail) == 1
 
     def test_log_file_output(self):
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".jsonl", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             path = f.name
         try:
             audit = AuditLogger(log_file=path)
@@ -404,9 +392,7 @@ class TestAuditLogger:
         audit = AuditLogger()
         audit.log_access("alice", "read", "customers")
         audit.log_access("bob", "write", "orders")
-        audit.log_transformation(
-            "alice", "job1", "mask", "raw", "masked"
-        )
+        audit.log_transformation("alice", "job1", "mask", "raw", "masked")
         trail = audit.get_audit_trail()
         assert len(trail) == 3
 
@@ -442,14 +428,8 @@ class TestRBACPolicy:
             permissions=["read"],
             allowed_columns={"customers": ["id", "name"]},
         )
-        assert (
-            policy.check_access("analyst", "read", "customers", "id")
-            is True
-        )
-        assert (
-            policy.check_access("analyst", "read", "customers", "ssn")
-            is False
-        )
+        assert policy.check_access("analyst", "read", "customers", "id") is True
+        assert policy.check_access("analyst", "read", "customers", "ssn") is False
 
     def test_filter_columns(self):
         policy = RBACPolicy()
@@ -488,7 +468,5 @@ class TestRBACPolicy:
     def test_apply_rbac_filter_no_restrictions(self, simple_df):
         policy = RBACPolicy()
         policy.add_role("admin", permissions=["read", "write"])
-        result = apply_rbac_filter(
-            simple_df, "admin", "test_table", policy
-        )
+        result = apply_rbac_filter(simple_df, "admin", "test_table", policy)
         pd.testing.assert_frame_equal(result, simple_df)

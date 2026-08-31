@@ -25,19 +25,19 @@ class XMLReader(DataReader):
         Returns:
             pandas DataFrame containing the data.
         """
-        root_element = kwargs.pop('root_element', None)
+        root_element = kwargs.pop("root_element", None)
 
         # Read XML content
-        if source.strip().startswith('<'):
+        if source.strip().startswith("<"):
             xml_content = source
         elif is_cloud_path(source):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(source)
-            with filesystem.open(source, 'r', encoding='utf-8') as f:
+            with filesystem.open(source, "r", encoding="utf-8") as f:
                 xml_content = f.read()
         else:
-            with open(source, 'r', encoding='utf-8') as f:
+            with open(source, "r", encoding="utf-8") as f:
                 xml_content = f.read()
 
         data_dict = xmltodict.parse(xml_content, **kwargs)
@@ -46,9 +46,7 @@ class XMLReader(DataReader):
             if root_element in data_dict:
                 data_dict = data_dict[root_element]
             else:
-                raise ValueError(
-                    f"Root element '{root_element}' not found in XML"
-                )
+                raise ValueError(f"Root element '{root_element}' not found in XML")
 
         if isinstance(data_dict, dict):
             for key, value in data_dict.items():
@@ -60,7 +58,7 @@ class XMLReader(DataReader):
         elif isinstance(data_dict, list):
             return pd.DataFrame(data_dict)
         else:
-            return pd.DataFrame([{'value': data_dict}])
+            return pd.DataFrame([{"value": data_dict}])
 
 
 class XMLWriter(DataWriter):
@@ -78,19 +76,19 @@ class XMLWriter(DataWriter):
             **kwargs: Additional arguments for XML generation.
                 Supports 'filesystem' for an fsspec filesystem instance.
         """
-        root_element = kwargs.pop('root_element', 'data')
-        record_element = kwargs.pop('record_element', 'record')
-        filesystem = kwargs.pop('filesystem', None)
+        root_element = kwargs.pop("root_element", "data")
+        record_element = kwargs.pop("record_element", "record")
+        filesystem = kwargs.pop("filesystem", None)
 
-        records = data.to_dict('records')
+        records = data.to_dict("records")
         xml_data = {root_element: {record_element: records}}
         xml_str = xmltodict.unparse(xml_data, **kwargs)
 
         if is_cloud_path(destination):
             if filesystem is None:
                 filesystem = get_filesystem(destination)
-            with filesystem.open(destination, 'w', encoding='utf-8') as f:
+            with filesystem.open(destination, "w", encoding="utf-8") as f:
                 f.write(xml_str)
         else:
-            with open(destination, 'w', encoding='utf-8') as f:
+            with open(destination, "w", encoding="utf-8") as f:
                 f.write(xml_str)

@@ -33,6 +33,7 @@ class SecretsProvider(ABC):
 
 class SecretNotFoundError(Exception):
     """Raised when a requested secret cannot be found."""
+
     pass
 
 
@@ -54,9 +55,7 @@ class EnvSecretsProvider(SecretsProvider):
         """
         value = os.environ.get(name)
         if value is None:
-            raise SecretNotFoundError(
-                f"Environment variable '{name}' is not set"
-            )
+            raise SecretNotFoundError(f"Environment variable '{name}' is not set")
         return value
 
 
@@ -192,9 +191,7 @@ class HashiCorpVaultProvider(SecretsProvider):
         import hvac.exceptions
 
         try:
-            response = self._client.secrets.kv.v2.read_secret_version(
-                path=name
-            )
+            response = self._client.secrets.kv.v2.read_secret_version(path=name)
             return response["data"]["data"]["value"]
         except hvac.exceptions.Forbidden as e:
             raise SecretNotFoundError(
@@ -207,9 +204,7 @@ class HashiCorpVaultProvider(SecretsProvider):
 
 
 # Regex pattern for ${secrets://provider/secret-name} syntax
-_SECRETS_PATTERN = re.compile(
-    r"\$\{secrets://([a-zA-Z0-9_-]+)/([^}]+)\}"
-)
+_SECRETS_PATTERN = re.compile(r"\$\{secrets://([a-zA-Z0-9_-]+)/([^}]+)\}")
 
 
 def resolve_secrets(
@@ -241,6 +236,7 @@ def resolve_secrets(
         if match:
             secret_name = match.group(2)
             return provider.get_secret(secret_name)
+
         # Also handle partial replacement within a larger string
         def _replace(match: re.Match) -> str:
             secret_name = match.group(2)
@@ -248,10 +244,7 @@ def resolve_secrets(
 
         return _SECRETS_PATTERN.sub(_replace, value)
     if isinstance(value, dict):
-        return {
-            key: resolve_secrets(val, provider)
-            for key, val in value.items()
-        }
+        return {key: resolve_secrets(val, provider) for key, val in value.items()}
     if isinstance(value, list):
         return [resolve_secrets(item, provider) for item in value]
     return value

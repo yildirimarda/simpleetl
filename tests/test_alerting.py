@@ -32,12 +32,8 @@ class TestWebhookChannel:
         mock_response.status = 200
 
         with patch("urllib.request.urlopen") as mock_urlopen:
-            mock_urlopen.return_value.__enter__ = MagicMock(
-                return_value=mock_response
-            )
-            mock_urlopen.return_value.__exit__ = MagicMock(
-                return_value=False
-            )
+            mock_urlopen.return_value.__enter__ = MagicMock(return_value=mock_response)
+            mock_urlopen.return_value.__exit__ = MagicMock(return_value=False)
             result = channel.send("test message", "critical", "rule1")
 
         assert result is True
@@ -55,12 +51,8 @@ class TestWebhookChannel:
         mock_response.status = 500
 
         with patch("urllib.request.urlopen") as mock_urlopen:
-            mock_urlopen.return_value.__enter__ = MagicMock(
-                return_value=mock_response
-            )
-            mock_urlopen.return_value.__exit__ = MagicMock(
-                return_value=False
-            )
+            mock_urlopen.return_value.__enter__ = MagicMock(return_value=mock_response)
+            mock_urlopen.return_value.__exit__ = MagicMock(return_value=False)
             result = channel.send("test", "warning", "rule1")
 
         assert result is False
@@ -113,9 +105,7 @@ class TestWebhookChannel:
             m.__exit__ = MagicMock(return_value=False)
             return m
 
-        with patch(
-            "urllib.request.urlopen", side_effect=capture_call
-        ) as mock_urlopen:
+        with patch("urllib.request.urlopen", side_effect=capture_call) as mock_urlopen:
             channel.send("msg", "warning", "r1")
 
         assert mock_urlopen.call_args.kwargs["timeout"] == 5.0
@@ -136,12 +126,8 @@ class TestSlackChannel:
         mock_response.status = 200
 
         with patch("urllib.request.urlopen") as mock_urlopen:
-            mock_urlopen.return_value.__enter__ = MagicMock(
-                return_value=mock_response
-            )
-            mock_urlopen.return_value.__exit__ = MagicMock(
-                return_value=False
-            )
+            mock_urlopen.return_value.__enter__ = MagicMock(return_value=mock_response)
+            mock_urlopen.return_value.__exit__ = MagicMock(return_value=False)
             result = channel.send("test msg", "warning", "rule1")
 
         assert result is True
@@ -150,9 +136,7 @@ class TestSlackChannel:
         """Test that errors return False."""
         channel = SlackChannel(webhook_url="https://hooks.slack.com/test")
 
-        with patch(
-            "urllib.request.urlopen", side_effect=Exception("Network error")
-        ):
+        with patch("urllib.request.urlopen", side_effect=Exception("Network error")):
             result = channel.send("test", "warning", "rule1")
 
         assert result is False
@@ -337,8 +321,7 @@ class TestEmailChannelSMTP:
     def test_send_ssl_variant(self):
         """Test use_ssl=True connects via SMTP_SSL without STARTTLS."""
         channel = self._channel(use_ssl=True, smtp_port=465)
-        with patch("smtplib.SMTP_SSL") as mock_ssl, \
-                patch("smtplib.SMTP") as mock_smtp:
+        with patch("smtplib.SMTP_SSL") as mock_ssl, patch("smtplib.SMTP") as mock_smtp:
             result = channel.send("msg", "critical", "r1")
 
         assert result is True
@@ -382,9 +365,7 @@ class TestEmailChannelSMTP:
         channel = self._channel()
         with patch("smtplib.SMTP") as mock_smtp:
             server = mock_smtp.return_value.__enter__.return_value
-            server.send_message.side_effect = smtplib.SMTPDataError(
-                550, "rejected"
-            )
+            server.send_message.side_effect = smtplib.SMTPDataError(550, "rejected")
             result = channel.send("msg", "critical", "r1")
 
         assert result is False
@@ -392,9 +373,10 @@ class TestEmailChannelSMTP:
     def test_send_failure_is_logged(self, caplog):
         """Test that SMTP failures are logged as errors."""
         channel = self._channel()
-        with patch(
-            "smtplib.SMTP", side_effect=smtplib.SMTPException("boom")
-        ), caplog.at_level(logging.ERROR):
+        with (
+            patch("smtplib.SMTP", side_effect=smtplib.SMTPException("boom")),
+            caplog.at_level(logging.ERROR),
+        ):
             channel.send("msg", "critical", "fail_rule")
 
         assert "Failed to send email alert" in caplog.text
@@ -403,9 +385,11 @@ class TestEmailChannelSMTP:
     def test_unconfigured_channel_does_not_use_smtp(self, caplog):
         """Test that no smtp_host keeps the log-only behavior."""
         channel = EmailChannel(recipients=["admin@example.com"])
-        with patch("smtplib.SMTP") as mock_smtp, \
-                patch("smtplib.SMTP_SSL") as mock_ssl, \
-                caplog.at_level(logging.INFO):
+        with (
+            patch("smtplib.SMTP") as mock_smtp,
+            patch("smtplib.SMTP_SSL") as mock_ssl,
+            caplog.at_level(logging.INFO),
+        ):
             result = channel.send("body", "warning", "r1")
 
         assert result is True
@@ -415,9 +399,7 @@ class TestEmailChannelSMTP:
 
     def test_recipients_alias_maps_to_to_addrs(self):
         """Test that the legacy recipients kwarg populates to_addrs."""
-        channel = EmailChannel(
-            recipients=["a@b.com"], smtp_host="smtp.example.com"
-        )
+        channel = EmailChannel(recipients=["a@b.com"], smtp_host="smtp.example.com")
         assert channel.to_addrs == ["a@b.com"]
         assert channel.recipients == ["a@b.com"]
 
@@ -477,6 +459,7 @@ class TestAlertRuleEvaluate:
 
     def test_evaluate_handles_exception_gracefully(self):
         """Test evaluate catches exceptions and returns None."""
+
         def bad_condition(ctx):
             raise RuntimeError("condition error")
 
@@ -566,12 +549,8 @@ class TestAlertRuleDispatch:
         )
 
         with patch("urllib.request.urlopen") as mock_urlopen:
-            mock_urlopen.return_value.__enter__ = MagicMock(
-                return_value=mock_response
-            )
-            mock_urlopen.return_value.__exit__ = MagicMock(
-                return_value=False
-            )
+            mock_urlopen.return_value.__enter__ = MagicMock(return_value=mock_response)
+            mock_urlopen.return_value.__exit__ = MagicMock(return_value=False)
             results = rule.dispatch("hello")
 
         assert results["EmailChannel"] is True
@@ -664,6 +643,7 @@ class TestAlertManagerDispatch:
 
     def test_condition_exception_handled(self):
         """Test that condition exceptions are handled gracefully."""
+
         def bad_condition(ctx):
             raise ValueError("boom")
 

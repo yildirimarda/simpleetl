@@ -148,6 +148,7 @@ class TestDeadLetterQueue:
             path = f.name
             for entry in self.dlq.entries:
                 import json
+
                 f.write(json.dumps(entry.to_dict()) + "\n")
 
         new_dlq = DeadLetterQueue()

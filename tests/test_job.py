@@ -28,11 +28,7 @@ class TestJob(ETLJob):
 
 def test_job_initialization():
     """Test that a job can be initialized with a config."""
-    config = ETLJobConfig(
-        name="test_job",
-        input_format="csv",
-        output_format="csv"
-    )
+    config = ETLJobConfig(name="test_job", input_format="csv", output_format="csv")
     job = TestJob(config)
     assert job.config.name == "test_job"
     assert job.logger.name == "simpleetl.core.job.test_job"
@@ -41,10 +37,7 @@ def test_job_initialization():
 def test_setup_logging():
     """Test that logging is set up correctly."""
     config = ETLJobConfig(
-        name="test_job",
-        input_format="csv",
-        output_format="csv",
-        log_level="DEBUG"
+        name="test_job", input_format="csv", output_format="csv", log_level="DEBUG"
     )
     job = TestJob(config)
 
@@ -63,17 +56,14 @@ def test_setup_logging():
 def test_setup_logging_invalid_level():
     """Test that invalid log level defaults to INFO."""
     config = ETLJobConfig(
-        name="test_job",
-        input_format="csv",
-        output_format="csv",
-        log_level="INVALID"
+        name="test_job", input_format="csv", output_format="csv", log_level="INVALID"
     )
     job = TestJob(config)
 
     # Clear any existing handlers to ensure clean state
     job.logger.handlers.clear()
 
-    with patch.object(job.logger, 'warning') as mock_warning:
+    with patch.object(job.logger, "warning") as mock_warning:
         job._setup_logging()
         # Should warn about invalid log level
         mock_warning.assert_called_once()
@@ -82,14 +72,10 @@ def test_setup_logging_invalid_level():
 
 def test_run_success():
     """Test successful job execution."""
-    config = ETLJobConfig(
-        name="test_job",
-        input_format="csv",
-        output_format="csv"
-    )
+    config = ETLJobConfig(name="test_job", input_format="csv", output_format="csv")
     job = TestJob(config, should_fail=False)
 
-    with patch.object(job.logger, 'info') as mock_info:
+    with patch.object(job.logger, "info") as mock_info:
         job.run_with_error_handling()
         # Should log start and success
         assert mock_info.call_count == 2
@@ -103,14 +89,15 @@ def test_run_with_retries_eventual_success():
         input_format="csv",
         output_format="csv",
         max_retries=2,
-        retry_delay=0.01  # Short delay for testing
+        retry_delay=0.01,  # Short delay for testing
     )
     job = TestJob(config, should_fail=True, fail_count=1)  # Fail once, then succeed
 
-    with patch('time.sleep') as mock_sleep, \
-         patch.object(job.logger, 'info') as mock_info, \
-         patch.object(job.logger, 'warning') as mock_warning:
-
+    with (
+        patch("time.sleep") as mock_sleep,
+        patch.object(job.logger, "info") as mock_info,
+        patch.object(job.logger, "warning") as mock_warning,
+    ):
         job.run_with_error_handling()
 
         # Should have attempted twice (1 failure + 1 success)
@@ -130,13 +117,14 @@ def test_run_max_retries_exceeded():
         input_format="csv",
         output_format="csv",
         max_retries=2,
-        retry_delay=0.01  # Short delay for testing
+        retry_delay=0.01,  # Short delay for testing
     )
     job = TestJob(config, should_fail=True, fail_count=5)  # Always fail
 
-    with patch('time.sleep') as mock_sleep, \
-         patch.object(job.logger, 'error') as mock_error:
-
+    with (
+        patch("time.sleep") as mock_sleep,
+        patch.object(job.logger, "error") as mock_error,
+    ):
         with pytest.raises(ConnectionError, match="Intentional failure"):
             job.run_with_error_handling()
 
@@ -150,27 +138,23 @@ def test_run_max_retries_exceeded():
 
 def test_extract_transform_load_defaults():
     """Test the default extract, transform, and load methods."""
-    config = ETLJobConfig(
-        name="test_job",
-        input_format="csv",
-        output_format="csv"
-    )
+    config = ETLJobConfig(name="test_job", input_format="csv", output_format="csv")
     job = TestJob(config)
 
     # extract should return None and log warning
-    with patch.object(job.logger, 'warning') as mock_warning:
+    with patch.object(job.logger, "warning") as mock_warning:
         result = job.extract()
         assert result is None
         mock_warning.assert_called_once()
 
     # transform should return input unchanged and log debug
     test_data = "test"
-    with patch.object(job.logger, 'debug') as mock_debug:
+    with patch.object(job.logger, "debug") as mock_debug:
         result = job.transform(test_data)
         assert result == test_data
         mock_debug.assert_called_once()
 
     # load should log warning and return None
-    with patch.object(job.logger, 'warning') as mock_warning:
+    with patch.object(job.logger, "warning") as mock_warning:
         job.load("test_data")
         mock_warning.assert_called_once()

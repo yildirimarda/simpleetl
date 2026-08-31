@@ -39,6 +39,7 @@ from simpleetl.core.checkpoint import Checkpoint
 # Test job subclass
 # ---------------------------------------------------------------------------
 
+
 class ConcreteTestJob(ETLJob):
     """A concrete ETL job for testing purposes."""
 
@@ -58,6 +59,7 @@ class ConcreteTestJob(ETLJob):
 # ---------------------------------------------------------------------------
 # 1. ETLJob.__init__ with invalid config type (lines 59-65)
 # ---------------------------------------------------------------------------
+
 
 class TestInitInvalidConfigType:
     """Tests for ETLJob.__init__ rejecting invalid config types."""
@@ -86,6 +88,7 @@ class TestInitInvalidConfigType:
 # ---------------------------------------------------------------------------
 # 2. checkpoint_config.get("dir", ...) line (line 83)
 # ---------------------------------------------------------------------------
+
 
 class TestCheckpointConfigDir:
     """Tests for checkpoint config dir default value."""
@@ -142,6 +145,7 @@ class TestCheckpointConfigDir:
 # 3. extract() placeholder warning (line 115)
 # ---------------------------------------------------------------------------
 
+
 class TestExtractPlaceholder:
     """Tests for the default extract() placeholder method."""
 
@@ -176,6 +180,7 @@ class TestExtractPlaceholder:
 # 4. schema_registry property getter (line 180)
 # ---------------------------------------------------------------------------
 
+
 class TestSchemaRegistryGetter:
     """Tests for the schema_registry property getter."""
 
@@ -205,6 +210,7 @@ class TestSchemaRegistryGetter:
 # ---------------------------------------------------------------------------
 # 5. schema_registry setter (lines 192-197)
 # ---------------------------------------------------------------------------
+
 
 class TestSchemaRegistrySetter:
     """Tests for the schema_registry setter with various input types."""
@@ -260,6 +266,7 @@ class TestSchemaRegistrySetter:
 # ---------------------------------------------------------------------------
 # 6. register_output_schema (lines 215-223)
 # ---------------------------------------------------------------------------
+
 
 class TestRegisterOutputSchema:
     """Tests for register_output_schema with and without registry."""
@@ -325,6 +332,7 @@ class TestRegisterOutputSchema:
 # 7. validate_against_schema (lines 248-260)
 # ---------------------------------------------------------------------------
 
+
 class TestValidateAgainstSchema:
     """Tests for validate_against_schema."""
 
@@ -383,6 +391,7 @@ class TestValidateAgainstSchema:
 # ---------------------------------------------------------------------------
 # 8. validate_output (lines 724-773)
 # ---------------------------------------------------------------------------
+
 
 class TestValidateOutput:
     """Tests for validate_output method."""
@@ -490,6 +499,7 @@ class TestValidateOutput:
 # 9. register_hook (line 276)
 # ---------------------------------------------------------------------------
 
+
 class TestRegisterHook:
     """Tests for register_hook."""
 
@@ -530,6 +540,7 @@ class TestRegisterHook:
 # 10. run_with_error_handling checkpoint resume (lines 359-361)
 # ---------------------------------------------------------------------------
 
+
 class TestRunErrorHandlingCheckpointResume:
     """Tests for checkpoint resume in run_with_error_handling."""
 
@@ -561,10 +572,7 @@ class TestRunErrorHandlingCheckpointResume:
         with patch.object(job.logger, "info") as mock_info:
             job.run_with_error_handling()
             # Should have logged the resume message
-            resume_calls = [
-                c for c in mock_info.call_args_list
-                if "Resuming" in str(c)
-            ]
+            resume_calls = [c for c in mock_info.call_args_list if "Resuming" in str(c)]
             assert len(resume_calls) == 1
             assert "transform" in str(resume_calls[0])
             assert "42" in str(resume_calls[0])
@@ -573,6 +581,7 @@ class TestRunErrorHandlingCheckpointResume:
 # ---------------------------------------------------------------------------
 # 11. run_with_error_handling on_success checkpoint delete (line 393)
 # ---------------------------------------------------------------------------
+
 
 class TestRunErrorHandlingCheckpointDelete:
     """Tests for checkpoint deletion on success."""
@@ -613,6 +622,7 @@ class TestRunErrorHandlingCheckpointDelete:
 # 12. run_with_error_handling permanent error (lines 410-413)
 # ---------------------------------------------------------------------------
 
+
 class TestRunErrorHandlingPermanentError:
     """Tests for permanent error handling (no retry)."""
 
@@ -632,8 +642,7 @@ class TestRunErrorHandlingPermanentError:
             error_type=FileNotFoundError,
         )
 
-        with patch("time.sleep") as mock_sleep, \
-             patch.object(job.logger, "error"):
+        with patch("time.sleep") as mock_sleep, patch.object(job.logger, "error"):
             with pytest.raises(FileNotFoundError):
                 job.run_with_error_handling()
 
@@ -658,15 +667,16 @@ class TestRunErrorHandlingPermanentError:
             error_type=FileNotFoundError,
         )
 
-        with patch.object(job.logger, "error") as mock_error, \
-             patch.object(job.logger, "warning"):
+        with (
+            patch.object(job.logger, "error") as mock_error,
+            patch.object(job.logger, "warning"),
+        ):
             with pytest.raises(FileNotFoundError):
                 job.run_with_error_handling()
 
             # Should have logged the permanent error message
             error_calls = [
-                c for c in mock_error.call_args_list
-                if "Permanent error" in str(c)
+                c for c in mock_error.call_args_list if "Permanent error" in str(c)
             ]
             assert len(error_calls) == 1
 
@@ -674,6 +684,7 @@ class TestRunErrorHandlingPermanentError:
 # ---------------------------------------------------------------------------
 # 13. run_with_partial_failure (lines 454-547)
 # ---------------------------------------------------------------------------
+
 
 class TestRunWithPartialFailure:
     """Tests for run_with_partial_failure in various modes."""
@@ -909,6 +920,7 @@ class TestRunWithPartialFailure:
 # 14. run_incremental non-DataFrame warning (lines 641-647)
 # ---------------------------------------------------------------------------
 
+
 class TestRunIncrementalNonDataFrame:
     """Tests for run_incremental with non-DataFrame data."""
 
@@ -932,14 +944,15 @@ class TestRunIncrementalNonDataFrame:
 
         job = NonDataFrameJob(config)
 
-        with patch.object(job.logger, "warning") as mock_warning, \
-             patch.object(job.logger, "info"):
+        with (
+            patch.object(job.logger, "warning") as mock_warning,
+            patch.object(job.logger, "info"),
+        ):
             job.run_incremental("test_source")
 
             # Should have logged the non-DataFrame warning
             warning_calls = [
-                c for c in mock_warning.call_args_list
-                if "non-DataFrame" in str(c)
+                c for c in mock_warning.call_args_list if "non-DataFrame" in str(c)
             ]
             assert len(warning_calls) == 1
 
@@ -962,13 +975,16 @@ class TestRunIncrementalNonDataFrame:
 
         job = NonDataFrameJob(config)
 
-        with patch.object(job.logger, "warning") as mock_warning, \
-             patch.object(job.logger, "info"):
+        with (
+            patch.object(job.logger, "warning") as mock_warning,
+            patch.object(job.logger, "info"),
+        ):
             job.run_incremental("test_source")
 
             # Should have the non-DataFrame warning
             warning_calls = [
-                c for c in mock_warning.call_args_list
+                c
+                for c in mock_warning.call_args_list
                 if "non-DataFrame" in str(c) or "manually" in str(c)
             ]
             assert len(warning_calls) >= 1

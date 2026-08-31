@@ -66,8 +66,15 @@ class ProfileReport:
         ]
 
         headers = [
-            "Column", "Type", "Nulls", "Null%",
-            "Distinct", "Distinct%", "Min", "Max", "Mean",
+            "Column",
+            "Type",
+            "Nulls",
+            "Null%",
+            "Distinct",
+            "Distinct%",
+            "Min",
+            "Max",
+            "Mean",
         ]
         lines.append("| " + " | ".join(headers) + " |")
         lines.append("| " + " | ".join(["---"] * len(headers)) + " |")
@@ -154,9 +161,7 @@ class DataProfiler:
             null_count = int(col.isna().sum())
             null_pct = (null_count / row_count * 100) if row_count > 0 else 0.0
             distinct_count = int(col.nunique(dropna=True))
-            distinct_pct = (
-                (distinct_count / row_count * 100) if row_count > 0 else 0.0
-            )
+            distinct_pct = (distinct_count / row_count * 100) if row_count > 0 else 0.0
 
             mean: Optional[float] = None
             std: Optional[float] = None

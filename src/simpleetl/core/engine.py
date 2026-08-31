@@ -74,9 +74,7 @@ def validate_engine(engine: str) -> str:
     """
     if engine not in VALID_ENGINES:
         valid = ", ".join(repr(name) for name in VALID_ENGINES)
-        raise ValueError(
-            f"Unknown engine {engine!r}; expected one of {valid}."
-        )
+        raise ValueError(f"Unknown engine {engine!r}; expected one of {valid}.")
     return engine
 
 

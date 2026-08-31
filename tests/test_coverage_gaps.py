@@ -112,9 +112,7 @@ class TestCSVCloudReadWrite:
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         mock_fs = MagicMock()
         mock_file = MagicMock()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=mock_file
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=mock_file)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         writer = CSVWriter()
@@ -133,9 +131,7 @@ class TestCSVCloudReadWrite:
 
         reader = CSVReader()
         chunks = list(
-            reader.read_chunks(
-                "s3://bucket/data.csv", chunk_size=2, filesystem=mock_fs
-            )
+            reader.read_chunks("s3://bucket/data.csv", chunk_size=2, filesystem=mock_fs)
         )
         total = sum(len(c) for c in chunks)
         assert total == 3
@@ -149,9 +145,7 @@ class TestCSVCloudReadWrite:
 
         mock_fs = MagicMock()
         mock_file = MagicMock()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=mock_file
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=mock_file)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         writer = CSVWriter()
@@ -174,12 +168,15 @@ class TestParquetCloudReadWrite:
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         with tempfile.NamedTemporaryFile(suffix=".parquet") as tmp:
             df.to_parquet(tmp.name, index=False)
-            with patch(
-                "simpleetl.formats.parquet.pd.read_parquet",
-                return_value=df,
-            ) as mock_read, patch(
-                "simpleetl.formats.parquet.get_filesystem",
-            ) as mock_get_fs:
+            with (
+                patch(
+                    "simpleetl.formats.parquet.pd.read_parquet",
+                    return_value=df,
+                ) as mock_read,
+                patch(
+                    "simpleetl.formats.parquet.get_filesystem",
+                ) as mock_get_fs,
+            ):
                 mock_get_fs.return_value = MagicMock()
                 reader = ParquetReader()
                 result = reader.read("s3://bucket/data.parquet")
@@ -191,11 +188,14 @@ class TestParquetCloudReadWrite:
         from simpleetl.formats.parquet import ParquetWriter
 
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
-        with patch(
-            "simpleetl.formats.parquet.get_filesystem",
-        ) as mock_get_fs, patch(
-            "simpleetl.formats.parquet.pd.DataFrame.to_parquet",
-        ) as mock_to_parquet:
+        with (
+            patch(
+                "simpleetl.formats.parquet.get_filesystem",
+            ) as mock_get_fs,
+            patch(
+                "simpleetl.formats.parquet.pd.DataFrame.to_parquet",
+            ) as mock_to_parquet,
+        ):
             mock_get_fs.return_value = MagicMock()
             writer = ParquetWriter()
             writer.write(df, "s3://bucket/data.parquet")
@@ -213,12 +213,15 @@ class TestParquetCloudReadWrite:
         mock_pf = MagicMock()
         mock_pf.iter_batches.return_value = [batch1, batch2]
 
-        with patch(
-            "simpleetl.formats.parquet.pq.ParquetFile",
-            return_value=mock_pf,
-        ), patch(
-            "simpleetl.formats.parquet.get_filesystem",
-        ) as mock_get_fs:
+        with (
+            patch(
+                "simpleetl.formats.parquet.pq.ParquetFile",
+                return_value=mock_pf,
+            ),
+            patch(
+                "simpleetl.formats.parquet.get_filesystem",
+            ) as mock_get_fs,
+        ):
             mock_get_fs.return_value = MagicMock()
             reader = ParquetReader()
             chunks = list(
@@ -238,11 +241,12 @@ class TestParquetCloudReadWrite:
             yield pd.DataFrame({"val": [1, 2]})
             yield pd.DataFrame({"val": [3, 4]})
 
-        with patch(
-            "simpleetl.formats.parquet.pq.ParquetWriter"
-        ) as mock_writer, patch(
-            "simpleetl.formats.parquet.get_filesystem",
-        ) as mock_get_fs:
+        with (
+            patch("simpleetl.formats.parquet.pq.ParquetWriter") as mock_writer,
+            patch(
+                "simpleetl.formats.parquet.get_filesystem",
+            ) as mock_get_fs,
+        ):
             mock_get_fs.return_value = MagicMock()
             mock_ctx = MagicMock()
             mock_writer.return_value = mock_ctx
@@ -279,9 +283,7 @@ class TestJSONCloudReadWrite:
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         mock_fs = MagicMock()
         mock_file = MagicMock()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=mock_file
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=mock_file)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         writer = JSONWriter()
@@ -315,9 +317,7 @@ class TestAvroCloudReadWrite:
         buffer.seek(0)
 
         mock_fs = MagicMock()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=buffer
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=buffer)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         reader = AvroReader()
@@ -330,9 +330,7 @@ class TestAvroCloudReadWrite:
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         mock_fs = MagicMock()
         mock_file = BytesIO()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=mock_file
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=mock_file)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         writer = AvroWriter()
@@ -359,9 +357,7 @@ class TestOrcCloudReadWrite:
         mock_fs = MagicMock()
         with patch("pyarrow.orc.ORCFile", return_value=mock_orc_file):
             reader = OrcReader()
-            result = reader.read(
-                "s3://bucket/data.orc", filesystem=mock_fs
-            )
+            result = reader.read("s3://bucket/data.orc", filesystem=mock_fs)
         assert len(result) == 2
 
     def test_orc_write_to_cloud(self):
@@ -405,9 +401,7 @@ class TestExcelCloudReadWrite:
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         mock_fs = MagicMock()
         mock_file = MagicMock()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=mock_file
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=mock_file)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         writer = ExcelWriter()
@@ -449,9 +443,7 @@ class TestXMLCloudReadWrite:
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         mock_fs = MagicMock()
         mock_file = MagicMock()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=mock_file
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=mock_file)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         writer = XMLWriter()
@@ -475,9 +467,7 @@ class TestAwsSecretsManagerProvider:
 
         from simpleetl.core.secrets import AwsSecretsManagerProvider
 
-        AwsSecretsManagerProvider(
-            region_name="us-west-2", profile_name="my-profile"
-        )
+        AwsSecretsManagerProvider(region_name="us-west-2", profile_name="my-profile")
         mock_session_cls.assert_called_once_with(
             region_name="us-west-2", profile_name="my-profile"
         )
@@ -522,9 +512,7 @@ class TestAzureKeyVaultProvider:
     def test_init(self, mock_client_cls, mock_credential_cls):
         from simpleetl.core.secrets import AzureKeyVaultProvider
 
-        AzureKeyVaultProvider(
-            vault_url="https://my-vault.vault.azure.net/"
-        )
+        AzureKeyVaultProvider(vault_url="https://my-vault.vault.azure.net/")
         mock_credential_cls.assert_called_once()
         mock_client_cls.assert_called_once()
 
@@ -540,9 +528,7 @@ class TestAzureKeyVaultProvider:
             SecretNotFoundError,
         )
 
-        provider = AzureKeyVaultProvider(
-            vault_url="https://my-vault.vault.azure.net/"
-        )
+        provider = AzureKeyVaultProvider(vault_url="https://my-vault.vault.azure.net/")
         with pytest.raises(SecretNotFoundError, match="Failed to retrieve"):
             provider.get_secret("my-secret")
 
@@ -556,9 +542,7 @@ class TestHashiCorpVaultProvider:
         from simpleetl.core.secrets import HashiCorpVaultProvider
 
         HashiCorpVaultProvider()
-        mock_client_cls.assert_called_once_with(
-            url="http://127.0.0.1:8200", token=None
-        )
+        mock_client_cls.assert_called_once_with(url="http://127.0.0.1:8200", token=None)
 
     @patch("hvac.Client")
     def test_init_custom(self, mock_client_cls):
@@ -567,9 +551,7 @@ class TestHashiCorpVaultProvider:
 
         from simpleetl.core.secrets import HashiCorpVaultProvider
 
-        HashiCorpVaultProvider(
-            url="https://vault.example.com", token="my-token"
-        )
+        HashiCorpVaultProvider(url="https://vault.example.com", token="my-token")
         mock_client_cls.assert_called_once_with(
             url="https://vault.example.com", token="my-token"
         )
@@ -597,8 +579,8 @@ class TestHashiCorpVaultProvider:
     def test_get_secret_generic_error(self, mock_client_cls):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
-        mock_client.secrets.kv.v2.read_secret_version.side_effect = (
-            Exception("connection refused")
+        mock_client.secrets.kv.v2.read_secret_version.side_effect = Exception(
+            "connection refused"
         )
 
         from simpleetl.core.secrets import (
@@ -648,7 +630,9 @@ class TestConfigUncovered:
         from simpleetl.core.config import load_config
 
         config_file = tmp_path / "bad.yaml"
-        config_file.write_text("name: test\ninput_format: csv\noutput_format: csv\nmax_retries: not_a_number\n")
+        config_file.write_text(
+            "name: test\ninput_format: csv\noutput_format: csv\nmax_retries: not_a_number\n"
+        )
         with pytest.raises(Exception):
             load_config(str(config_file))
 
@@ -1002,6 +986,7 @@ class TestFormatFactoryUncovered:
 
         reader = FormatFactory.get_reader("sqlite:///test.db")
         from simpleetl.formats.database import DatabaseReader
+
         assert isinstance(reader, DatabaseReader)
 
     def test_get_writer_database(self):
@@ -1009,6 +994,7 @@ class TestFormatFactoryUncovered:
 
         writer = FormatFactory.get_writer("sqlite:///test.db")
         from simpleetl.formats.database import DatabaseWriter
+
         assert isinstance(writer, DatabaseWriter)
 
 
@@ -1044,8 +1030,10 @@ class TestCLIUncovered:
     def test_cli_import(self):
         """Verify CLI module is importable."""
         from simpleetl import cli
+
         assert hasattr(cli, "main")
 
     def test_cli_run_command_import(self):
         from simpleetl.cli import main
+
         assert callable(main)

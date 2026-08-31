@@ -49,9 +49,7 @@ class DLQEntry:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> DLQEntry:
         """Deserialize entry from dictionary."""
-        return cls(
-            **{k: v for k, v in data.items() if k in cls.__dataclass_fields__}
-        )
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
 class DeadLetterQueue:
@@ -88,9 +86,7 @@ class DeadLetterQueue:
             The created DLQEntry.
         """
         error_str = str(error) if isinstance(error, BaseException) else str(error)
-        error_type = (
-            type(error).__name__ if isinstance(error, BaseException) else ""
-        )
+        error_type = type(error).__name__ if isinstance(error, BaseException) else ""
         entry = DLQEntry(
             record_data=record_data,
             error=error_str,
@@ -148,9 +144,7 @@ class DeadLetterQueue:
         elif format == "csv":
             self._write_csv(path, entries)
         else:
-            raise ValueError(
-                f"Unsupported DLQ format: {format}. Supported: jsonl, csv"
-            )
+            raise ValueError(f"Unsupported DLQ format: {format}. Supported: jsonl, csv")
 
         return len(entries)
 
@@ -172,20 +166,29 @@ class DeadLetterQueue:
 
         output = StringIO()
         writer = csv.writer(output)
-        writer.writerow([
-            "record_index", "phase", "error_type", "error", "timestamp",
-            "record_data", "metadata",
-        ])
+        writer.writerow(
+            [
+                "record_index",
+                "phase",
+                "error_type",
+                "error",
+                "timestamp",
+                "record_data",
+                "metadata",
+            ]
+        )
         for entry in entries:
-            writer.writerow([
-                entry.record_index,
-                entry.phase,
-                entry.error_type,
-                entry.error,
-                entry.timestamp,
-                json.dumps(entry.record_data, default=str),
-                json.dumps(entry.metadata, default=str),
-            ])
+            writer.writerow(
+                [
+                    entry.record_index,
+                    entry.phase,
+                    entry.error_type,
+                    entry.error,
+                    entry.timestamp,
+                    json.dumps(entry.record_data, default=str),
+                    json.dumps(entry.metadata, default=str),
+                ]
+            )
 
         with open(path, "w", newline="") as f:
             f.write(output.getvalue())
@@ -216,9 +219,7 @@ class DeadLetterQueue:
         elif format == "csv":
             entries = self._read_csv(path)
         else:
-            raise ValueError(
-                f"Unsupported DLQ format: {format}. Supported: jsonl, csv"
-            )
+            raise ValueError(f"Unsupported DLQ format: {format}. Supported: jsonl, csv")
 
         with self._lock:
             self._entries.extend(entries)
@@ -246,15 +247,9 @@ class DeadLetterQueue:
             reader = csv.DictReader(f)
             for row in reader:
                 record_data = (
-                    json.loads(row["record_data"])
-                    if row.get("record_data")
-                    else None
+                    json.loads(row["record_data"]) if row.get("record_data") else None
                 )
-                metadata = (
-                    json.loads(row["metadata"])
-                    if row.get("metadata")
-                    else {}
-                )
+                metadata = json.loads(row["metadata"]) if row.get("metadata") else {}
                 entries.append(
                     DLQEntry(
                         record_data=record_data,

@@ -46,7 +46,10 @@ class TestWatermark:
     def test_watermark_default_timestamp(self):
         before = datetime.now(timezone.utc)
         wm = Watermark(
-            job_name="j", source="s", column="c", value=100,
+            job_name="j",
+            source="s",
+            column="c",
+            value=100,
         )
         after = datetime.now(timezone.utc)
         parsed = datetime.fromisoformat(wm.updated_at)
@@ -54,8 +57,11 @@ class TestWatermark:
 
     def test_watermark_with_custom_timestamp(self):
         wm = Watermark(
-            job_name="j", source="s", column="c",
-            value=1, updated_at="2024-06-15T00:00:00+00:00",
+            job_name="j",
+            source="s",
+            column="c",
+            value=1,
+            updated_at="2024-06-15T00:00:00+00:00",
         )
         assert wm.updated_at == "2024-06-15T00:00:00+00:00"
 
@@ -69,8 +75,10 @@ class TestFileWatermarkStore:
     def test_set_and_get(self, tmp_path):
         store = FileWatermarkStore(str(tmp_path / "watermarks.json"))
         wm = Watermark(
-            job_name="job1", source="src1",
-            column="id", value=42,
+            job_name="job1",
+            source="src1",
+            column="id",
+            value=42,
         )
         store.set(wm)
         result = store.get("job1", "src1")
@@ -87,13 +95,17 @@ class TestFileWatermarkStore:
     def test_overwrite_watermark(self, tmp_path):
         store = FileWatermarkStore(str(tmp_path / "watermarks.json"))
         wm1 = Watermark(
-            job_name="job1", source="src1",
-            column="id", value=10,
+            job_name="job1",
+            source="src1",
+            column="id",
+            value=10,
         )
         store.set(wm1)
         wm2 = Watermark(
-            job_name="job1", source="src1",
-            column="id", value=20,
+            job_name="job1",
+            source="src1",
+            column="id",
+            value=20,
         )
         store.set(wm2)
         result = store.get("job1", "src1")
@@ -102,8 +114,10 @@ class TestFileWatermarkStore:
     def test_delete(self, tmp_path):
         store = FileWatermarkStore(str(tmp_path / "watermarks.json"))
         wm = Watermark(
-            job_name="job1", source="src1",
-            column="id", value=1,
+            job_name="job1",
+            source="src1",
+            column="id",
+            value=1,
         )
         store.set(wm)
         store.delete("job1", "src1")
@@ -141,8 +155,10 @@ class TestDatabaseWatermarkStore:
         engine = sqlalchemy.create_engine("sqlite:///:memory:")
         store = DatabaseWatermarkStore(engine)
         wm = Watermark(
-            job_name="job1", source="src1",
-            column="id", value=42,
+            job_name="job1",
+            source="src1",
+            column="id",
+            value=42,
         )
         store.set(wm)
         result = store.get("job1", "src1")
@@ -305,23 +321,27 @@ class TestIncrementalQuery:
 
 class TestDatabaseWriterMerge:
     def _make_df(self):
-        return pd.DataFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-            "value": [10, 20, 30],
-        })
+        return pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "name": ["Alice", "Bob", "Charlie"],
+                "value": [10, 20, 30],
+            }
+        )
 
     def test_merge_sqlite(self):
         engine = sqlalchemy.create_engine("sqlite:///:memory:")
         # Create target table
         with engine.begin() as conn:
-            conn.execute(sqlalchemy.text(
-                "CREATE TABLE users (id INTEGER PRIMARY KEY, "
-                "name TEXT, value INTEGER)"
-            ))
-            conn.execute(sqlalchemy.text(
-                "INSERT INTO users VALUES (1, 'OldAlice', 99)"
-            ))
+            conn.execute(
+                sqlalchemy.text(
+                    "CREATE TABLE users (id INTEGER PRIMARY KEY, "
+                    "name TEXT, value INTEGER)"
+                )
+            )
+            conn.execute(
+                sqlalchemy.text("INSERT INTO users VALUES (1, 'OldAlice', 99)")
+            )
 
         writer = DatabaseWriter()
         df = self._make_df()
@@ -341,10 +361,12 @@ class TestDatabaseWriterMerge:
     def test_merge_generic_fallback(self):
         """Test the generic DELETE+INSERT fallback with a mock engine."""
         writer = DatabaseWriter()
-        df = pd.DataFrame({
-            "id": [1],
-            "name": ["Test"],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1],
+                "name": ["Test"],
+            }
+        )
 
         # Use SQLite but mock the dialect name to trigger generic path
         engine = sqlalchemy.create_engine("sqlite:///:memory:")
@@ -353,9 +375,11 @@ class TestDatabaseWriterMerge:
         ) as mock_dialect:
             mock_dialect.return_value = "unknown_db"
             with engine.begin() as conn:
-                conn.execute(sqlalchemy.text(
-                    "CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT)"
-                ))
+                conn.execute(
+                    sqlalchemy.text(
+                        "CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT)"
+                    )
+                )
                 conn.execute(sqlalchemy.text("INSERT INTO t VALUES (1, 'Old')"))
 
             rows = writer.merge(
@@ -369,20 +393,24 @@ class TestDatabaseWriterMerge:
     def test_merge_with_update_columns(self):
         engine = sqlalchemy.create_engine("sqlite:///:memory:")
         with engine.begin() as conn:
-            conn.execute(sqlalchemy.text(
-                "CREATE TABLE users (id INTEGER PRIMARY KEY, "
-                "name TEXT, value INTEGER)"
-            ))
-            conn.execute(sqlalchemy.text(
-                "INSERT INTO users VALUES (1, 'OldAlice', 99)"
-            ))
+            conn.execute(
+                sqlalchemy.text(
+                    "CREATE TABLE users (id INTEGER PRIMARY KEY, "
+                    "name TEXT, value INTEGER)"
+                )
+            )
+            conn.execute(
+                sqlalchemy.text("INSERT INTO users VALUES (1, 'OldAlice', 99)")
+            )
 
         writer = DatabaseWriter()
-        df = pd.DataFrame({
-            "id": [1],
-            "name": ["NewAlice"],
-            "value": [100],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1],
+                "name": ["NewAlice"],
+                "value": [100],
+            }
+        )
         writer.merge(
             data=df,
             destination=engine,
@@ -452,10 +480,12 @@ class TestRunIncremental:
             job.run_incremental("source")
 
     def test_full_run_no_prior_watermark(self, tmp_path):
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "name": ["a", "b", "c"],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "name": ["a", "b", "c"],
+            }
+        )
         config = ETLJobConfig(
             name="test_job",
             input_format="csv",
@@ -480,10 +510,12 @@ class TestRunIncremental:
             )
 
     def test_run_with_prior_watermark(self):
-        df = pd.DataFrame({
-            "id": [4, 5],
-            "name": ["d", "e"],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [4, 5],
+                "name": ["d", "e"],
+            }
+        )
         config = ETLJobConfig(
             name="test_job",
             input_format="csv",

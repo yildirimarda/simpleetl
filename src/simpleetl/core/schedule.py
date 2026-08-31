@@ -12,6 +12,7 @@ from typing import Optional, Set
 
 class CronParseError(Exception):
     """Raised when a cron expression cannot be parsed."""
+
     pass
 
 
@@ -43,11 +44,11 @@ class CronExpression:
 
     # Field bounds: (min, max)
     _FIELD_BOUNDS = [
-        (0, 59),   # minute
-        (0, 23),   # hour
-        (1, 31),   # day of month
-        (1, 12),   # month
-        (0, 6),    # day of week (0 = Sunday)
+        (0, 59),  # minute
+        (0, 23),  # hour
+        (1, 31),  # day of month
+        (1, 12),  # month
+        (0, 6),  # day of week (0 = Sunday)
     ]
 
     def __post_init__(self) -> None:
@@ -68,9 +69,7 @@ class CronExpression:
             self._parse_field(part, val_set, lo, hi)
 
     @staticmethod
-    def _parse_field(
-        part: str, val_set: Set[int], min_val: int, max_val: int
-    ) -> None:
+    def _parse_field(part: str, val_set: Set[int], min_val: int, max_val: int) -> None:
         """Parse a single cron field and populate val_set."""
         # Handle list (comma-separated)
         for segment in part.split(","):
@@ -87,13 +86,10 @@ class CronExpression:
                     step = int(step_str)
                 except ValueError:
                     raise CronParseError(
-                        f"Invalid step value '{step_str}' in cron field "
-                        f"'{part}'"
+                        f"Invalid step value '{step_str}' in cron field '{part}'"
                     )
                 if step <= 0:
-                    raise CronParseError(
-                        f"Step value must be positive, got {step}"
-                    )
+                    raise CronParseError(f"Step value must be positive, got {step}")
                 segment = base if base != "*" else "*"
 
             if segment == "*":
@@ -171,9 +167,7 @@ class CronExpression:
             if self.matches(candidate):
                 return candidate
             candidate += timedelta(minutes=1)
-        raise CronParseError(
-            "Could not find next run time within 4 years"
-        )
+        raise CronParseError("Could not find next run time within 4 years")
 
 
 @dataclass
@@ -244,9 +238,7 @@ class Schedule:
 
         return True
 
-    def next_run_time(
-        self, after: Optional[datetime] = None
-    ) -> datetime:
+    def next_run_time(self, after: Optional[datetime] = None) -> datetime:
         """Return the next scheduled run time.
 
         Args:

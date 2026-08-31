@@ -26,10 +26,10 @@ class OrcReader(DataReader):
         from pyarrow import orc
 
         if is_cloud_path(source):
-            fs = kwargs.pop('filesystem', None)
+            fs = kwargs.pop("filesystem", None)
             if fs is None:
                 fs = get_filesystem(source)
-            with fs.open(source, 'rb') as f:
+            with fs.open(source, "rb") as f:
                 orc_file = orc.ORCFile(f)
                 table = orc_file.read(**kwargs)
         else:
@@ -60,10 +60,10 @@ class OrcWriter(DataWriter):
         compression = kwargs.pop("compression", "snappy")
 
         if is_cloud_path(destination):
-            fs = kwargs.pop('filesystem', None)
+            fs = kwargs.pop("filesystem", None)
             if fs is None:
                 fs = get_filesystem(destination)
-            with fs.open(destination, 'wb') as f:
+            with fs.open(destination, "wb") as f:
                 orc.write_table(
                     table,
                     f,
@@ -71,6 +71,4 @@ class OrcWriter(DataWriter):
                     **kwargs,
                 )
         else:
-            orc.write_table(
-                table, destination, compression=compression, **kwargs
-            )
+            orc.write_table(table, destination, compression=compression, **kwargs)

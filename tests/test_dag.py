@@ -30,6 +30,7 @@ from simpleetl.core.schedule import (
 # JobNode tests
 # ---------------------------------------------------------------------------
 
+
 class TestJobNode:
     """Tests for the JobNode dataclass."""
 
@@ -78,6 +79,7 @@ class TestJobNode:
 # ---------------------------------------------------------------------------
 # DAG tests
 # ---------------------------------------------------------------------------
+
 
 class TestDAG:
     """Tests for the DAG class."""
@@ -277,9 +279,7 @@ class TestDAG:
                 {"name": "b", "dependencies": ["a"]},
             ],
         }
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".yaml", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(data, f)
             temp_path = f.name
 
@@ -294,6 +294,7 @@ class TestDAG:
 # ---------------------------------------------------------------------------
 # DAGRunner tests
 # ---------------------------------------------------------------------------
+
 
 class FailingJob:
     """A mock job that always fails."""
@@ -471,6 +472,7 @@ class TestDAGRunner:
 # CronExpression tests
 # ---------------------------------------------------------------------------
 
+
 class TestCronExpression:
     """Tests for cron expression parsing and matching."""
 
@@ -577,6 +579,7 @@ class TestCronExpression:
 # ---------------------------------------------------------------------------
 # Schedule tests
 # ---------------------------------------------------------------------------
+
 
 class TestSchedule:
     """Tests for the Schedule class."""

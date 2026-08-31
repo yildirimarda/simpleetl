@@ -57,7 +57,7 @@ def _parse_source(source: str) -> Tuple[str, Optional[str]]:
     path = source
     table: Optional[str] = None
     if path.startswith(URI_PREFIX):
-        path = path[len(URI_PREFIX):]
+        path = path[len(URI_PREFIX) :]
     if "?" in path:
         path, query = path.split("?", 1)
         values = parse_qs(query).get("table")
@@ -178,9 +178,7 @@ class _IcebergFormatBase:
                 "source string."
             )
 
-        catalog = _build_catalog(
-            warehouse, self.catalog_name, self.catalog_config
-        )
+        catalog = _build_catalog(warehouse, self.catalog_name, self.catalog_config)
         return catalog, _qualify(identifier)
 
 
@@ -366,9 +364,7 @@ class IcebergWriter(_IcebergFormatBase, DataWriter):
 
         catalog, identifier = self._resolve(destination, table)
         if mode == "error" and catalog.table_exists(identifier):
-            raise ValueError(
-                f"Table '{identifier}' already exists and mode='error'."
-            )
+            raise ValueError(f"Table '{identifier}' already exists and mode='error'.")
 
         arrow_table = pa.Table.from_pandas(data, preserve_index=False)
 

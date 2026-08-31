@@ -101,9 +101,7 @@ class TestParquetExtended:
         df.to_parquet(path)
 
         reader = ParquetReader()
-        chunks = list(
-            reader.read_chunks(str(path), chunk_size=20, columns=["a", "c"])
-        )
+        chunks = list(reader.read_chunks(str(path), chunk_size=20, columns=["a", "c"]))
         result = pd.concat(chunks, ignore_index=True)
         assert list(result.columns) == ["a", "c"]
 
@@ -258,11 +256,13 @@ class TestFormatFactory:
     def test_get_reader_database(self):
         reader = FormatFactory.get_reader("sqlite:///test.db")
         from simpleetl.formats.database import DatabaseReader
+
         assert isinstance(reader, DatabaseReader)
 
     def test_get_writer_database(self):
         writer = FormatFactory.get_writer("sqlite:///test.db")
         from simpleetl.formats.database import DatabaseWriter
+
         assert isinstance(writer, DatabaseWriter)
 
 

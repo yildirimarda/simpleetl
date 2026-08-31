@@ -22,9 +22,11 @@ from prometheus_client import CollectorRegistry
 # core/metrics.py — remaining uncovered lines
 # -------------------------------------------------------------------
 
+
 class TestMetricsRemaining:
     def test_export_to_file_text(self, tmp_path):
         from simpleetl.core.metrics import MetricsCollector
+
         registry = CollectorRegistry()
         collector = MetricsCollector(registry=registry)
         collector.inc_counter("my_ctr", 3.0)
@@ -34,6 +36,7 @@ class TestMetricsRemaining:
 
     def test_get_metrics_text(self):
         from simpleetl.core.metrics import MetricsCollector
+
         registry = CollectorRegistry()
         collector = MetricsCollector(registry=registry)
         collector.inc_counter("counter_a", 1.0)
@@ -42,6 +45,7 @@ class TestMetricsRemaining:
 
     def test_get_metrics_invalid_format_raises(self):
         from simpleetl.core.metrics import MetricsCollector
+
         registry = CollectorRegistry()
         collector = MetricsCollector(registry=registry)
         with pytest.raises(ValueError, match="Unsupported output format"):
@@ -49,6 +53,7 @@ class TestMetricsRemaining:
 
     def test_register_custom_metric(self):
         from simpleetl.core.metrics import MetricsCollector
+
         registry = CollectorRegistry()
         collector = MetricsCollector(registry=registry)
         collector.register_custom_metric("custom", "counter", "A custom metric")
@@ -58,9 +63,11 @@ class TestMetricsRemaining:
 # core/security.py — remaining uncovered lines
 # -------------------------------------------------------------------
 
+
 class TestSecurityEdgeCases:
     def test_mask_pii_with_hash(self):
         from simpleetl.core.security import mask_pii
+
         df = pd.DataFrame({"email": ["test@example.com"]})
         result = mask_pii(df, {"email": "email"}, method="hash")
         assert result["email"].iloc[0] != "test@example.com"
@@ -68,12 +75,14 @@ class TestSecurityEdgeCases:
 
     def test_mask_pii_with_partial(self):
         from simpleetl.core.security import mask_pii
+
         df = pd.DataFrame({"email": ["user@example.com"]})
         result = mask_pii(df, {"email": "email"}, method="partial")
         assert result["email"].iloc[0] != "user@example.com"
 
     def test_mask_pii_with_tokenize(self):
         from simpleetl.core.security import mask_pii, _reset_token_cache
+
         _reset_token_cache()
         df = pd.DataFrame({"ssn": ["123-45-6789"]})
         result = mask_pii(df, {"ssn": "ssn"}, method="tokenize")
@@ -82,82 +91,102 @@ class TestSecurityEdgeCases:
 
     def test_mask_pii_invalid_method(self):
         from simpleetl.core.security import mask_pii
+
         df = pd.DataFrame({"a": ["x"]})
         with pytest.raises(ValueError, match="Unsupported masking method"):
             mask_pii(df, {"a": "email"}, method="invalid")
 
     def test_mask_pii_missing_column_skipped(self):
         from simpleetl.core.security import mask_pii
+
         df = pd.DataFrame({"a": ["x"]})
         result = mask_pii(df, {"nonexistent": "email"}, method="redact")
         assert list(result.columns) == ["a"]
 
     def test_mask_redact_with_nan(self):
         from simpleetl.core.security import _mask_redact
+
         result = _mask_redact(float("nan"), "email")
         assert pd.isna(result)
 
     def test_mask_hash_with_nan(self):
         from simpleetl.core.security import _mask_hash
+
         result = _mask_hash(float("nan"))
         assert pd.isna(result)
 
     def test_mask_tokenize_with_nan(self):
         from simpleetl.core.security import _mask_tokenize, _reset_token_cache
+
         _reset_token_cache()
         result = _mask_tokenize(float("nan"), "email")
         assert pd.isna(result)
 
     def test_mask_partial_email(self):
         from simpleetl.core.security import _mask_partial
+
         result = _mask_partial("user@example.com", "email")
         assert result != "user@example.com"
 
     def test_mask_partial_phone(self):
         from simpleetl.core.security import _mask_partial
+
         result = _mask_partial("555-123-4567", "phone")
         assert result != "555-123-4567"
 
     def test_mask_partial_credit_card(self):
         from simpleetl.core.security import _mask_partial
+
         result = _mask_partial("4111-1111-1111-1111", "credit_card")
         assert result != "4111-1111-1111-1111"
 
     def test_mask_partial_short_text(self):
         from simpleetl.core.security import _mask_partial
+
         result = _mask_partial("ab", "other")
         assert result == "a***"
 
     def test_mask_partial_generic(self):
         from simpleetl.core.security import _mask_partial
+
         result = _mask_partial("hello", "other")
         assert result == "h***o"
 
     def test_detect_pii_values_empty_series(self):
         from simpleetl.core.security import detect_pii_values
+
         df = pd.DataFrame({"col": [None, None]})
         result = detect_pii_values(df)
         assert result is not None
 
     def test_detect_pii_values_missing_column(self):
         from simpleetl.core.security import detect_pii_values
+
         df = pd.DataFrame({"a": ["test@example.com"]})
         result = detect_pii_values(df, columns=["nonexistent"])
         assert result is not None
 
     def test_column_encryptor_import_error(self):
         from simpleetl.core.security import ColumnEncryptor
-        with patch.dict("sys.modules", {"cryptography": None, "cryptography.fernet": None}):
+
+        with patch.dict(
+            "sys.modules", {"cryptography": None, "cryptography.fernet": None}
+        ):
             with pytest.raises(ImportError, match="cryptography"):
                 ColumnEncryptor(key=None)
 
     def test_audit_logger_with_file(self, tmp_path):
         from simpleetl.core.security import AuditLogger
+
         log_file = str(tmp_path / "audit.jsonl")
         logger = AuditLogger(log_file=log_file)
         logger.log_access(user="test", action="read", source="src")
         logger.log_transformation(
-            user="test", job_name="j1", operation="filter", source="src", destination="dst"
+            user="test",
+            job_name="j1",
+            operation="filter",
+            source="src",
+            destination="dst",
         )
         assert os.path.exists(log_file)
         with open(log_file) as f:
@@ -166,6 +195,7 @@ class TestSecurityEdgeCases:
 
     def test_audit_trail_filtering(self):
         from simpleetl.core.security import AuditLogger
+
         logger = AuditLogger()
         logger.log_access(user="u1", action="read", source="src1")
         logger.log_access(user="u2", action="write", source="src2")
@@ -176,6 +206,7 @@ class TestSecurityEdgeCases:
 
     def test_audit_trail_time_filtering(self):
         from simpleetl.core.security import AuditLogger
+
         logger = AuditLogger()
         logger.log_access(user="u1", action="read", source="src")
 
@@ -188,6 +219,7 @@ class TestSecurityEdgeCases:
 
     def test_audit_trail_time_filtering_empty(self):
         from simpleetl.core.security import AuditLogger
+
         logger = AuditLogger()
         logger.log_access(user="u1", action="read", source="src")
 
@@ -200,6 +232,7 @@ class TestSecurityEdgeCases:
 
     def test_audit_logger_file_write_error(self, tmp_path):
         from simpleetl.core.security import AuditLogger
+
         log_file = str(tmp_path / "audit.jsonl")
         logger = AuditLogger(log_file=log_file)
         logger.log_access(user="u1", action="read", source="src")
@@ -214,6 +247,7 @@ class TestSecurityEdgeCases:
 # core/lineage.py — LineageHook coverage
 # -------------------------------------------------------------------
 
+
 class TestLineageHook:
     def test_lineage_hook_execute(self):
         from simpleetl.core.lineage import LineageHook, HookContext
@@ -222,12 +256,18 @@ class TestLineageHook:
         df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
         ctx_pre = HookContext(
-            job=None, phase="pre_extract", data=None, metadata={},
+            job=None,
+            phase="pre_extract",
+            data=None,
+            metadata={},
         )
         hook.execute(ctx_pre)
 
         ctx_post = HookContext(
-            job=None, phase="post_extract", data=df, metadata={"extracted_rows": 3},
+            job=None,
+            phase="post_extract",
+            data=df,
+            metadata={"extracted_rows": 3},
         )
         hook.execute(ctx_post)
 
@@ -240,12 +280,18 @@ class TestLineageHook:
         df = pd.DataFrame({"x": [1]})
 
         ctx_pre = HookContext(
-            job=mock_job, phase="pre_extract", data=None, metadata={},
+            job=mock_job,
+            phase="pre_extract",
+            data=None,
+            metadata={},
         )
         hook.execute(ctx_pre)
 
         ctx = HookContext(
-            job=mock_job, phase="post_extract", data=df, metadata={},
+            job=mock_job,
+            phase="post_extract",
+            data=df,
+            metadata={},
         )
         hook.execute(ctx)
 
@@ -254,7 +300,10 @@ class TestLineageHook:
 
         hook = LineageHook()
         ctx = HookContext(
-            job=None, phase="some_other_phase", data=None, metadata={},
+            job=None,
+            phase="some_other_phase",
+            data=None,
+            metadata={},
         )
         hook.execute(ctx)
 
@@ -284,13 +333,17 @@ class TestLineageHook:
 # core/incremental.py — remaining edge cases
 # -------------------------------------------------------------------
 
+
 class TestIncrementalEdgeCases:
     def test_file_watermark_store_get_missing(self, tmp_path):
         from simpleetl.core.incremental import FileWatermarkStore, Watermark
 
         store = FileWatermarkStore(str(tmp_path / "wm.json"))
         wm = Watermark(
-            job_name="j1", source="s1", column="updated_at", value="2024-01-01",
+            job_name="j1",
+            source="s1",
+            column="updated_at",
+            value="2024-01-01",
         )
         store.set(wm)
         result = store.get("nonexistent", "source")
@@ -314,7 +367,10 @@ class TestIncrementalEdgeCases:
         engine = sqlalchemy.create_engine("sqlite:///:memory:")
         store = DatabaseWatermarkStore(connection=engine)
         wm = Watermark(
-            job_name="j1", source="s1", column="updated_at", value="2024-01-01",
+            job_name="j1",
+            source="s1",
+            column="updated_at",
+            value="2024-01-01",
         )
         store.set(wm)
         result = store.get("j1", "s1")
@@ -355,6 +411,7 @@ class TestIncrementalEdgeCases:
 # formats/base.py — abstract class verification
 # -------------------------------------------------------------------
 
+
 class TestBaseFormatDefaults:
     def test_base_reader_is_abstract(self):
         from simpleetl.formats.base import DataReader
@@ -372,6 +429,7 @@ class TestBaseFormatDefaults:
 # -------------------------------------------------------------------
 # formats/csv.py — remaining edge cases
 # -------------------------------------------------------------------
+
 
 class TestCSVEdgeCases:
     def test_csv_reader_with_encoding(self, tmp_path):
@@ -399,6 +457,7 @@ class TestCSVEdgeCases:
 # formats/json.py — remaining edge cases
 # -------------------------------------------------------------------
 
+
 class TestJSONEdgeCases:
     def test_json_reader_with_lines(self, tmp_path):
         from simpleetl.formats.json import JSONReader
@@ -424,6 +483,7 @@ class TestJSONEdgeCases:
 # -------------------------------------------------------------------
 # formats/excel.py — remaining edge cases
 # -------------------------------------------------------------------
+
 
 class TestExcelEdgeCases:
     def test_excel_reader_basic(self, tmp_path):
@@ -452,6 +512,7 @@ class TestExcelEdgeCases:
 # formats/orc.py — remaining edge cases
 # -------------------------------------------------------------------
 
+
 class TestORCEdgeCases:
     def test_orc_reader_basic(self, tmp_path):
         from simpleetl.formats.orc import OrcReader, OrcWriter
@@ -469,6 +530,7 @@ class TestORCEdgeCases:
 # -------------------------------------------------------------------
 # platforms/base.py — abstract class verification
 # -------------------------------------------------------------------
+
 
 class TestPlatformBase:
     def test_base_platform_is_abstract(self):

@@ -45,7 +45,7 @@ class TestHealthEndpoints:
         resp = urllib.request.urlopen(f"http://127.0.0.1:{port}/metrics")
         assert resp.status == 200
         body = resp.read()
-        assert b'etl_jobs_total' in body
+        assert b"etl_jobs_total" in body
 
     def test_unknown_endpoint_returns_404(self, health_server):
         """Test unknown path returns 404."""

@@ -81,9 +81,7 @@ class PluginRegistry:
             ValueError: If a plugin with the same name is already registered.
         """
         if plugin.name in self._plugins:
-            raise ValueError(
-                f"Plugin '{plugin.name}' is already registered."
-            )
+            raise ValueError(f"Plugin '{plugin.name}' is already registered.")
         self._plugins[plugin.name] = plugin
         logger.info("Registered plugin: %s v%s", plugin.name, plugin.version)
 
@@ -156,8 +154,7 @@ class PluginRegistry:
                 from importlib_metadata import entry_points  # type: ignore[no-redef]
             except ImportError:
                 logger.warning(
-                    "importlib.metadata not available; "
-                    "entry point discovery skipped."
+                    "importlib.metadata not available; entry point discovery skipped."
                 )
                 return 0
 

@@ -39,11 +39,13 @@ class TestTable:
         """Test Table read and write operations."""
         table = Table("test_table", connection_string="sqlite:///:memory:")
 
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-            "value": [10.5, 20.0, 30.5],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "name": ["Alice", "Bob", "Charlie"],
+                "value": [10.5, 20.0, 30.5],
+            }
+        )
         table.write(df, if_exists="replace")
 
         result = table.read()
@@ -54,10 +56,12 @@ class TestTable:
         """Test Table read with WHERE clause."""
         table = Table("test_table", connection_string="sqlite:///:memory:")
 
-        df = pd.DataFrame({
-            "id": [1, 2, 3, 4, 5],
-            "name": ["Alice", "Bob", "Alice", "Charlie", "Bob"],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3, 4, 5],
+                "name": ["Alice", "Bob", "Alice", "Charlie", "Bob"],
+            }
+        )
         table.write(df, if_exists="replace")
 
         result = table.read(where="id > 2", order_by="id")
@@ -68,11 +72,13 @@ class TestTable:
         """Test Table read with column selection."""
         table = Table("test_table", connection_string="sqlite:///:memory:")
 
-        df = pd.DataFrame({
-            "id": [1],
-            "name": ["Alice"],
-            "secret": ["hidden"],
-        })
+        df = pd.DataFrame(
+            {
+                "id": [1],
+                "name": ["Alice"],
+                "secret": ["hidden"],
+            }
+        )
         table.write(df, if_exists="replace")
 
         result = table.read(columns=["id", "name"])
@@ -83,10 +89,12 @@ class TestTable:
         """Test Table chunked reading."""
         table = Table("test_table", connection_string="sqlite:///:memory:")
 
-        df = pd.DataFrame({
-            "id": range(100),
-            "value": range(100),
-        })
+        df = pd.DataFrame(
+            {
+                "id": range(100),
+                "value": range(100),
+            }
+        )
         table.write(df, if_exists="replace")
 
         chunks = list(table.read_chunks(chunk_size=25))

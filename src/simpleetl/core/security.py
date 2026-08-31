@@ -143,8 +143,7 @@ def mask_pii(
     valid_methods = {"redact", "hash", "partial", "tokenize"}
     if method not in valid_methods:
         raise ValueError(
-            f"Unsupported masking method '{method}'. "
-            f"Choose from: {valid_methods}"
+            f"Unsupported masking method '{method}'. Choose from: {valid_methods}"
         )
 
     result = df.copy()
@@ -212,9 +211,7 @@ def _mask_tokenize(value: Any, pii_type: str) -> str:
 
     if cache_key not in _tokenize_cache:
         _tokenize_counter += 1
-        _tokenize_cache[cache_key] = (
-            f"<{pii_type.upper()}_{_tokenize_counter}>"
-        )
+        _tokenize_cache[cache_key] = f"<{pii_type.upper()}_{_tokenize_counter}>"
 
     return _tokenize_cache[cache_key]
 
@@ -347,11 +344,10 @@ class ColumnEncryptor:
             A URL-safe base64-encoded 32-byte key.
         """
         from cryptography.fernet import Fernet  # noqa: PLC0415
+
         return Fernet.generate_key()
 
-    def encrypt_column(
-        self, df: pd.DataFrame, column: str
-    ) -> pd.DataFrame:
+    def encrypt_column(self, df: pd.DataFrame, column: str) -> pd.DataFrame:
         """Encrypt a column's values.
 
         Args:
@@ -366,15 +362,13 @@ class ColumnEncryptor:
             return result
 
         result[column] = result[column].apply(
-            lambda v: self._fernet.encrypt(str(v).encode()).decode()
-            if not pd.isna(v)
-            else v
+            lambda v: (
+                self._fernet.encrypt(str(v).encode()).decode() if not pd.isna(v) else v
+            )
         )
         return result
 
-    def decrypt_column(
-        self, df: pd.DataFrame, column: str
-    ) -> pd.DataFrame:
+    def decrypt_column(self, df: pd.DataFrame, column: str) -> pd.DataFrame:
         """Decrypt a column's values.
 
         Args:
@@ -389,9 +383,9 @@ class ColumnEncryptor:
             return result
 
         result[column] = result[column].apply(
-            lambda v: self._fernet.decrypt(str(v).encode()).decode()
-            if not pd.isna(v)
-            else v
+            lambda v: (
+                self._fernet.decrypt(str(v).encode()).decode() if not pd.isna(v) else v
+            )
         )
         return result
 
@@ -449,9 +443,7 @@ class AuditLogger:
             "details": details or {},
         }
         self._entries.append(entry)
-        logger.info(
-            "Audit: user=%s action=%s source=%s", user, action, source
-        )
+        logger.info("Audit: user=%s action=%s source=%s", user, action, source)
         if self._log_file:
             self._write_to_file(entry)
 
@@ -524,9 +516,7 @@ class AuditLogger:
 
         if end_time is not None:
             results = [
-                e
-                for e in results
-                if datetime.fromisoformat(e["timestamp"]) <= end_time
+                e for e in results if datetime.fromisoformat(e["timestamp"]) <= end_time
             ]
 
         return results
@@ -576,9 +566,7 @@ class AuditLogger:
             logger.error("Failed to write audit log: %s", exc)
 
     @classmethod
-    def from_file(
-        cls, path: str, log_file: Optional[str] = None
-    ) -> "AuditLogger":
+    def from_file(cls, path: str, log_file: Optional[str] = None) -> "AuditLogger":
         """Load audit entries from a JSON-lines file.
 
         Returns a new ``AuditLogger`` instance populated with
@@ -655,9 +643,7 @@ class RBACPolicy:
             "permissions": set(permissions),
             "allowed_columns": allowed_columns or {},
         }
-        logger.debug(
-            "Added role '%s' with permissions: %s", name, permissions
-        )
+        logger.debug("Added role '%s' with permissions: %s", name, permissions)
 
     def check_access(
         self,

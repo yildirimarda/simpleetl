@@ -1,4 +1,5 @@
 """Extra coverage tests for remaining gaps."""
+
 import pytest
 import pandas as pd
 import tempfile
@@ -8,6 +9,7 @@ from unittest.mock import MagicMock
 # -------------------------------------------------------------------
 # formats/database.py — merge methods
 # -------------------------------------------------------------------
+
 
 class TestDatabaseMerge:
     def _make_engine_with_table(self):
@@ -28,9 +30,7 @@ class TestDatabaseMerge:
         engine = self._make_engine_with_table()
         df = pd.DataFrame({"id": [1, 2], "name": ["Alice", "Bob"]})
 
-        result = DatabaseWriter._merge_sqlite(
-            engine, df, "users", ["id"], ["name"]
-        )
+        result = DatabaseWriter._merge_sqlite(engine, df, "users", ["id"], ["name"])
         assert isinstance(result, int)
 
     def test_generic_merge(self):
@@ -39,9 +39,7 @@ class TestDatabaseMerge:
         engine = self._make_engine_with_table()
         df = pd.DataFrame({"id": [1, 2], "name": ["Alice", "Bob"]})
 
-        result = DatabaseWriter._merge_generic(
-            engine, df, "users", ["id"], ["name"]
-        )
+        result = DatabaseWriter._merge_generic(engine, df, "users", ["id"], ["name"])
         assert isinstance(result, int)
 
     def test_postgres_upsert_mocked(self):
@@ -56,9 +54,7 @@ class TestDatabaseMerge:
         engine.begin.return_value.__exit__ = MagicMock(return_value=False)
 
         df = pd.DataFrame({"id": [1], "name": ["Alice"]})
-        result = DatabaseWriter._merge_postgresql(
-            engine, df, "users", ["id"], ["name"]
-        )
+        result = DatabaseWriter._merge_postgresql(engine, df, "users", ["id"], ["name"])
         assert result == 1
 
     def test_mysql_upsert_mocked(self):
@@ -73,15 +69,14 @@ class TestDatabaseMerge:
         engine.begin.return_value.__exit__ = MagicMock(return_value=False)
 
         df = pd.DataFrame({"id": [1], "name": ["Alice"]})
-        result = DatabaseWriter._merge_mysql(
-            engine, df, "users", ["id"], ["name"]
-        )
+        result = DatabaseWriter._merge_mysql(engine, df, "users", ["id"], ["name"])
         assert result == 1
 
 
 # -------------------------------------------------------------------
 # formats/database.py — read/write with cloud connection strings
 # -------------------------------------------------------------------
+
 
 class TestDatabaseFormat:
     def test_database_reader_init(self):
@@ -100,6 +95,7 @@ class TestDatabaseFormat:
 # -------------------------------------------------------------------
 # core/security.py — remaining uncovered lines
 # -------------------------------------------------------------------
+
 
 class TestSecurityUncovered:
     def test_detect_pii_columns(self):
@@ -170,13 +166,16 @@ class TestSecurityUncovered:
 
         policy = RBACPolicy()
         df = pd.DataFrame({"id": [1, 2], "secret": ["a", "b"]})
-        result = apply_rbac_filter(df, role="viewer", source="test_table", policy=policy)
+        result = apply_rbac_filter(
+            df, role="viewer", source="test_table", policy=policy
+        )
         assert result is not None
 
 
 # -------------------------------------------------------------------
 # core/lineage.py — remaining uncovered lines
 # -------------------------------------------------------------------
+
 
 class TestLineageRemaining:
     def test_lineage_tracker_get_events_filtered(self):
@@ -233,6 +232,7 @@ class TestLineageRemaining:
 # core/metrics.py — remaining uncovered lines
 # -------------------------------------------------------------------
 
+
 class TestMetricsRemaining:
     def test_counter_with_labelnames(self):
         from prometheus_client import CollectorRegistry
@@ -288,6 +288,7 @@ class TestMetricsRemaining:
 # core/plugins.py — remaining uncovered lines
 # -------------------------------------------------------------------
 
+
 class TestPluginsRemaining:
     def test_plugin_without_name(self):
         from simpleetl.core.plugins import Plugin
@@ -319,6 +320,7 @@ class TestPluginsRemaining:
 # core/incremental.py — remaining uncovered lines
 # -------------------------------------------------------------------
 
+
 class TestIncrementalRemaining:
     def test_watermark_store_operations(self, tmp_path):
         from simpleetl.core.incremental import (
@@ -348,6 +350,7 @@ class TestIncrementalRemaining:
 # -------------------------------------------------------------------
 # formats/database.py — DatabaseReader read/write with sqlite
 # -------------------------------------------------------------------
+
 
 class TestDatabaseReaderWriter:
     def test_sqlite_read_write_roundtrip(self):
@@ -383,9 +386,7 @@ class TestDatabaseReaderWriter:
             writer = DatabaseWriter()
             writer.write(df, f"sqlite:///{db_path}", table_name="t1")
             with pytest.raises(Exception):
-                writer.write(
-                    df, f"sqlite:///{db_path}", table="t1", if_exists="fail"
-                )
+                writer.write(df, f"sqlite:///{db_path}", table="t1", if_exists="fail")
         finally:
             os.unlink(db_path)
 

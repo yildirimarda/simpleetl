@@ -103,9 +103,7 @@ class TestSchemaDiff:
         assert diff.has_changes is True
 
     def test_nullability_changes(self):
-        diff = SchemaDiff(
-            nullability_changes={"col": {"old": True, "new": False}}
-        )
+        diff = SchemaDiff(nullability_changes={"col": {"old": True, "new": False}})
         assert diff.has_changes is True
 
     def test_to_dict(self):
@@ -149,9 +147,7 @@ class TestSchemaFromDataFrame:
 
     def test_descriptions(self):
         df = pd.DataFrame({"x": [1]})
-        schema = Schema.from_dataframe(
-            df, descriptions={"x": "The X column"}
-        )
+        schema = Schema.from_dataframe(df, descriptions={"x": "The X column"})
         assert schema.get_column("x").description == "The X column"
 
     def test_metadata(self):
@@ -208,9 +204,7 @@ class TestSchemaSerialization:
         assert d["columns"][0]["name"] == "id"
 
     def test_to_json(self):
-        schema = Schema(
-            columns=[ColumnDef("id", "int64")], metadata={"k": "v"}
-        )
+        schema = Schema(columns=[ColumnDef("id", "int64")], metadata={"k": "v"})
         j = schema.to_json()
         parsed = json.loads(j)
         assert parsed["columns"][0]["name"] == "id"
@@ -235,9 +229,7 @@ class TestSchemaSerialization:
 
 class TestSchemaValidate:
     def test_valid(self):
-        schema = Schema(
-            columns=[ColumnDef("id", "int64"), ColumnDef("name", "object")]
-        )
+        schema = Schema(columns=[ColumnDef("id", "int64"), ColumnDef("name", "object")])
         df = pd.DataFrame({"id": [1], "name": ["a"]})
         schema.validate(df)  # Should not raise
 
@@ -256,9 +248,7 @@ class TestSchemaValidate:
             schema.validate(df)
 
     def test_strict_nullability(self):
-        schema = Schema(
-            columns=[ColumnDef("id", "int64", nullable=False)]
-        )
+        schema = Schema(columns=[ColumnDef("id", "int64", nullable=False)])
         df = pd.DataFrame({"id": [1, None]})
         with pytest.raises(SchemaValidationError):
             schema.validate(df, strict_nullability=True)
@@ -275,32 +265,25 @@ class TestSchemaValidate:
         schema.validate(df, strict_types=True)  # Should not raise
 
     def test_validation_errors_list(self):
-        schema = Schema(
-            columns=[ColumnDef("x", "int64", nullable=False)]
-        )
+        schema = Schema(columns=[ColumnDef("x", "int64", nullable=False)])
         df = pd.DataFrame({"x": [1, None]})
         with pytest.raises(SchemaValidationError) as exc_info:
             schema.validate(df, strict_nullability=True)
         assert len(exc_info.value.errors) > 0
 
-
-# ---------------------------------------------------------------------------
-# Schema.diff
-# ---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
+    # Schema.diff
+    # ---------------------------------------------------------------------------
 
     def test_schema_diff_added_columns(self):
         old = Schema(columns=[ColumnDef("a", "int64")])
-        new = Schema(
-            columns=[ColumnDef("a", "int64"), ColumnDef("b", "object")]
-        )
+        new = Schema(columns=[ColumnDef("a", "int64"), ColumnDef("b", "object")])
         diff = old.diff(new)
         assert diff.added_columns == ["b"]
         assert diff.removed_columns == []
 
     def test_schema_diff_removed_columns(self):
-        old = Schema(
-            columns=[ColumnDef("a", "int64"), ColumnDef("b", "object")]
-        )
+        old = Schema(columns=[ColumnDef("a", "int64"), ColumnDef("b", "object")])
         new = Schema(columns=[ColumnDef("a", "int64")])
         diff = old.diff(new)
         assert diff.removed_columns == ["b"]
@@ -354,17 +337,13 @@ class TestSchemaValidate:
 class TestSchemaEvolve:
     def test_add_columns(self):
         old = Schema(columns=[ColumnDef("a", "int64")])
-        new = Schema(
-            columns=[ColumnDef("a", "int64"), ColumnDef("b", "object")]
-        )
+        new = Schema(columns=[ColumnDef("a", "int64"), ColumnDef("b", "object")])
         evolved = old.evolve(new)
         assert len(evolved) == 2
         assert "b" in evolved.column_names
 
     def test_remove_columns(self):
-        old = Schema(
-            columns=[ColumnDef("a", "int64"), ColumnDef("b", "object")]
-        )
+        old = Schema(columns=[ColumnDef("a", "int64"), ColumnDef("b", "object")])
         new = Schema(columns=[ColumnDef("a", "int64")])
         evolved = old.evolve(new)
         assert len(evolved) == 1
@@ -461,9 +440,7 @@ class TestSchemaDunder:
         assert s1 != s2
 
     def test_len(self):
-        schema = Schema(
-            columns=[ColumnDef("a", "int64"), ColumnDef("b", "object")]
-        )
+        schema = Schema(columns=[ColumnDef("a", "int64"), ColumnDef("b", "object")])
         assert len(schema) == 2
 
     def test_get_column_none(self):
@@ -507,17 +484,13 @@ class TestGenerateDdl:
         assert "TEXT" in ddl
 
     def test_mysql_basic(self):
-        schema = Schema(
-            columns=[ColumnDef("id", "int64", nullable=False)]
-        )
+        schema = Schema(columns=[ColumnDef("id", "int64", nullable=False)])
         ddl = generate_ddl(schema, "users", dialect="mysql")
         assert "CREATE TABLE" in ddl
         assert "BIGINT" in ddl
 
     def test_sqlite_basic(self):
-        schema = Schema(
-            columns=[ColumnDef("id", "int64", nullable=False)]
-        )
+        schema = Schema(columns=[ColumnDef("id", "int64", nullable=False)])
         ddl = generate_ddl(schema, "users", dialect="sqlite")
         assert "CREATE TABLE" in ddl
         assert "INTEGER" in ddl
@@ -539,9 +512,7 @@ class TestGenerateDdl:
             generate_ddl(schema, "t", dialect="oracle")
 
     def test_default_value(self):
-        schema = Schema(
-            columns=[ColumnDef("status", "object", default="active")]
-        )
+        schema = Schema(columns=[ColumnDef("status", "object", default="active")])
         ddl = generate_ddl(schema, "t")
         assert "'active'" in ddl
 
@@ -593,8 +564,6 @@ class TestGenerateDdl:
         assert "TEXT" in ddl  # Falls back to TEXT
 
     def test_datetime_with_timezone(self):
-        schema = Schema(
-            columns=[ColumnDef("ts", "datetime64[ns, UTC]")]
-        )
+        schema = Schema(columns=[ColumnDef("ts", "datetime64[ns, UTC]")])
         ddl = generate_ddl(schema, "t", dialect="postgresql")
         assert "TIMESTAMPTZ" in ddl

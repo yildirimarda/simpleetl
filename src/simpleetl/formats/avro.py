@@ -22,6 +22,7 @@ def _get_fastavro():
     if _fastavro is None:
         try:
             import fastavro as _fa
+
             _fastavro = _fa
         except ImportError:
             raise ImportError(
@@ -57,14 +58,14 @@ class AvroReader(DataReader):
     def _read_with_fastavro(source: str, **kwargs) -> pd.DataFrame:
         fastavro = _get_fastavro()
         if is_cloud_path(source):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(source)
-            with filesystem.open(source, 'rb') as f:
+            with filesystem.open(source, "rb") as f:
                 reader = fastavro.reader(f, **kwargs)
                 records = [record for record in reader]
         else:
-            with open(source, 'rb') as f:
+            with open(source, "rb") as f:
                 reader = fastavro.reader(f, **kwargs)
                 records = [record for record in reader]
         return pd.DataFrame(records)
@@ -72,11 +73,12 @@ class AvroReader(DataReader):
     @staticmethod
     def _read_with_pyarrow(source: str, **kwargs) -> pd.DataFrame:
         from pyarrow import avro
+
         if is_cloud_path(source):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(source)
-            with filesystem.open(source, 'rb') as f:
+            with filesystem.open(source, "rb") as f:
                 table = avro.read_avro(f)
         else:
             table = avro.read_avro(source)
@@ -100,40 +102,40 @@ class AvroWriter(DataWriter):
                 and 'filesystem' for an fsspec filesystem instance.
         """
         fastavro = _get_fastavro()
-        records = data.to_dict(orient='records')
+        records = data.to_dict(orient="records")
 
-        schema = kwargs.pop('schema', None)
+        schema = kwargs.pop("schema", None)
         if schema is None:
             schema = self._infer_schema(data)
 
         if is_cloud_path(destination):
-            filesystem = kwargs.pop('filesystem', None)
+            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(destination)
-            with filesystem.open(destination, 'wb') as f:
+            with filesystem.open(destination, "wb") as f:
                 fastavro.writer(f, schema, records, **kwargs)
         else:
-            with open(destination, 'wb') as f:
+            with open(destination, "wb") as f:
                 fastavro.writer(f, schema, records, **kwargs)
 
     @staticmethod
     def _infer_schema(df: pd.DataFrame) -> Dict[str, Any]:
         """Infer Avro schema from a DataFrame."""
         type_map = {
-            'int64': 'long',
-            'int32': 'int',
-            'float64': 'double',
-            'float32': 'float',
-            'bool': 'boolean',
-            'object': 'string',
+            "int64": "long",
+            "int32": "int",
+            "float64": "double",
+            "float32": "float",
+            "bool": "boolean",
+            "object": "string",
         }
         fields: List[Dict[str, str]] = []
         for col in df.columns:
             dtype = str(df[col].dtype)
-            avro_type = type_map.get(dtype, 'string')
-            fields.append({'name': col, 'type': avro_type})
+            avro_type = type_map.get(dtype, "string")
+            fields.append({"name": col, "type": avro_type})
         return {
-            'type': 'record',
-            'name': 'Record',
-            'fields': fields,
+            "type": "record",
+            "name": "Record",
+            "fields": fields,
         }

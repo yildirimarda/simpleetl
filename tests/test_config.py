@@ -30,6 +30,7 @@ from simpleetl.core.secrets import (
 # Original tests (kept intact)
 # ---------------------------------------------------------------------------
 
+
 def test_etl_job_config_creation():
     """Test creating an ETLJobConfig instance."""
     config = ETLJobConfig(
@@ -61,9 +62,7 @@ def test_load_config_yaml():
         },
     }
 
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(config_data, f)
         temp_path = f.name
 
@@ -93,9 +92,7 @@ def test_load_config_json():
         },
     }
 
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".json", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(config_data, f)
         temp_path = f.name
 
@@ -113,16 +110,12 @@ def test_load_config_json():
 
 def test_load_config_invalid_format():
     """Test loading configuration from an unsupported file format."""
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".txt", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         f.write("invalid config")
         temp_path = f.name
 
     try:
-        with pytest.raises(
-            ValueError, match="Unsupported configuration file format"
-        ):
+        with pytest.raises(ValueError, match="Unsupported configuration file format"):
             load_config(temp_path)
     finally:
         os.unlink(temp_path)
@@ -145,9 +138,7 @@ def test_save_config_yaml():
         params={"test_param": "test_value"},
     )
 
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         temp_path = f.name
 
     try:
@@ -176,9 +167,7 @@ def test_save_config_json():
         params={"test_param": "test_value"},
     )
 
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".json", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         temp_path = f.name
 
     try:
@@ -201,9 +190,7 @@ def test_etl_job_config_validation():
     with pytest.raises(Exception):
         ETLJobConfig()
 
-    config = ETLJobConfig(
-        name="test_job", input_format="csv", output_format="csv"
-    )
+    config = ETLJobConfig(name="test_job", input_format="csv", output_format="csv")
     assert config.name == "test_job"
     assert config.input_format == "csv"
     assert config.output_format == "csv"
@@ -212,6 +199,7 @@ def test_etl_job_config_validation():
 # ---------------------------------------------------------------------------
 # New ETLJobConfig field tests
 # ---------------------------------------------------------------------------
+
 
 def test_etl_job_config_secrets_provider_field():
     """Test the secrets_provider field on ETLJobConfig."""
@@ -249,6 +237,7 @@ def test_etl_job_config_defaults_for_new_fields():
 # ---------------------------------------------------------------------------
 # resolve_env_vars tests
 # ---------------------------------------------------------------------------
+
 
 class TestResolveEnvVars:
     """Tests for the resolve_env_vars function."""
@@ -312,11 +301,7 @@ class TestResolveEnvVars:
     def test_resolve_nested_structures(self, monkeypatch):
         """Test resolution in deeply nested structures."""
         monkeypatch.setenv("NESTED_VAL", "deep")
-        data = {
-            "level1": {
-                "level2": ["${NESTED_VAL}", {"level3": "${NESTED_VAL}"}]
-            }
-        }
+        data = {"level1": {"level2": ["${NESTED_VAL}", {"level3": "${NESTED_VAL}"}]}}
         result = resolve_env_vars(data)
         assert result["level1"]["level2"][0] == "deep"
         assert result["level1"]["level2"][1]["level3"] == "deep"
@@ -349,6 +334,7 @@ class TestResolveEnvVars:
 # ---------------------------------------------------------------------------
 # Secrets resolution tests
 # ---------------------------------------------------------------------------
+
 
 class TestResolveSecrets:
     """Tests for the resolve_secrets function."""
@@ -400,9 +386,7 @@ class TestResolveSecrets:
         """Test secret resolution embedded in a larger string."""
         monkeypatch.setenv("TOKEN", "abc123")
         provider = EnvSecretsProvider()
-        result = resolve_secrets(
-            "Bearer ${secrets://env/TOKEN} end", provider
-        )
+        result = resolve_secrets("Bearer ${secrets://env/TOKEN} end", provider)
         assert result == "Bearer abc123 end"
 
 
@@ -428,14 +412,13 @@ class TestEnvSecretsProvider:
 # Integration: load_config with env vars and secrets
 # ---------------------------------------------------------------------------
 
+
 class TestLoadConfigWithEnvVars:
     """Integration tests for load_config with env var resolution."""
 
     def _write_config(self, data: dict, suffix: str = ".yaml") -> str:
         """Helper to write a config dict to a temp file."""
-        f = tempfile.NamedTemporaryFile(
-            mode="w", suffix=suffix, delete=False
-        )
+        f = tempfile.NamedTemporaryFile(mode="w", suffix=suffix, delete=False)
         yaml.dump(data, f)
         f.close()
         return f.name
@@ -495,9 +478,7 @@ class TestLoadConfigWithEnvVars:
             "name": "secret_job",
             "input_format": "csv",
             "output_format": "csv",
-            "params": {
-                "password": "${secrets://env/MY_SECRET_PASSWORD}"
-            },
+            "params": {"password": "${secrets://env/MY_SECRET_PASSWORD}"},
         }
         path = self._write_config(config_data)
         try:

@@ -311,6 +311,7 @@ class TestRestApiReaderAuth:
         try:
             with pytest.raises(ImportError, match="requests"):
                 from simpleetl.formats.rest_api import _require_requests
+
                 _require_requests()
         finally:
             if original is not None:

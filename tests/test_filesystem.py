@@ -48,14 +48,18 @@ class TestIsCloudPath:
         assert is_cloud_path("gcs://my-bucket/data/file.csv") is True
 
     def test_abfs_path(self):
-        assert is_cloud_path(
-            "abfs://container@account.dfs.core.windows.net/data/file.csv"
-        ) is True
+        assert (
+            is_cloud_path("abfs://container@account.dfs.core.windows.net/data/file.csv")
+            is True
+        )
 
     def test_abfss_path(self):
-        assert is_cloud_path(
-            "abfss://container@account.dfs.core.windows.net/data/file.csv"
-        ) is True
+        assert (
+            is_cloud_path(
+                "abfss://container@account.dfs.core.windows.net/data/file.csv"
+            )
+            is True
+        )
 
     def test_local_path(self):
         assert is_cloud_path("/local/path/file.csv") is False
@@ -235,9 +239,7 @@ class TestFormatFactoryCloudPaths:
         assert info["extension"] == ".parquet"
 
     def test_detect_format_with_query_string(self):
-        info = FormatFactory.detect_format(
-            "s3://bucket/data.csv?versionId=abc123"
-        )
+        info = FormatFactory.detect_format("s3://bucket/data.csv?versionId=abc123")
         assert info["format"] == "csv"
         assert info["extension"] == ".csv"
 
@@ -262,9 +264,7 @@ class TestCSVCloudRoundTrip:
 
     def test_csv_read_from_cloud(self):
         """Test CSV reading from cloud storage with mocked filesystem."""
-        pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
+        pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         csv_content = "name,age\nAlice,25\nBob,30\n"
 
         mock_fs = MagicMock()
@@ -282,15 +282,11 @@ class TestCSVCloudRoundTrip:
 
     def test_csv_write_to_cloud(self):
         """Test CSV writing to cloud storage with mocked filesystem."""
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 
         mock_fs = MagicMock()
         mock_file = MagicMock()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=mock_file
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=mock_file)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         writer = CSVWriter()
@@ -320,15 +316,11 @@ class TestJSONCloudRoundTrip:
 
     def test_json_write_to_cloud(self):
         """Test JSON writing to cloud storage with mocked filesystem."""
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 
         mock_fs = MagicMock()
         mock_file = MagicMock()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=mock_file
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=mock_file)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         writer = JSONWriter()
@@ -341,6 +333,7 @@ def _aws_credentials_available():
     """Check if valid, non-expired AWS credentials are available."""
     try:
         import boto3
+
         session = boto3.Session()
         credentials = session.get_credentials()
         if credentials is None:
@@ -358,7 +351,7 @@ def _aws_credentials_available():
 
 @pytest.mark.skipif(
     not _aws_credentials_available(),
-    reason="Valid AWS credentials not available (may be expired)"
+    reason="Valid AWS credentials not available (may be expired)",
 )
 class TestParquetCloudRoundTrip:
     """Test Parquet reader/writer with mocked cloud filesystem."""
@@ -368,16 +361,12 @@ class TestParquetCloudRoundTrip:
         from unittest.mock import patch
         import pyarrow.parquet as pq
 
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 
-        with tempfile.NamedTemporaryFile(suffix='.parquet') as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".parquet") as tmp:
             df.to_parquet(tmp.name, index=False)
-            with patch('simpleetl.formats.parquet.pq.ParquetFile') as mock_pf:
-                mock_pf.return_value.read.return_value = (
-                    pq.ParquetFile(tmp.name).read()
-                )
+            with patch("simpleetl.formats.parquet.pq.ParquetFile") as mock_pf:
+                mock_pf.return_value.read.return_value = pq.ParquetFile(tmp.name).read()
                 reader = ParquetReader()
                 result = reader.read("s3://bucket/data.parquet")
 
@@ -387,11 +376,9 @@ class TestParquetCloudRoundTrip:
         """Test Parquet writing to cloud storage with mocked filesystem."""
         from unittest.mock import patch, MagicMock
 
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 
-        with patch('simpleetl.formats.parquet.pq.ParquetWriter') as mock_writer:
+        with patch("simpleetl.formats.parquet.pq.ParquetWriter") as mock_writer:
             mock_writer.return_value = MagicMock()
             writer = ParquetWriter()
             writer.write(df, "s3://bucket/data.parquet")
@@ -406,9 +393,7 @@ class TestAvroCloudRoundTrip:
         import fastavro
         from io import BytesIO as AvroBytesIO
 
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         records = df.to_dict(orient="records")
         schema = {
             "type": "record",
@@ -424,9 +409,7 @@ class TestAvroCloudRoundTrip:
         buffer.seek(0)
 
         mock_fs = MagicMock()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=buffer
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=buffer)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         reader = AvroReader()
@@ -439,15 +422,11 @@ class TestAvroCloudRoundTrip:
         """Test Avro writing to cloud storage with mocked filesystem."""
         import fastavro
 
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 
         mock_fs = MagicMock()
         mock_file = BytesIO()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=mock_file
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=mock_file)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         writer = AvroWriter()
@@ -468,9 +447,7 @@ class TestOrcCloudRoundTrip:
         """Test ORC reading from cloud storage with mocked filesystem."""
         import pyarrow as pa
 
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         table = pa.Table.from_pandas(df)
 
         mock_orc_file = MagicMock()
@@ -480,17 +457,13 @@ class TestOrcCloudRoundTrip:
 
         with patch("pyarrow.orc.ORCFile", return_value=mock_orc_file):
             reader = OrcReader()
-            result = reader.read(
-                "s3://bucket/data.orc", filesystem=mock_fs
-            )
+            result = reader.read("s3://bucket/data.orc", filesystem=mock_fs)
 
         assert len(result) == 2
 
     def test_orc_write_to_cloud(self):
         """Test ORC writing to cloud storage with mocked filesystem."""
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 
         mock_fs = MagicMock()
 
@@ -506,9 +479,7 @@ class TestExcelCloudRoundTrip:
 
     def test_excel_read_from_cloud(self):
         """Test Excel reading from cloud storage with mocked filesystem."""
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         buffer = BytesIO()
         df.to_excel(buffer, index=False)
         buffer.seek(0)
@@ -527,15 +498,11 @@ class TestExcelCloudRoundTrip:
 
     def test_excel_write_to_cloud(self):
         """Test Excel writing to cloud storage with mocked filesystem."""
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 
         mock_fs = MagicMock()
         mock_file = MagicMock()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=mock_file
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=mock_file)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         writer = ExcelWriter()
@@ -575,15 +542,11 @@ class TestXMLCloudRoundTrip:
 
     def test_xml_write_to_cloud(self):
         """Test XML writing to cloud storage with mocked filesystem."""
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 
         mock_fs = MagicMock()
         mock_file = MagicMock()
-        mock_fs.open.return_value.__enter__ = MagicMock(
-            return_value=mock_file
-        )
+        mock_fs.open.return_value.__enter__ = MagicMock(return_value=mock_file)
         mock_fs.open.return_value.__exit__ = MagicMock(return_value=False)
 
         writer = XMLWriter()
@@ -598,12 +561,8 @@ class TestLocalPathsStillWork:
     """Regression tests: ensure local paths still work after cloud changes."""
 
     def test_csv_local_roundtrip(self):
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
-        with tempfile.NamedTemporaryFile(
-            suffix=".csv", delete=False
-        ) as f:
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
             temp_file = f.name
         try:
             writer = CSVWriter()
@@ -616,30 +575,22 @@ class TestLocalPathsStillWork:
             os.unlink(temp_file)
 
     def test_json_local_roundtrip(self):
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
-        with tempfile.NamedTemporaryFile(
-            suffix=".json", delete=False
-        ) as f:
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             temp_file = f.name
         try:
             writer = JSONWriter()
             writer.write(df, temp_file)
             # JSONWriter defaults to lines=True, orient='records' (JSONL)
             reader = JSONReader()
-            result = reader.read(temp_file, lines=True, orient='records')
+            result = reader.read(temp_file, lines=True, orient="records")
             assert len(result) == 2
         finally:
             os.unlink(temp_file)
 
     def test_parquet_local_roundtrip(self):
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
-        with tempfile.NamedTemporaryFile(
-            suffix=".parquet", delete=False
-        ) as f:
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
+        with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as f:
             temp_file = f.name
         try:
             writer = ParquetWriter()
@@ -651,12 +602,8 @@ class TestLocalPathsStillWork:
             os.unlink(temp_file)
 
     def test_avro_local_roundtrip(self):
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
-        with tempfile.NamedTemporaryFile(
-            suffix=".avro", delete=False
-        ) as f:
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
+        with tempfile.NamedTemporaryFile(suffix=".avro", delete=False) as f:
             temp_file = f.name
         try:
             writer = AvroWriter()
@@ -668,12 +615,8 @@ class TestLocalPathsStillWork:
             os.unlink(temp_file)
 
     def test_orc_local_roundtrip(self):
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
-        with tempfile.NamedTemporaryFile(
-            suffix=".orc", delete=False
-        ) as f:
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
+        with tempfile.NamedTemporaryFile(suffix=".orc", delete=False) as f:
             temp_file = f.name
         try:
             writer = OrcWriter()
@@ -685,18 +628,12 @@ class TestLocalPathsStillWork:
             os.unlink(temp_file)
 
     def test_xml_local_roundtrip(self):
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
-        with tempfile.NamedTemporaryFile(
-            suffix=".xml", delete=False
-        ) as f:
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
+        with tempfile.NamedTemporaryFile(suffix=".xml", delete=False) as f:
             temp_file = f.name
         try:
             writer = XMLWriter()
-            writer.write(
-                df, temp_file, root_element="data", record_element="record"
-            )
+            writer.write(df, temp_file, root_element="data", record_element="record")
             reader = XMLReader()
             result = reader.read(temp_file, root_element="data")
             assert len(result) == 2
@@ -704,12 +641,8 @@ class TestLocalPathsStillWork:
             os.unlink(temp_file)
 
     def test_excel_local_roundtrip(self):
-        df = pd.DataFrame(
-            {"name": ["Alice", "Bob"], "age": [25, 30]}
-        )
-        with tempfile.NamedTemporaryFile(
-            suffix=".xlsx", delete=False
-        ) as f:
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
             temp_file = f.name
         try:
             writer = ExcelWriter()

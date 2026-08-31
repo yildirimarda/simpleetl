@@ -77,10 +77,7 @@ class TestDeltaLakeWriter:
         )
         DeltaLakeWriter().write(df, path, partition_by=["region"])
         # Partitioned files should be created
-        assert any(
-            (Path(path) / d).is_dir()
-            for d in ("region=us", "region=eu")
-        )
+        assert any((Path(path) / d).is_dir() for d in ("region=us", "region=eu"))
 
     def test_write_import_error(self, tmp_path):
         original = sys.modules.get("deltalake")
@@ -88,6 +85,7 @@ class TestDeltaLakeWriter:
         try:
             with pytest.raises(ImportError, match="deltalake"):
                 from simpleetl.formats.delta import _require_deltalake
+
                 _require_deltalake()
         finally:
             if original is not None:

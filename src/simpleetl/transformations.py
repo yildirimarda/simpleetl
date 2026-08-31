@@ -122,8 +122,8 @@ def aggregate_data(
         for col in result_df.columns:
             if isinstance(col, tuple):
                 # Filter out empty strings and join with underscore
-                parts = [str(part) for part in col if part != '']
-                new_col = '_'.join(parts) if parts else ''
+                parts = [str(part) for part in col if part != ""]
+                new_col = "_".join(parts) if parts else ""
                 new_columns.append(new_col)
             else:
                 new_columns.append(str(col))
@@ -165,7 +165,9 @@ def join_data(
         raise ValueError(f"Invalid join type '{how}'. Must be one of {valid_joins}")
 
     if on is None and (left_on is None or right_on is None):
-        raise ValueError("Either 'on' or both 'left_on' and 'right_on' must be provided")
+        raise ValueError(
+            "Either 'on' or both 'left_on' and 'right_on' must be provided"
+        )
 
     # Validate columns exist
     if on is not None:
@@ -571,7 +573,9 @@ def cast_columns(
         ValueError: If columns are not found or errors value is invalid.
     """
     if errors not in ("raise", "coerce"):
-        raise ValueError(f"Invalid value '{errors}' for 'errors'. Must be 'raise' or 'coerce'")
+        raise ValueError(
+            f"Invalid value '{errors}' for 'errors'. Must be 'raise' or 'coerce'"
+        )
 
     missing = [col for col in type_map.keys() if col not in df.columns]
     if missing:
@@ -581,11 +585,11 @@ def cast_columns(
     for col, dtype in type_map.items():
         if errors == "coerce":
             cast_dtype: Any = dtype
-            result_df[col] = pd.to_numeric(
-                result_df[col], errors="coerce"
-            ).astype(cast_dtype) if dtype in (
-                int, float, "int64", "float64", "int32", "float32"
-            ) else result_df[col].astype(cast_dtype)
+            result_df[col] = (
+                pd.to_numeric(result_df[col], errors="coerce").astype(cast_dtype)
+                if dtype in (int, float, "int64", "float64", "int32", "float32")
+                else result_df[col].astype(cast_dtype)
+            )
         else:
             cast_dtype = dtype
             result_df[col] = result_df[col].astype(cast_dtype)
@@ -898,12 +902,20 @@ def window_functions(
         ... })
     """
     VALID_FUNCTIONS = {
-        'rank', 'dense_rank', 'lag', 'lead', 'row_number',
-        'percent_rank', 'cumsum', 'cume_dist',
+        "rank",
+        "dense_rank",
+        "lag",
+        "lead",
+        "row_number",
+        "percent_rank",
+        "cumsum",
+        "cume_dist",
     }
 
     # Validate partition and order columns
-    partition_cols = [partition_by] if isinstance(partition_by, str) else list(partition_by)
+    partition_cols = (
+        [partition_by] if isinstance(partition_by, str) else list(partition_by)
+    )
     order_cols = [order_by] if isinstance(order_by, str) else list(order_by)
 
     for col in partition_cols:
@@ -915,12 +927,12 @@ def window_functions(
 
     # Validate function specs
     for out_col, spec in functions.items():
-        func_name = spec.get('function')
+        func_name = spec.get("function")
         if func_name not in VALID_FUNCTIONS:
             raise ValueError(
                 f"Invalid window function '{func_name}'. Must be one of {sorted(VALID_FUNCTIONS)}"
             )
-        if func_name in ('lag', 'lead', 'cumsum') and 'column' not in spec:
+        if func_name in ("lag", "lead", "cumsum") and "column" not in spec:
             raise ValueError(
                 f"Window function '{func_name}' requires a 'column' key in its spec"
             )
@@ -928,46 +940,48 @@ def window_functions(
     result_df = df.copy()
 
     # Sort the DataFrame by partition + order columns to ensure correct window computation
-    sorted_df = result_df.sort_values(partition_cols + order_cols).reset_index(drop=True)
+    sorted_df = result_df.sort_values(partition_cols + order_cols).reset_index(
+        drop=True
+    )
 
     # Group by partition columns
     grouped = sorted_df.groupby(partition_cols, sort=False)
 
     for out_col, spec in functions.items():
-        func_name = spec['function']
+        func_name = spec["function"]
 
-        if func_name == 'rank':
+        if func_name == "rank":
             sorted_df[out_col] = grouped[order_cols[0]].rank(
-                method='min', ascending=True, pct=False
+                method="min", ascending=True, pct=False
             )
-        elif func_name == 'dense_rank':
+        elif func_name == "dense_rank":
             sorted_df[out_col] = grouped[order_cols[0]].rank(
-                method='dense', ascending=True
+                method="dense", ascending=True
             )
-        elif func_name == 'row_number':
+        elif func_name == "row_number":
             sorted_df[out_col] = grouped.cumcount() + 1
-        elif func_name == 'percent_rank':
+        elif func_name == "percent_rank":
             sorted_df[out_col] = grouped[order_cols[0]].rank(
-                method='min', ascending=True, pct=True
+                method="min", ascending=True, pct=True
             )
-        elif func_name == 'lag':
-            offset = spec.get('offset', 1)
-            fill_value = spec.get('fill_value', None)
-            sorted_df[out_col] = grouped[spec['column']].shift(
+        elif func_name == "lag":
+            offset = spec.get("offset", 1)
+            fill_value = spec.get("fill_value", None)
+            sorted_df[out_col] = grouped[spec["column"]].shift(
                 offset, fill_value=fill_value
             )
-        elif func_name == 'lead':
-            offset = spec.get('offset', 1)
-            fill_value = spec.get('fill_value', None)
-            sorted_df[out_col] = grouped[spec['column']].shift(
+        elif func_name == "lead":
+            offset = spec.get("offset", 1)
+            fill_value = spec.get("fill_value", None)
+            sorted_df[out_col] = grouped[spec["column"]].shift(
                 -offset, fill_value=fill_value
             )
-        elif func_name == 'cumsum':
-            sorted_df[out_col] = grouped[spec['column']].cumsum()
-        elif func_name == 'cume_dist':
+        elif func_name == "cumsum":
+            sorted_df[out_col] = grouped[spec["column"]].cumsum()
+        elif func_name == "cume_dist":
             # cume_dist = rank / count
-            counts = grouped[order_cols[0]].transform('count')
-            ranks = grouped[order_cols[0]].rank(method='min')
+            counts = grouped[order_cols[0]].transform("count")
+            ranks = grouped[order_cols[0]].rank(method="min")
             sorted_df[out_col] = ranks / counts
 
     # Restore original order using the index
@@ -1018,9 +1032,17 @@ def string_operations(
         2  Charlie
     """
     VALID_OPERATIONS = {
-        'trim', 'upper', 'lower', 'replace', 'split',
-        'contains', 'regex_extract', 'length', 'substring',
-        'pad_left', 'pad_right',
+        "trim",
+        "upper",
+        "lower",
+        "replace",
+        "split",
+        "contains",
+        "regex_extract",
+        "length",
+        "substring",
+        "pad_left",
+        "pad_right",
     }
 
     if column not in df.columns:
@@ -1034,60 +1056,62 @@ def string_operations(
     col_series = result_df[column].astype(str)
     str_acc = col_series.str
 
-    if operation == 'trim':
+    if operation == "trim":
         result_df[column] = str_acc.strip()
-    elif operation == 'upper':
+    elif operation == "upper":
         result_df[column] = str_acc.upper()
-    elif operation == 'lower':
+    elif operation == "lower":
         result_df[column] = str_acc.lower()
-    elif operation == 'replace':
-        old = kwargs.get('old')
-        new = kwargs.get('new', '')
+    elif operation == "replace":
+        old = kwargs.get("old")
+        new = kwargs.get("new", "")
         if old is None:
             raise ValueError("'replace' operation requires 'old' keyword argument")
         result_df[column] = str_acc.replace(old, new)
-    elif operation == 'split':
-        sep = kwargs.get('sep')
+    elif operation == "split":
+        sep = kwargs.get("sep")
         if sep is None:
             raise ValueError("'split' operation requires 'sep' keyword argument")
-        maxsplit = kwargs.get('maxsplit', -1)
-        expand = kwargs.get('expand', False)
+        maxsplit = kwargs.get("maxsplit", -1)
+        expand = kwargs.get("expand", False)
         split_result = str_acc.split(sep, n=maxsplit, expand=expand)
         if expand:
             for i, sub_col in enumerate(split_result.columns):
                 result_df[f"{column}_split_{i}"] = split_result[sub_col]
         else:
             result_df[column] = split_result
-    elif operation == 'contains':
-        pattern = kwargs.get('pattern')
+    elif operation == "contains":
+        pattern = kwargs.get("pattern")
         if pattern is None:
             raise ValueError("'contains' operation requires 'pattern' keyword argument")
-        case = kwargs.get('case', True)
+        case = kwargs.get("case", True)
         result_df[f"{column}_contains"] = str_acc.contains(pattern, case=case)
-    elif operation == 'regex_extract':
-        pattern = kwargs.get('pattern')
+    elif operation == "regex_extract":
+        pattern = kwargs.get("pattern")
         if pattern is None:
-            raise ValueError("'regex_extract' operation requires 'pattern' keyword argument")
+            raise ValueError(
+                "'regex_extract' operation requires 'pattern' keyword argument"
+            )
         extracted = str_acc.extract(pattern)
         result_df[column] = extracted
-    elif operation == 'length':
+    elif operation == "length":
         result_df[f"{column}_length"] = str_acc.len()
-    elif operation == 'substring':
-        start = kwargs.get('start', 0)
-        stop = kwargs.get('stop')
-        step = kwargs.get('step')
+    elif operation == "substring":
+        start = kwargs.get("start", 0)
+        stop = kwargs.get("stop")
+        step = kwargs.get("step")
         result_df[column] = str_acc.slice(start, stop, step)
-    elif operation == 'pad_left':
-        width = kwargs.get('width')
+    elif operation == "pad_left":
+        width = kwargs.get("width")
         if width is None:
             raise ValueError("'pad_left' operation requires 'width' keyword argument")
-        fillchar = kwargs.get('fillchar', ' ')
+        fillchar = kwargs.get("fillchar", " ")
         result_df[column] = str_acc.rjust(width, fillchar)
-    elif operation == 'pad_right':
-        width = kwargs.get('width')
+    elif operation == "pad_right":
+        width = kwargs.get("width")
         if width is None:
             raise ValueError("'pad_right' operation requires 'width' keyword argument")
-        fillchar = kwargs.get('fillchar', ' ')
+        fillchar = kwargs.get("fillchar", " ")
         result_df[column] = str_acc.ljust(width, fillchar)
 
     return result_df
@@ -1137,36 +1161,42 @@ def date_operations(
         2  2024-11-01     2024
     """
     VALID_OPERATIONS = {
-        'trunc', 'extract', 'diff', 'format', 'timezone',
-        'add', 'is_weekend', 'is_business_day',
+        "trunc",
+        "extract",
+        "diff",
+        "format",
+        "timezone",
+        "add",
+        "is_weekend",
+        "is_business_day",
     }
 
     FREQ_MAP = {
-        'year': 'YS',
-        'month': 'MS',
-        'day': 'D',
-        'hour': 'h',
-        'minute': 'min',
-        'second': 's',
+        "year": "YS",
+        "month": "MS",
+        "day": "D",
+        "hour": "h",
+        "minute": "min",
+        "second": "s",
     }
 
     # Frequencies that need to_period().dt.to_timestamp() (non-fixed)
     PERIOD_FREQ = {
-        'year': 'Y',
-        'month': 'M',
+        "year": "Y",
+        "month": "M",
     }
 
     EXTRACT_MAP = {
-        'year': lambda s: s.dt.year,
-        'month': lambda s: s.dt.month,
-        'day': lambda s: s.dt.day,
-        'hour': lambda s: s.dt.hour,
-        'minute': lambda s: s.dt.minute,
-        'second': lambda s: s.dt.second,
-        'dayofweek': lambda s: s.dt.dayofweek,
-        'dayofyear': lambda s: s.dt.dayofyear,
-        'quarter': lambda s: s.dt.quarter,
-        'week': lambda s: s.dt.isocalendar().week.astype(int),
+        "year": lambda s: s.dt.year,
+        "month": lambda s: s.dt.month,
+        "day": lambda s: s.dt.day,
+        "hour": lambda s: s.dt.hour,
+        "minute": lambda s: s.dt.minute,
+        "second": lambda s: s.dt.second,
+        "dayofweek": lambda s: s.dt.dayofweek,
+        "dayofyear": lambda s: s.dt.dayofyear,
+        "quarter": lambda s: s.dt.quarter,
+        "week": lambda s: s.dt.isocalendar().week.astype(int),
     }
 
     if column not in df.columns:
@@ -1183,8 +1213,8 @@ def date_operations(
 
     dt_series = result_df[column]
 
-    if operation == 'trunc':
-        freq = kwargs.get('freq')
+    if operation == "trunc":
+        freq = kwargs.get("freq")
         if freq is None:
             raise ValueError("'trunc' operation requires 'freq' keyword argument")
         if freq not in FREQ_MAP:
@@ -1198,8 +1228,8 @@ def date_operations(
         else:
             result_df[column] = dt_series.dt.floor(FREQ_MAP[freq])
 
-    elif operation == 'extract':
-        part = kwargs.get('part')
+    elif operation == "extract":
+        part = kwargs.get("part")
         if part is None:
             raise ValueError("'extract' operation requires 'part' keyword argument")
         if part not in EXTRACT_MAP:
@@ -1208,52 +1238,56 @@ def date_operations(
             )
         result_df[f"{column}_{part}"] = EXTRACT_MAP[part](dt_series)
 
-    elif operation == 'diff':
-        other = kwargs.get('other')
+    elif operation == "diff":
+        other = kwargs.get("other")
         if other is None:
             raise ValueError("'diff' operation requires 'other' keyword argument")
         if other not in result_df.columns:
             raise ValueError(f"Column '{other}' not found in DataFrame")
         other_series = pd.to_datetime(result_df[other])
-        unit = kwargs.get('unit', 'D')
-        if unit not in ('D', 'h', 'm', 's'):
-            raise ValueError(f"Invalid unit '{unit}'. Must be one of 'D', 'h', 'm', 's'")
-        diff = (dt_series - other_series)
-        multipliers = {'D': 86400, 'h': 3600, 'm': 60, 's': 1}
-        result_df[f"{column}_diff_{other}"] = diff.dt.total_seconds() / multipliers[unit]
+        unit = kwargs.get("unit", "D")
+        if unit not in ("D", "h", "m", "s"):
+            raise ValueError(
+                f"Invalid unit '{unit}'. Must be one of 'D', 'h', 'm', 's'"
+            )
+        diff = dt_series - other_series
+        multipliers = {"D": 86400, "h": 3600, "m": 60, "s": 1}
+        result_df[f"{column}_diff_{other}"] = (
+            diff.dt.total_seconds() / multipliers[unit]
+        )
 
-    elif operation == 'format':
-        fmt = kwargs.get('fmt')
+    elif operation == "format":
+        fmt = kwargs.get("fmt")
         if fmt is None:
             raise ValueError("'format' operation requires 'fmt' keyword argument")
         result_df[f"{column}_formatted"] = dt_series.dt.strftime(fmt)
 
-    elif operation == 'timezone':
-        tz = kwargs.get('tz')
+    elif operation == "timezone":
+        tz = kwargs.get("tz")
         if tz is None:
             raise ValueError("'timezone' operation requires 'tz' keyword argument")
         if dt_series.dt.tz is None:
-            result_df[column] = dt_series.dt.tz_localize('UTC').dt.tz_convert(tz)
+            result_df[column] = dt_series.dt.tz_localize("UTC").dt.tz_convert(tz)
         else:
             result_df[column] = dt_series.dt.tz_convert(tz)
 
-    elif operation == 'add':
-        value = kwargs.get('value')
+    elif operation == "add":
+        value = kwargs.get("value")
         if value is None:
             raise ValueError("'add' operation requires 'value' keyword argument")
-        unit = kwargs.get('unit')
+        unit = kwargs.get("unit")
         if unit is None:
             raise ValueError("'add' operation requires 'unit' keyword argument")
-        if unit not in ('days', 'hours', 'minutes', 'seconds'):
+        if unit not in ("days", "hours", "minutes", "seconds"):
             raise ValueError(
                 f"Invalid unit '{unit}'. Must be one of 'days', 'hours', 'minutes', 'seconds'"
             )
         result_df[f"{column}_added"] = dt_series + pd.Timedelta(**{unit: value})
 
-    elif operation == 'is_weekend':
+    elif operation == "is_weekend":
         result_df[f"{column}_is_weekend"] = dt_series.dt.dayofweek.isin([5, 6])
 
-    elif operation == 'is_business_day':
+    elif operation == "is_business_day":
         result_df[f"{column}_is_business_day"] = ~dt_series.dt.dayofweek.isin([5, 6])
 
     return result_df
@@ -1339,7 +1373,9 @@ class TransformationChain:
         )
         return self
 
-    def union(self, other: pd.DataFrame, ignore_index: bool = True) -> "TransformationChain":
+    def union(
+        self, other: pd.DataFrame, ignore_index: bool = True
+    ) -> "TransformationChain":
         """Apply union_data. See :func:`union_data` for details."""
         self._df = union_data(self._df, other=other, ignore_index=ignore_index)
         return self
@@ -1450,7 +1486,9 @@ class TransformationChain:
 
     def compute(self, expression: str, output_col: str) -> "TransformationChain":
         """Apply add_computed_column. See :func:`add_computed_column` for details."""
-        self._df = add_computed_column(self._df, expression=expression, output_col=output_col)
+        self._df = add_computed_column(
+            self._df, expression=expression, output_col=output_col
+        )
         return self
 
     def pivot(
@@ -1509,7 +1547,9 @@ class TransformationChain:
         **kwargs: Any,
     ) -> "TransformationChain":
         """Apply string_operations. See :func:`string_operations` for details."""
-        self._df = string_operations(self._df, column=column, operation=operation, **kwargs)
+        self._df = string_operations(
+            self._df, column=column, operation=operation, **kwargs
+        )
         return self
 
     def date_op(
@@ -1519,7 +1559,9 @@ class TransformationChain:
         **kwargs: Any,
     ) -> "TransformationChain":
         """Apply date_operations. See :func:`date_operations` for details."""
-        self._df = date_operations(self._df, column=column, operation=operation, **kwargs)
+        self._df = date_operations(
+            self._df, column=column, operation=operation, **kwargs
+        )
         return self
 
     def result(self) -> pd.DataFrame:

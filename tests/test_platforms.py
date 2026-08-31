@@ -28,7 +28,7 @@ def test_local_platform_runner():
     job = DummyJob()
     runner = LocalPlatformRunner()
 
-    with patch.object(job, 'run_with_error_handling') as mock_run:
+    with patch.object(job, "run_with_error_handling") as mock_run:
         runner.run_job(job)
         mock_run.assert_called_once()
 
@@ -38,10 +38,12 @@ def test_glue_platform_runner_in_glue_env():
     job = DummyJob()
     runner = GluePlatformRunner()
 
-    with patch.dict(os.environ, {'AWS_EXECUTION_ENV': 'AWS_Glue'}), \
-         patch('simpleetl.platforms.glue.is_aws_glue', return_value=True), \
-         patch('simpleetl.platforms.glue.create_glue_context') as mock_ctx, \
-         patch.object(job, 'run_with_error_handling') as mock_run:
+    with (
+        patch.dict(os.environ, {"AWS_EXECUTION_ENV": "AWS_Glue"}),
+        patch("simpleetl.platforms.glue.is_aws_glue", return_value=True),
+        patch("simpleetl.platforms.glue.create_glue_context") as mock_ctx,
+        patch.object(job, "run_with_error_handling") as mock_run,
+    ):
         mock_ctx.return_value = MagicMock()
         runner.run_job(job)
         mock_run.assert_called_once()
@@ -52,9 +54,11 @@ def test_glue_platform_runner_not_in_glue_env():
     job = DummyJob()
     runner = GluePlatformRunner()
 
-    with patch.dict(os.environ, {'AWS_EXECUTION_ENV': 'SomethingElse'}), \
-         patch('simpleetl.platforms.glue.is_aws_glue', return_value=False), \
-         patch.object(job, 'run_with_error_handling') as mock_run:
+    with (
+        patch.dict(os.environ, {"AWS_EXECUTION_ENV": "SomethingElse"}),
+        patch("simpleetl.platforms.glue.is_aws_glue", return_value=False),
+        patch.object(job, "run_with_error_handling") as mock_run,
+    ):
         runner.run_job(job)
         mock_run.assert_called_once()
 
@@ -64,9 +68,11 @@ def test_databricks_platform_runner_in_databricks_env():
     job = DummyJob()
     runner = DatabricksPlatformRunner()
 
-    with patch.dict(os.environ, {'DATABRICKS_RUNTIME_VERSION': '10.4.x-scala2.12'}), \
-         patch('simpleetl.platforms.detector.is_databricks', return_value=True), \
-         patch.object(job, 'run_with_error_handling') as mock_run:
+    with (
+        patch.dict(os.environ, {"DATABRICKS_RUNTIME_VERSION": "10.4.x-scala2.12"}),
+        patch("simpleetl.platforms.detector.is_databricks", return_value=True),
+        patch.object(job, "run_with_error_handling") as mock_run,
+    ):
         runner.run_job(job)
         mock_run.assert_called_once()
 
@@ -76,9 +82,11 @@ def test_databricks_platform_runner_not_in_databricks_env():
     job = DummyJob()
     runner = DatabricksPlatformRunner()
 
-    with patch.dict(os.environ, {}, clear=True), \
-         patch.object(job, 'run_with_error_handling') as mock_run, \
-         patch('logging.getLogger') as mock_get_logger:
+    with (
+        patch.dict(os.environ, {}, clear=True),
+        patch.object(job, "run_with_error_handling") as mock_run,
+        patch("logging.getLogger") as mock_get_logger,
+    ):
         mock_logger = Mock()
         mock_get_logger.return_value = mock_logger
         runner.run_job(job)
@@ -91,8 +99,10 @@ def test_synapse_platform_runner_in_synapse_env():
     job = DummyJob()
     runner = SynapsePlatformRunner()
 
-    with patch.dict(os.environ, {'AZURE_SYNAPSE_SPARK_POOL_NAME': 'my-pool'}), \
-         patch.object(job, 'run_with_error_handling') as mock_run:
+    with (
+        patch.dict(os.environ, {"AZURE_SYNAPSE_SPARK_POOL_NAME": "my-pool"}),
+        patch.object(job, "run_with_error_handling") as mock_run,
+    ):
         runner.run_job(job)
         mock_run.assert_called_once()
 
@@ -102,9 +112,11 @@ def test_synapse_platform_runner_not_in_synapse_env():
     job = DummyJob()
     runner = SynapsePlatformRunner()
 
-    with patch.dict(os.environ, {}, clear=True), \
-         patch.object(job, 'run_with_error_handling') as mock_run, \
-         patch('logging.getLogger') as mock_get_logger:
+    with (
+        patch.dict(os.environ, {}, clear=True),
+        patch.object(job, "run_with_error_handling") as mock_run,
+        patch("logging.getLogger") as mock_get_logger,
+    ):
         mock_logger = Mock()
         mock_get_logger.return_value = mock_logger
         runner.run_job(job)

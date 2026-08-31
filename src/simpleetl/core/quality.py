@@ -15,8 +15,12 @@ import pandas as pd
 class DataQualityError(Exception):
     """Raised when a data quality check fails."""
 
-    def __init__(self, message: str, check_name: str = "",
-                 details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str,
+        check_name: str = "",
+        details: Optional[Dict[str, Any]] = None,
+    ):
         self.check_name = check_name
         self.details = details or {}
         super().__init__(message)
@@ -149,8 +153,7 @@ def check_duplicates(
 
     if fraction > threshold:
         raise DataQualityError(
-            f"Duplicate threshold exceeded: {dup_count} duplicates "
-            f"({fraction:.2%})",
+            f"Duplicate threshold exceeded: {dup_count} duplicates ({fraction:.2%})",
             check_name="check_duplicates",
             details={
                 "threshold": threshold,
@@ -316,9 +319,13 @@ class DataQualityReport:
         self.raise_on_failure = raise_on_failure
         self._results: List[CheckResult] = []
 
-    def add_check(self, name: str, passed: bool,
-                  details: Optional[Dict[str, Any]] = None,
-                  error: Optional[str] = None) -> None:
+    def add_check(
+        self,
+        name: str,
+        passed: bool,
+        details: Optional[Dict[str, Any]] = None,
+        error: Optional[str] = None,
+    ) -> None:
         """Add a check result to the report.
 
         Args:
@@ -373,8 +380,9 @@ class DataQualityReport:
         """Run check_nulls and record the result."""
         try:
             result = check_nulls(df, columns, threshold)
-            self.add_check("check_nulls", passed=True,
-                           details={"null_fractions": result})
+            self.add_check(
+                "check_nulls", passed=True, details={"null_fractions": result}
+            )
         except DataQualityError as e:
             self.add_check(
                 "check_nulls",
@@ -474,8 +482,7 @@ class DataQualityReport:
                 check_name="DataQualityReport",
                 details={
                     "failed_checks": [
-                        {"name": c.name, "error": c.error}
-                        for c in self.failed_checks
+                        {"name": c.name, "error": c.error} for c in self.failed_checks
                     ],
                 },
             )

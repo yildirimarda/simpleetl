@@ -24,9 +24,7 @@ class SchemaRegistry(ABC):
     """
 
     @abstractmethod
-    def register_schema(
-        self, name: str, version: int, schema: Schema
-    ) -> None:
+    def register_schema(self, name: str, version: int, schema: Schema) -> None:
         """Register a schema under the given name and version.
 
         Args:
@@ -128,27 +126,19 @@ class FileSchemaRegistry(SchemaRegistry):
 
     # -- SchemaRegistry implementation --------------------------------------
 
-    def register_schema(
-        self, name: str, version: int, schema: Schema
-    ) -> None:
+    def register_schema(self, name: str, version: int, schema: Schema) -> None:
         """Register a schema under the given name and version."""
         if version < 1:
-            raise ValueError(
-                f"Version must be a positive integer, got {version}"
-            )
+            raise ValueError(f"Version must be a positive integer, got {version}")
         path = self._schema_path(name, version)
         self._save_json(path, schema.to_dict())
-        logger.info(
-            "Registered schema '%s' version %d at %s", name, version, path
-        )
+        logger.info("Registered schema '%s' version %d at %s", name, version, path)
 
     def get_schema(self, name: str, version: int) -> Schema:
         """Retrieve a specific version of a schema."""
         path = self._schema_path(name, version)
         if not path.exists():
-            raise KeyError(
-                f"Schema '{name}' version {version} not found at {path}"
-            )
+            raise KeyError(f"Schema '{name}' version {version} not found at {path}")
         data = self._load_json(path)
         return Schema.from_dict(data)
 

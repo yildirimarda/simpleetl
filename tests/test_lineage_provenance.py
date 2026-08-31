@@ -216,12 +216,8 @@ class TestLineageTrackerProvenance:
         event2 = LineageEvent(job_name="test_job", phase=POST_TRANSFORM)
         self.tracker.record_event(event1)
         self.tracker.record_event(event2)
-        self.tracker.record_provenance(
-            "rec_001", "extract", event_id=event1.event_id
-        )
-        self.tracker.record_provenance(
-            "rec_001", "transform", event_id=event2.event_id
-        )
+        self.tracker.record_provenance("rec_001", "extract", event_id=event1.event_id)
+        self.tracker.record_provenance("rec_001", "transform", event_id=event2.event_id)
         all_prov = self.tracker.get_all_provenance()
         assert all_prov["rec_001"] == ["extract", "transform"]
 
@@ -265,18 +261,14 @@ class TestLineageEventRecordProvenance:
             phase=POST_EXTRACT,
             record_provenance={"rec_001": ["step1", "step2"]},
         )
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".jsonl", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             f.write(event.to_json() + "\n")
             path = f.name
         try:
             tracker = LineageTracker.from_file(path)
             events = tracker.get_events()
             assert len(events) == 1
-            assert events[0].record_provenance == {
-                "rec_001": ["step1", "step2"]
-            }
+            assert events[0].record_provenance == {"rec_001": ["step1", "step2"]}
         finally:
             Path(path).unlink()
 

@@ -29,6 +29,7 @@ class DatabricksPlatformRunner(PlatformRunner):
             # Not in Databricks environment - simulate or delegate
             # For now, we'll run locally with a warning
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(
                 "Not running in Databricks environment. Executing job locally instead."

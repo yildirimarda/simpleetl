@@ -69,7 +69,7 @@ def split_path(path: str) -> Tuple[str, str]:
     """
     for prefix in CLOUD_PREFIXES.values():
         if path.startswith(prefix):
-            rest = path[len(prefix):]
+            rest = path[len(prefix) :]
             parts = rest.split("/", 1)
             bucket = parts[0]
             prefix_path = parts[1] if len(parts) > 1 else ""

@@ -157,19 +157,32 @@ class TestCreateGlueContext:
         mock_spark_mod = MagicMock()
         mock_spark_mod.SparkContext.getOrCreate.return_value = mock_sc
 
-        with patch("simpleetl.platforms.glue.is_aws_glue", return_value=True), \
-             patch.dict(sys.modules, {"awsglue": MagicMock(), "awsglue.context": mock_glue_mod, "pyspark": mock_spark_mod, "pyspark.context": mock_spark_mod}):
+        with (
+            patch("simpleetl.platforms.glue.is_aws_glue", return_value=True),
+            patch.dict(
+                sys.modules,
+                {
+                    "awsglue": MagicMock(),
+                    "awsglue.context": mock_glue_mod,
+                    "pyspark": mock_spark_mod,
+                    "pyspark.context": mock_spark_mod,
+                },
+            ),
+        ):
             result = create_glue_context()
             assert result is mock_ctx
             mock_spark_mod.SparkContext.getOrCreate.assert_called_once()
             mock_glue_mod.GlueContext.assert_called_once_with(mock_sc)
 
     def test_import_error_raises_runtime_error(self):
-        with patch("simpleetl.platforms.glue.is_aws_glue", return_value=True), \
-             patch.dict(sys.modules, {"awsglue": None, "awsglue.context": None}):
+        with (
+            patch("simpleetl.platforms.glue.is_aws_glue", return_value=True),
+            patch.dict(sys.modules, {"awsglue": None, "awsglue.context": None}),
+        ):
             # Simulate ImportError by making the import fail
             with patch("simpleetl.platforms.glue.is_aws_glue", return_value=True):
                 import builtins
+
                 real_import = builtins.__import__
 
                 def fake_import(name, *args, **kwargs):
@@ -219,9 +232,7 @@ class TestReadFromCatalog:
             table_name="my_table",
             push_down_predicate="year=2024",
         )
-        call_kwargs = (
-            mock_glue_context.create_dynamic_frame.from_catalog.call_args
-        )
+        call_kwargs = mock_glue_context.create_dynamic_frame.from_catalog.call_args
         assert call_kwargs.kwargs["pushDownPredicate"] == "year=2024"
 
     def test_with_additional_options(self, mock_glue_context):
@@ -231,9 +242,7 @@ class TestReadFromCatalog:
             table_name="my_table",
             additional_options={"groupFiles": "inPartition"},
         )
-        call_kwargs = (
-            mock_glue_context.create_dynamic_frame.from_catalog.call_args
-        )
+        call_kwargs = mock_glue_context.create_dynamic_frame.from_catalog.call_args
         assert call_kwargs.kwargs["groupFiles"] == "inPartition"
 
     def test_none_context_raises(self):
@@ -251,9 +260,7 @@ class TestReadFromCatalog:
             table_name="my_table",
             transformation_ctx="custom_ctx",
         )
-        call_kwargs = (
-            mock_glue_context.create_dynamic_frame.from_catalog.call_args
-        )
+        call_kwargs = mock_glue_context.create_dynamic_frame.from_catalog.call_args
         assert call_kwargs.kwargs["transformation_ctx"] == "custom_ctx"
 
 
@@ -282,9 +289,7 @@ class TestWriteToCatalog:
             table_name="my_table",
             format="json",
         )
-        call_kwargs = (
-            mock_glue_context.write_dynamic_frame.from_catalog.call_args
-        )
+        call_kwargs = mock_glue_context.write_dynamic_frame.from_catalog.call_args
         assert call_kwargs.kwargs["format"] == "json"
 
     def test_none_context_raises(self):
@@ -315,9 +320,7 @@ class TestWriteToCatalog:
             table_name="my_table",
             additional_options={"compression": "gzip"},
         )
-        call_kwargs = (
-            mock_glue_context.write_dynamic_frame.from_catalog.call_args
-        )
+        call_kwargs = mock_glue_context.write_dynamic_frame.from_catalog.call_args
         assert call_kwargs.kwargs["compression"] == "gzip"
 
 
@@ -346,7 +349,9 @@ class TestGlueContextManager:
     def test_glue_context_lazy_creation(self):
         mgr = GlueContextManager()
         mock_ctx = MagicMock(name="GlueContext")
-        with patch("simpleetl.platforms.glue.create_glue_context", return_value=mock_ctx):
+        with patch(
+            "simpleetl.platforms.glue.create_glue_context", return_value=mock_ctx
+        ):
             result = mgr.glue_context
             assert result is mock_ctx
 
@@ -364,7 +369,10 @@ class TestGlueContextManager:
         mgr = GlueContextManager()
         mock_spark = MagicMock(name="SparkSession")
         mock_glue_context.spark_session = mock_spark
-        with patch("simpleetl.platforms.glue.create_glue_context", return_value=mock_glue_context):
+        with patch(
+            "simpleetl.platforms.glue.create_glue_context",
+            return_value=mock_glue_context,
+        ):
             result = mgr.spark_session
             assert result is mock_spark
 
@@ -387,8 +395,10 @@ class TestGluePlatformRunner:
         job = DummyJob()
         runner = GluePlatformRunner()
 
-        with patch("simpleetl.platforms.glue.is_aws_glue", return_value=True), \
-             patch.object(runner, "_run_in_glue") as mock_glue_run:
+        with (
+            patch("simpleetl.platforms.glue.is_aws_glue", return_value=True),
+            patch.object(runner, "_run_in_glue") as mock_glue_run,
+        ):
             runner.run_job(job)
             mock_glue_run.assert_called_once_with(job)
 
@@ -396,8 +406,10 @@ class TestGluePlatformRunner:
         job = DummyJob()
         runner = GluePlatformRunner()
 
-        with patch("simpleetl.platforms.glue.is_aws_glue", return_value=False), \
-             patch.object(runner, "_run_locally") as mock_local_run:
+        with (
+            patch("simpleetl.platforms.glue.is_aws_glue", return_value=False),
+            patch.object(runner, "_run_locally") as mock_local_run,
+        ):
             runner.run_job(job)
             mock_local_run.assert_called_once_with(job)
 
@@ -406,10 +418,12 @@ class TestGluePlatformRunner:
         runner = GluePlatformRunner()
         runner.job_args = {"JOB_NAME": "test-job"}
 
-        with patch.object(runner, "_init_glue") as mock_init, \
-             patch.object(runner, "_set_job_bookmark") as mock_set, \
-             patch.object(runner, "_update_job_bookmark") as mock_update, \
-             patch.object(job, "run_with_error_handling") as mock_run:
+        with (
+            patch.object(runner, "_init_glue") as mock_init,
+            patch.object(runner, "_set_job_bookmark") as mock_set,
+            patch.object(runner, "_update_job_bookmark") as mock_update,
+            patch.object(job, "run_with_error_handling") as mock_run,
+        ):
             runner._run_in_glue(job)
             mock_init.assert_called_once()
             mock_set.assert_called_once()
@@ -421,11 +435,15 @@ class TestGluePlatformRunner:
         runner = GluePlatformRunner()
         runner.job_args = {}
 
-        with patch("simpleetl.platforms.glue.get_job_args", return_value={"JOB_NAME": "j"}), \
-             patch.object(runner, "_init_glue"), \
-             patch.object(runner, "_set_job_bookmark"), \
-             patch.object(runner, "_update_job_bookmark"), \
-             patch.object(job, "run_with_error_handling"):
+        with (
+            patch(
+                "simpleetl.platforms.glue.get_job_args", return_value={"JOB_NAME": "j"}
+            ),
+            patch.object(runner, "_init_glue"),
+            patch.object(runner, "_set_job_bookmark"),
+            patch.object(runner, "_update_job_bookmark"),
+            patch.object(job, "run_with_error_handling"),
+        ):
             runner._run_in_glue(job)
             assert runner.job_args == {"JOB_NAME": "j"}
 
@@ -504,9 +522,7 @@ class TestGlueCatalogReader:
     def test_read_with_push_down_predicate(self, mock_glue_context):
         reader = GlueCatalogReader(glue_context=mock_glue_context)
         reader.read("my_db", "my_table", push_down_predicate="year=2024")
-        call_kwargs = (
-            mock_glue_context.create_dynamic_frame.from_catalog.call_args
-        )
+        call_kwargs = mock_glue_context.create_dynamic_frame.from_catalog.call_args
         assert call_kwargs.kwargs["pushDownPredicate"] == "year=2024"
 
     def test_read_empty_database_raises(self, mock_glue_context):
@@ -538,7 +554,9 @@ class TestGlueCatalogReader:
         mock_frame.count.return_value = 0
         mock_ctx.create_dynamic_frame.from_catalog.return_value = mock_frame
 
-        with patch("simpleetl.platforms.glue.create_glue_context", return_value=mock_ctx):
+        with patch(
+            "simpleetl.platforms.glue.create_glue_context", return_value=mock_ctx
+        ):
             reader.read("my_db", "my_table")
             assert reader._glue_context is mock_ctx
 
@@ -559,9 +577,7 @@ class TestGlueCatalogWriter:
         writer = GlueCatalogWriter(glue_context=mock_glue_context)
         mock_frame = MagicMock(name="DynamicFrame")
         writer.write(mock_frame, "my_db", "my_table", format="json")
-        call_kwargs = (
-            mock_glue_context.write_dynamic_frame.from_catalog.call_args
-        )
+        call_kwargs = mock_glue_context.write_dynamic_frame.from_catalog.call_args
         assert call_kwargs.kwargs["format"] == "json"
 
     def test_write_empty_database_raises(self, mock_glue_context):
@@ -611,7 +627,9 @@ class TestGlueCatalogWriter:
         mock_ctx = MagicMock(name="GlueContext")
         mock_frame = MagicMock(name="DynamicFrame")
 
-        with patch("simpleetl.platforms.glue.create_glue_context", return_value=mock_ctx):
+        with patch(
+            "simpleetl.platforms.glue.create_glue_context", return_value=mock_ctx
+        ):
             writer.write(mock_frame, "my_db", "my_table")
             assert writer._glue_context is mock_ctx
 
@@ -643,9 +661,7 @@ class TestGlueIntegration:
         assert frame.count() == 100
 
         # Write to catalog
-        runner.write_catalog(
-            frame, "target_db", "target_table", format="parquet"
-        )
+        runner.write_catalog(frame, "target_db", "target_table", format="parquet")
         mock_ctx.write_dynamic_frame.from_catalog.assert_called_once()
 
     def test_glue_runner_with_custom_job_args(self):
@@ -697,9 +713,7 @@ class TestGlueJobBookmarks:
         ):
             runner._set_job_bookmark()
 
-        mock_job_mod.Job.assert_called_once_with(
-            runner.context_manager._glue_context
-        )
+        mock_job_mod.Job.assert_called_once_with(runner.context_manager._glue_context)
         mock_job_mod.Job.return_value.init.assert_called_once_with(
             "bookmark-job", runner.job_args
         )
@@ -728,18 +742,14 @@ class TestGlueJobBookmarks:
             runner._update_job_bookmark()
 
         instance = mock_job_mod.Job.return_value
-        instance.init.assert_called_once_with(
-            "bookmark-job", runner.job_args
-        )
+        instance.init.assert_called_once_with("bookmark-job", runner.job_args)
         instance.commit.assert_called_once_with()
 
     def test_set_bookmark_without_awsglue_is_safe(self):
         """Test ImportError fallback: no Job stored, nothing raised."""
         runner = self._runner_with_context()
 
-        with patch.dict(
-            sys.modules, {"awsglue": None, "awsglue.job": None}
-        ):
+        with patch.dict(sys.modules, {"awsglue": None, "awsglue.job": None}):
             runner._set_job_bookmark()
 
         assert runner._glue_job is None

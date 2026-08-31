@@ -172,10 +172,7 @@ class DuckDBWriter(DataWriter):
         try:
             conn.register("_simpleetl_input", data)
 
-            tables = {
-                row[0]
-                for row in conn.execute("SHOW TABLES").fetchall()
-            }
+            tables = {row[0] for row in conn.execute("SHOW TABLES").fetchall()}
             table_exists = table_name in tables
 
             if mode == "error" and table_exists:
@@ -188,9 +185,7 @@ class DuckDBWriter(DataWriter):
                     f"CREATE TABLE {table_name} AS SELECT * FROM _simpleetl_input"
                 )
             elif table_exists:
-                conn.execute(
-                    f"INSERT INTO {table_name} SELECT * FROM _simpleetl_input"
-                )
+                conn.execute(f"INSERT INTO {table_name} SELECT * FROM _simpleetl_input")
             else:
                 conn.execute(
                     f"CREATE TABLE {table_name} AS SELECT * FROM _simpleetl_input"

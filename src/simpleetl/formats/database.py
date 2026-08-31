@@ -79,9 +79,7 @@ class Table:
             self._pool = None
             self._engine = get_engine(ConnectionConfig(url=connection_string))
         else:
-            raise ValueError(
-                "Must provide one of connection_string, engine, or pool"
-            )
+            raise ValueError("Must provide one of connection_string, engine, or pool")
 
     @property
     def engine(self) -> Optional[sqlalchemy.engine.Engine]:
@@ -165,7 +163,9 @@ class Table:
         if where:
             sql += f" WHERE {where}"
 
-        yield from self._reader.read_chunks(engine, chunk_size=chunk_size, sql=sql, **kwargs)
+        yield from self._reader.read_chunks(
+            engine, chunk_size=chunk_size, sql=sql, **kwargs
+        )
 
     def write(
         self,
@@ -297,16 +297,21 @@ class DatabaseReader(DataReader):
 
         if sql:
             return pd.read_sql(
-                sql, engine, params=params, chunksize=chunksize, **kwargs,
+                sql,
+                engine,
+                params=params,
+                chunksize=chunksize,
+                **kwargs,
             )
         if table:
             return pd.read_sql_table(
-                table, engine, chunksize=chunksize, **kwargs,
+                table,
+                engine,
+                chunksize=chunksize,
+                **kwargs,
             )
 
-        raise ValueError(
-            "Must provide 'sql' or 'table' parameter"
-        )
+        raise ValueError("Must provide 'sql' or 'table' parameter")
 
     def read_chunks(
         self,
@@ -331,7 +336,10 @@ class DatabaseReader(DataReader):
             raise ValueError("Must provide 'sql' parameter for chunked reading")
 
         chunk_iter = self.read(
-            source, sql=sql, chunksize=chunk_size, **kwargs,
+            source,
+            sql=sql,
+            chunksize=chunk_size,
+            **kwargs,
         )
         for chunk in chunk_iter:  # type: ignore[misc]
             yield chunk  # type: ignore[misc]
@@ -500,34 +508,62 @@ class DatabaseWriter(DataWriter):
         dialect = engine.dialect.name
 
         if update_columns is None:
-            update_columns = [
-                col for col in data.columns if col not in key_columns
-            ]
+            update_columns = [col for col in data.columns if col not in key_columns]
 
         if dialect == "postgresql":
             return self._merge_postgresql(
-                engine, data, table_name, key_columns, update_columns, **kwargs,
+                engine,
+                data,
+                table_name,
+                key_columns,
+                update_columns,
+                **kwargs,
             )
         if dialect == "mysql":
             return self._merge_mysql(
-                engine, data, table_name, key_columns, update_columns, **kwargs,
+                engine,
+                data,
+                table_name,
+                key_columns,
+                update_columns,
+                **kwargs,
             )
         if dialect == "sqlite":
             return self._merge_sqlite(
-                engine, data, table_name, key_columns, update_columns, **kwargs,
+                engine,
+                data,
+                table_name,
+                key_columns,
+                update_columns,
+                **kwargs,
             )
         if dialect == "snowflake":
             return self._merge_snowflake(
-                engine, data, table_name, key_columns, update_columns, **kwargs,
+                engine,
+                data,
+                table_name,
+                key_columns,
+                update_columns,
+                **kwargs,
             )
         if dialect == "bigquery":
             return self._merge_bigquery(
-                engine, data, table_name, key_columns, update_columns, **kwargs,
+                engine,
+                data,
+                table_name,
+                key_columns,
+                update_columns,
+                **kwargs,
             )
 
         # Fallback: delete + insert pattern
         return self._merge_generic(
-            engine, data, table_name, key_columns, update_columns, **kwargs,
+            engine,
+            data,
+            table_name,
+            key_columns,
+            update_columns,
+            **kwargs,
         )
 
     @staticmethod
@@ -547,9 +583,7 @@ class DatabaseWriter(DataWriter):
         col_list = ", ".join(columns)
         val_placeholders = ", ".join([f":{c}" for c in columns])
         conflict_cols = ", ".join(key_columns)
-        update_clause = ", ".join(
-            [f"{c} = EXCLUDED.{c}" for c in update_columns]
-        )
+        update_clause = ", ".join([f"{c} = EXCLUDED.{c}" for c in update_columns])
 
         sql = (
             f"INSERT INTO {full_table} ({col_list}) VALUES ({val_placeholders}) "
@@ -579,9 +613,7 @@ class DatabaseWriter(DataWriter):
         columns = list(data.columns)
         col_list = ", ".join(columns)
         val_placeholders = ", ".join([f":{c}" for c in columns])
-        update_clause = ", ".join(
-            [f"{c} = VALUES({c})" for c in update_columns]
-        )
+        update_clause = ", ".join([f"{c} = VALUES({c})" for c in update_columns])
 
         sql = (
             f"INSERT INTO {table_name} ({col_list}) VALUES ({val_placeholders}) "
@@ -612,9 +644,7 @@ class DatabaseWriter(DataWriter):
         col_list = ", ".join(columns)
         val_placeholders = ", ".join([f":{c}" for c in columns])
         conflict_cols = ", ".join(key_columns)
-        update_clause = ", ".join(
-            [f"{c} = excluded.{c}" for c in update_columns]
-        )
+        update_clause = ", ".join([f"{c} = excluded.{c}" for c in update_columns])
 
         sql = (
             f"INSERT INTO {table_name} ({col_list}) VALUES ({val_placeholders}) "
@@ -654,9 +684,7 @@ class DatabaseWriter(DataWriter):
         columns = list(data.columns)
         col_list = ", ".join(columns)
         val_placeholders = ", ".join([f":{c}" for c in columns])
-        on_clause = " AND ".join(
-            [f"target.{c} = source.{c}" for c in key_columns]
-        )
+        on_clause = " AND ".join([f"target.{c} = source.{c}" for c in key_columns])
         insert_values = ", ".join([f"source.{c}" for c in columns])
 
         matched_clause = ""
@@ -678,10 +706,9 @@ class DatabaseWriter(DataWriter):
         rows_affected = 0
         try:
             with engine.begin() as conn:
-                conn.execute(text(
-                    f"CREATE TEMPORARY TABLE {full_staging} "
-                    f"LIKE {full_table}"
-                ))
+                conn.execute(
+                    text(f"CREATE TEMPORARY TABLE {full_staging} LIKE {full_table}")
+                )
                 insert_sql = (
                     f"INSERT INTO {full_staging} ({col_list}) "
                     f"VALUES ({val_placeholders})"
@@ -720,9 +747,7 @@ class DatabaseWriter(DataWriter):
         columns = list(data.columns)
         col_list = ", ".join(columns)
         val_placeholders = ", ".join([f":{c}" for c in columns])
-        on_clause = " AND ".join(
-            [f"target.{c} = source.{c}" for c in key_columns]
-        )
+        on_clause = " AND ".join([f"target.{c} = source.{c}" for c in key_columns])
         insert_values = ", ".join([f"source.{c}" for c in columns])
 
         matched_clause = ""
@@ -744,9 +769,7 @@ class DatabaseWriter(DataWriter):
         rows_affected = 0
         try:
             with engine.begin() as conn:
-                conn.execute(text(
-                    f"CREATE TABLE `{full_staging}` LIKE `{full_table}`"
-                ))
+                conn.execute(text(f"CREATE TABLE `{full_staging}` LIKE `{full_table}`"))
                 insert_sql = (
                     f"INSERT INTO `{full_staging}` ({col_list}) "
                     f"VALUES ({val_placeholders})"
@@ -757,9 +780,7 @@ class DatabaseWriter(DataWriter):
                 rows_affected = result.rowcount
         finally:
             with engine.begin() as conn:
-                conn.execute(
-                    text(f"DROP TABLE IF EXISTS `{full_staging}`")
-                )
+                conn.execute(text(f"DROP TABLE IF EXISTS `{full_staging}`"))
 
         logger.info("BigQuery MERGE affected %d rows", rows_affected)
         return rows_affected
@@ -780,9 +801,7 @@ class DatabaseWriter(DataWriter):
         rows_affected = 0
         with engine.begin() as conn:
             for _, row in data.iterrows():
-                where_clause = " AND ".join(
-                    [f"{c} = :key_{c}" for c in key_columns]
-                )
+                where_clause = " AND ".join([f"{c} = :key_{c}" for c in key_columns])
                 delete_sql = f"DELETE FROM {full_table} WHERE {where_clause}"
 
                 key_params = {f"key_{c}": row[c] for c in key_columns}
@@ -793,8 +812,7 @@ class DatabaseWriter(DataWriter):
                 col_list = ", ".join(columns)
                 val_placeholders = ", ".join([f":{c}" for c in columns])
                 insert_sql = (
-                    f"INSERT INTO {full_table} ({col_list}) "
-                    f"VALUES ({val_placeholders})"
+                    f"INSERT INTO {full_table} ({col_list}) VALUES ({val_placeholders})"
                 )
                 insert_params = {c: row[c] for c in columns}
                 conn.execute(text(insert_sql), insert_params)

@@ -32,6 +32,7 @@ class TestRenderConfigTemplate:
     def test_today_variable(self):
         result = render_config_template("{{ today }}")
         import re
+
         assert re.match(r"\d{4}-\d{2}-\d{2}", result)
 
     def test_now_variable_strftime(self):
@@ -68,6 +69,7 @@ class TestRenderConfigTemplate:
 
     def test_missing_jinja2_raises_import_error(self):
         import sys
+
         original = sys.modules.get("jinja2")
         sys.modules["jinja2"] = None  # type: ignore[assignment]
         try:
@@ -118,9 +120,7 @@ class TestLoadConfigWithTemplates:
         cfg = tmp_path / "job.yaml"
         _write_yaml(
             cfg,
-            "name: auto_{{ 'detected' }}\n"
-            "input_format: csv\n"
-            "output_format: parquet\n",
+            "name: auto_{{ 'detected' }}\ninput_format: csv\noutput_format: parquet\n",
         )
         result = load_config(cfg)
         assert result.name == "auto_detected"
@@ -156,6 +156,7 @@ class TestLoadConfigWithTemplates:
         )
         result = load_config(cfg, template_vars={})
         import re
+
         assert re.match(r"job_\d{4}-\d{2}-\d{2}", result.name)
 
 
@@ -167,28 +168,34 @@ class TestLoadConfigWithTemplates:
 class TestParseParams:
     def test_single_param(self):
         from simpleetl.cli import _parse_params
+
         result = _parse_params(["key=value"])
         assert result == {"key": "value"}
 
     def test_multiple_params(self):
         from simpleetl.cli import _parse_params
+
         result = _parse_params(["a=1", "b=hello world"])
         assert result == {"a": "1", "b": "hello world"}
 
     def test_empty_list(self):
         from simpleetl.cli import _parse_params
+
         assert _parse_params([]) == {}
 
     def test_none_list(self):
         from simpleetl.cli import _parse_params
+
         assert _parse_params(None) == {}
 
     def test_invalid_format_raises(self):
         from simpleetl.cli import _parse_params
+
         with pytest.raises(SystemExit):
             _parse_params(["no-equals-sign"])
 
     def test_value_with_equals(self):
         from simpleetl.cli import _parse_params
+
         result = _parse_params(["url=http://x.com?a=b"])
         assert result == {"url": "http://x.com?a=b"}

@@ -304,7 +304,9 @@ class TestRetryLogic:
             return "ok"
 
         result = _retry_operation(
-            fail_then_succeed, retry_count=5, retry_delay=0,
+            fail_then_succeed,
+            retry_count=5,
+            retry_delay=0,
         )
         assert result == "ok"
         assert call_count == 3
@@ -548,12 +550,16 @@ class TestDatabaseWriterIntegration:
         engine = sqlalchemy.create_engine(self.conn_str)
         # Create table with PRIMARY KEY for ON CONFLICT to work
         with engine.begin() as conn:
-            conn.execute(sqlalchemy.text(
-                "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, age INTEGER)"
-            ))
-            conn.execute(sqlalchemy.text(
-                "INSERT INTO users (id, name, age) VALUES (1, 'Alice', 25), (2, 'Bob', 30)"
-            ))
+            conn.execute(
+                sqlalchemy.text(
+                    "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, age INTEGER)"
+                )
+            )
+            conn.execute(
+                sqlalchemy.text(
+                    "INSERT INTO users (id, name, age) VALUES (1, 'Alice', 25), (2, 'Bob', 30)"
+                )
+            )
 
         # Upsert: update Alice's age, insert Charlie
         df_update = pd.DataFrame(

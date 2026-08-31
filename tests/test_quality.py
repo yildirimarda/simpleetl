@@ -25,31 +25,37 @@ from simpleetl.core.quality import (
 @pytest.fixture
 def sample_df():
     """A basic DataFrame used across many tests."""
-    return pd.DataFrame({
-        "id": [1, 2, 3, 4, 5],
-        "name": ["Alice", "Bob", "Charlie", "Diana", "Eve"],
-        "age": [25, 30, 35, 40, 45],
-        "score": [88.5, 92.0, 76.3, 95.1, 81.7],
-    })
+    return pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5],
+            "name": ["Alice", "Bob", "Charlie", "Diana", "Eve"],
+            "age": [25, 30, 35, 40, 45],
+            "score": [88.5, 92.0, 76.3, 95.1, 81.7],
+        }
+    )
 
 
 @pytest.fixture
 def df_with_nulls():
     """A DataFrame containing null values."""
-    return pd.DataFrame({
-        "id": [1, 2, None, 4, 5],
-        "name": ["Alice", None, "Charlie", None, "Eve"],
-        "value": [10.0, 20.0, 30.0, 40.0, 50.0],
-    })
+    return pd.DataFrame(
+        {
+            "id": [1, 2, None, 4, 5],
+            "name": ["Alice", None, "Charlie", None, "Eve"],
+            "value": [10.0, 20.0, 30.0, 40.0, 50.0],
+        }
+    )
 
 
 @pytest.fixture
 def df_with_duplicates():
     """A DataFrame containing duplicate rows."""
-    return pd.DataFrame({
-        "id": [1, 2, 2, 3, 3, 3],
-        "name": ["a", "b", "b", "c", "c", "c"],
-    })
+    return pd.DataFrame(
+        {
+            "id": [1, 2, 2, 3, 3, 3],
+            "name": ["a", "b", "b", "c", "c", "c"],
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -78,22 +84,16 @@ class TestValidateSchema:
         assert result is True
 
     def test_column_types_match(self, sample_df):
-        result = validate_schema(
-            sample_df, ["id"], column_types={"id": "int64"}
-        )
+        result = validate_schema(sample_df, ["id"], column_types={"id": "int64"})
         assert result is True
 
     def test_column_types_mismatch(self, sample_df):
         with pytest.raises(DataQualityError, match="type mismatches"):
-            validate_schema(
-                sample_df, ["id"], column_types={"id": "float64"}
-            )
+            validate_schema(sample_df, ["id"], column_types={"id": "float64"})
 
     def test_column_types_mismatch_details(self, sample_df):
         with pytest.raises(DataQualityError) as exc_info:
-            validate_schema(
-                sample_df, ["id"], column_types={"id": "float64"}
-            )
+            validate_schema(sample_df, ["id"], column_types={"id": "float64"})
         mismatches = exc_info.value.details["type_mismatches"]
         assert "id" in mismatches
         assert mismatches["id"]["expected"] == "float64"
@@ -139,14 +139,10 @@ class TestCheckNulls:
 
     def test_nulls_specific_column_exceeds(self, df_with_nulls):
         with pytest.raises(DataQualityError):
-            check_nulls(
-                df_with_nulls, columns=["name"], threshold=0.1
-            )
+            check_nulls(df_with_nulls, columns=["name"], threshold=0.1)
 
     def test_nulls_specific_column_within(self, df_with_nulls):
-        result = check_nulls(
-            df_with_nulls, columns=["value"], threshold=0.0
-        )
+        result = check_nulls(df_with_nulls, columns=["value"], threshold=0.0)
         assert result["value"] == 0.0
 
     def test_zero_threshold_no_nulls_allowed(self, sample_df):
@@ -194,10 +190,12 @@ class TestCheckDuplicates:
         assert result == 3
 
     def test_duplicates_specific_columns(self):
-        df = pd.DataFrame({
-            "a": [1, 1, 2, 2],
-            "b": ["x", "y", "z", "w"],
-        })
+        df = pd.DataFrame(
+            {
+                "a": [1, 1, 2, 2],
+                "b": ["x", "y", "z", "w"],
+            }
+        )
         result = check_duplicates(df, columns=["a"], threshold=1.0)
         assert result == 2
 
@@ -226,9 +224,7 @@ class TestCheckValueRange:
     """Tests for check_value_range."""
 
     def test_values_within_range(self, sample_df):
-        result = check_value_range(
-            sample_df, "age", min_value=20, max_value=50
-        )
+        result = check_value_range(sample_df, "age", min_value=20, max_value=50)
         assert result is True
 
     def test_values_below_min(self, sample_df):
@@ -284,9 +280,7 @@ class TestCheckUniqueValues:
         assert result == 5
 
     def test_expected_count_mismatch(self, sample_df):
-        with pytest.raises(
-            DataQualityError, match="Unique value count mismatch"
-        ):
+        with pytest.raises(DataQualityError, match="Unique value count mismatch"):
             check_unique_values(sample_df, "name", expected_count=3)
 
     def test_nonexistent_column(self, sample_df):

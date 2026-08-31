@@ -62,7 +62,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --frozen
+        # --python: override the repo's .python-version (3.14) so the matrix
+        # actually tests what it claims. --all-extras: metrics.py imports
+        # prometheus_client (monitoring extra) at module level and tests
+        # exercise otel/polars/kafka/... extras.
+        run: uv sync --frozen --all-extras --python ${{ matrix.python-version }}
 
       - name: Run tests with coverage
         run: uv run pytest --cov=src --cov-report=xml --cov-report=term-missing tests/
@@ -170,5 +174,7 @@ jobs:
         run: uv pip install pip-audit
 
       - name: Run dependency vulnerability scan
-        run: uv run pip-audit --strict
+        # --skip-editable: don't try to audit the local simpleetl package
+        # itself (its version may not be published on PyPI yet)
+        run: uv run pip-audit --strict --skip-editable
         continue-on-error: false

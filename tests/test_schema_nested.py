@@ -89,7 +89,10 @@ class TestStructType:
         fields = [FieldDef("a", "int64")]
         st = StructType(fields=fields)
         d = st.to_dict()
-        assert d == {"type": "struct", "fields": [{"name": "a", "dtype": "int64", "nullable": True}]}
+        assert d == {
+            "type": "struct",
+            "fields": [{"name": "a", "dtype": "int64", "nullable": True}],
+        }
 
     def test_from_dict(self):
         data = {
@@ -113,9 +116,7 @@ class TestStructType:
         assert len(st.fields) == 2
 
     def test_round_trip(self):
-        original = StructType(
-            fields=[FieldDef("a", "int64"), FieldDef("b", "string")]
-        )
+        original = StructType(fields=[FieldDef("a", "int64"), FieldDef("b", "string")])
         restored = StructType.from_dict(original.to_dict())
         assert restored.dtype == original.dtype
         assert len(restored.fields) == len(original.fields)
