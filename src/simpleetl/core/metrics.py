@@ -1,32 +1,98 @@
 """
 Metrics collection hooks with Prometheus compatibility.
+
+Prometheus_client is an optional dependency (``simpleetl[monitoring]``).  All
+``prometheus_client`` imports in this module are performed lazily so that the
+module can always be imported.  When the SDK is not installed, metrics
+degrade to a no-op and a warning is logged once.
 """
 
-import time
-from typing import Dict, List, Optional, Callable, Any, Tuple
-from prometheus_client import (
-    Counter,
-    Gauge,
-    Histogram,
-    CollectorRegistry,
-    generate_latest,
-)
-from prometheus_client.core import GaugeMetricFamily
+import logging
 import threading
+import time
+from typing import Any, Callable, Dict, List, Optional, Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from prometheus_client import Counter  # noqa: F401
+    from prometheus_client import Gauge  # noqa: F401
+    from prometheus_client import Histogram  # noqa: F401
+    from prometheus_client import CollectorRegistry  # noqa: F401
+    from prometheus_client.core import GaugeMetricFamily  # noqa: F401
+
+logger = logging.getLogger(__name__)
+_PROMETHEUS_MISSING_WARNED = False
+
+
+class _DummyMetric:
+    """No-op metric stand-in when prometheus_client is missing."""
+
+    def labels(self, **labels: Any) -> "_DummyMetric":
+        return self
+
+    def inc(self, value: float = 1.0) -> None:
+        pass
+
+    def set(self, value: float) -> None:
+        pass
+
+    def observe(self, value: float) -> None:
+        pass
+
+    def collect(self) -> Any:
+        return []
+
+
+class _DummyCounter(_DummyMetric):
+    pass
+
+
+class _DummyGauge(_DummyMetric):
+    pass
+
+
+class _DummyHistogram(_DummyMetric):
+    pass
+
+
+def is_metrics_available() -> bool:
+    """Return ``True`` when ``prometheus_client`` is importable."""
+    try:
+        import prometheus_client  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+def _warn_prometheus_missing() -> None:
+    """Log a warning (once per process) that prometheus_client is missing."""
+    global _PROMETHEUS_MISSING_WARNED
+    if not _PROMETHEUS_MISSING_WARNED:
+        logger.warning(
+            "Metrics is enabled but prometheus_client is not installed; "
+            "metrics are disabled. Install it with: pip install simpleetl[monitoring]"
+        )
+        _PROMETHEUS_MISSING_WARNED = True
 
 
 class MetricsCollector:
     """Metrics collector with Prometheus compatibility."""
 
-    def __init__(self, registry: Optional[CollectorRegistry] = None):
+    def __init__(self, registry: Optional[Any] = None):
         """Initialize metrics collector."""
-        self.registry = registry or CollectorRegistry()
-        self._counters: Dict[str, Counter] = {}
-        self._gauges: Dict[str, Gauge] = {}
-        self._histograms: Dict[str, Histogram] = {}
+        self._available = is_metrics_available()
+        self.registry: Optional[Any] = None
+        self._counters: Dict[str, Any] = {}
+        self._gauges: Dict[str, Any] = {}
+        self._histograms: Dict[str, Any] = {}
         self._custom_metrics: Dict[str, Any] = {}
         self._lock = threading.Lock()
+        if not self._available:
+            _warn_prometheus_missing()
+            return
 
+        from prometheus_client import CollectorRegistry
+
+        self.registry = registry or CollectorRegistry()
         # Initialize default metrics
         self._initialize_default_metrics()
 
@@ -58,11 +124,15 @@ class MetricsCollector:
 
     def counter(
         self, name: str, description: str, labelnames: Optional[tuple] = None
-    ) -> Counter:
+    ) -> Any:
         """Get or create a counter metric."""
+        if not self._available:
+            return _DummyCounter()
         key = name
         with self._lock:
             if key not in self._counters:
+                from prometheus_client import Counter
+
                 self._counters[key] = Counter(
                     name, description, labelnames or [], registry=self.registry
                 )
@@ -70,11 +140,15 @@ class MetricsCollector:
 
     def gauge(
         self, name: str, description: str, labelnames: Optional[tuple] = None
-    ) -> Gauge:
+    ) -> Any:
         """Get or create a gauge metric."""
+        if not self._available:
+            return _DummyGauge()
         key = name
         with self._lock:
             if key not in self._gauges:
+                from prometheus_client import Gauge
+
                 self._gauges[key] = Gauge(
                     name, description, labelnames or [], registry=self.registry
                 )
@@ -86,11 +160,15 @@ class MetricsCollector:
         description: str,
         labelnames: Optional[tuple] = None,
         buckets: Optional[tuple] = None,
-    ) -> Histogram:
+    ) -> Any:
         """Get or create a histogram metric."""
+        if not self._available:
+            return _DummyHistogram()
         key = name
         with self._lock:
             if key not in self._histograms:
+                from prometheus_client import Histogram
+
                 self._histograms[key] = Histogram(
                     name,
                     description,
@@ -122,6 +200,8 @@ class MetricsCollector:
         self, name: str, value: float = 1.0, labels: Optional[Dict[str, str]] = None
     ) -> None:
         """Increment a counter metric."""
+        if not self._available:
+            return
         metric = self.counter(name, "")
         if labels:
             metric.labels(**labels).inc(value)
@@ -132,6 +212,8 @@ class MetricsCollector:
         self, name: str, value: float, labels: Optional[Dict[str, str]] = None
     ) -> None:
         """Set a gauge metric value."""
+        if not self._available:
+            return
         metric = self.gauge(name, "")
         if labels:
             metric.labels(**labels).set(value)
@@ -142,6 +224,8 @@ class MetricsCollector:
         self, name: str, value: float, labels: Optional[Dict[str, str]] = None
     ) -> None:
         """Observe a value in a histogram."""
+        if not self._available:
+            return
         metric = self.histogram(name, "")
         if labels:
             metric.labels(**labels).observe(value)
@@ -173,8 +257,24 @@ class MetricsCollector:
 
     def get_metrics(self, output_format: str = "text") -> str:
         """Get metrics in the specified format."""
+        if not self._available:
+            if output_format == "text":
+                return ""
+            elif output_format == "json":
+                import json
+                from datetime import datetime, timezone
+
+                payload: Dict[str, Any] = {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "metrics": [],
+                }
+                return json.dumps(payload, indent=2)
+            else:
+                raise ValueError(f"Unsupported output format: {output_format}")
         if output_format == "text":
-            return generate_latest(self.registry).decode("utf-8")
+            from prometheus_client import generate_latest
+
+            return generate_latest(self.registry).decode("utf-8")  # type: ignore[arg-type]
         elif output_format == "json":
             return self._get_metrics_json()
         else:
@@ -230,7 +330,7 @@ class MetricsCollector:
         return json.dumps(payload, indent=2)
 
     @staticmethod
-    def _histogram_json_entries(name: str, metric: Histogram) -> List[Dict[str, Any]]:
+    def _histogram_json_entries(name: str, metric: Any) -> List[Dict[str, Any]]:
         """Build JSON entries for a histogram, one per label set.
 
         Groups the histogram's Prometheus samples (``*_bucket``,
@@ -278,8 +378,12 @@ class MetricsCollector:
         self, name: str, metric_type: str, description: str
     ) -> None:
         """Register a custom metric."""
+        if not self._available:
+            return
         with self._lock:
             if metric_type == "gauge_family":
+                from prometheus_client.core import GaugeMetricFamily
+
                 self._custom_metrics[name] = GaugeMetricFamily(
                     name, description, labels=["label"]
                 )
