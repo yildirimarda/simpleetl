@@ -46,3 +46,6 @@
 - Provide clear error messages and logging
 - Support multiple platforms (local, AWS Glue, Databricks, Azure Synapse)
 - Support multiple data formats (CSV, JSON, Parquet, etc.)
+@AGENTS.md
+<!-- agentloop: the import above pulls in the autonomous-loop workflow
+     contract. Keep it; everything else in this file is yours. -->

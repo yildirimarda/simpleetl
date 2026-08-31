@@ -11,3 +11,8 @@ wheels/
 
 # ETL test output
 tmp_output/
+logs/
+graphify-out/
+.opencode/
+*.agentloop-new
+.agentloop.local
