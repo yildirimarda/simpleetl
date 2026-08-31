@@ -429,6 +429,12 @@ def run_job(
 
     try:
         module_path, class_name = job_class_path.rsplit(".", 1)
+        # Job classes live in the user's project directory, which is not on
+        # sys.path when simpleetl runs as an installed console script — make
+        # the working directory importable (as pytest and gunicorn do).
+        cwd = str(Path.cwd())
+        if cwd not in sys.path:
+            sys.path.insert(0, cwd)
         module = importlib.import_module(module_path)
         job_class = getattr(module, class_name)
         job = job_class(config)
