@@ -116,12 +116,18 @@ jobs:
 
       - name: Run ETL job inside Docker image
         run: |
+          # Pre-create the output mount: if Docker creates it, it's owned by
+          # root and the container's non-root user (uid 1000) cannot write
+          mkdir -p tmp_output && chmod 777 tmp_output
           docker run --rm \
             -v ${{ github.workspace }}/configs:/app/configs:ro \
             -v ${{ github.workspace }}/examples/input:/app/examples/input:ro \
             -v ${{ github.workspace }}/tmp_output:/app/tmp_output \
             simpleetl:${{ github.sha }} \
             --config /app/configs/test_e2e.yaml
+          # Assert the pipeline actually produced output
+          test -s tmp_output/test_output.csv
+          echo "output rows: $(wc -l < tmp_output/test_output.csv)"
 
   e2e:
     name: End-to-End Integration Test
