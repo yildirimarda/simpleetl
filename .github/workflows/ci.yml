@@ -29,16 +29,24 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: uv sync --frozen
+        # --all-extras so mypy can see the optional imports (duckdb, polars,
+        # prometheus_client, opentelemetry, ...). --python overrides the
+        # repo's .python-version (3.14).
+        run: uv sync --frozen --all-extras --python 3.11
 
+      - name: Install type stubs
+        run: uv pip install pandas-stubs types-PyYAML types-xmltodict
+
+      # --no-sync everywhere: a bare `uv run` re-syncs the venv from
+      # .python-version and DROPS the extras installed above.
       - name: Run ruff (lint)
-        run: uv run ruff check src/ tests/
+        run: uv run --no-sync ruff check src/ tests/
 
       - name: Run ruff (format check)
-        run: uv run ruff format --check src/ tests/
+        run: uv run --no-sync ruff format --check src/ tests/
 
       - name: Run mypy
-        run: uv run mypy src/ tests/
+        run: uv run --no-sync mypy src/ tests/
 
   test:
     name: Test (Python ${{ matrix.python-version }})
@@ -69,7 +77,8 @@ jobs:
         run: uv sync --frozen --all-extras --python ${{ matrix.python-version }}
 
       - name: Run tests with coverage
-        run: uv run pytest --cov=src --cov-report=xml --cov-report=term-missing tests/
+        # --no-sync: keep the venv exactly as the sync step built it
+        run: uv run --no-sync pytest --cov=src --cov-report=xml --cov-report=term-missing tests/
 
       - name: Upload coverage report
         if: matrix.python-version == '3.11'
@@ -133,13 +142,13 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: uv sync --frozen
+        run: uv sync --frozen --all-extras --python 3.11
 
       - name: Create test output directory
         run: mkdir -p tmp_output
 
       - name: Run ETL job with simpleetl --config
-        run: uv run simpleetl --config configs/test_e2e.yaml
+        run: uv run --no-sync simpleetl --config configs/test_e2e.yaml
 
       - name: Verify ETL job output
         run: |
@@ -168,13 +177,14 @@ jobs:
         run: uv sync --frozen
 
       - name: Run pip check
-        run: uv run pip check
+        run: uv run --no-sync pip check
 
       - name: Install pip-audit
         run: uv pip install pip-audit
 
       - name: Run dependency vulnerability scan
-        # --skip-editable: don't try to audit the local simpleetl package
-        # itself (its version may not be published on PyPI yet)
-        run: uv run pip-audit --strict --skip-editable
+        # --skip-editable: don't audit the local simpleetl package itself.
+        # No --strict: it escalates the "skipped editable" warning back into
+        # an error. pip-audit still exits non-zero on real vulnerabilities.
+        run: uv run --no-sync pip-audit --skip-editable
         continue-on-error: false
