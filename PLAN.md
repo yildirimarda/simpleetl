@@ -1,31 +1,25 @@
 # SimpleETL Framework Project Plan
 
-## Project Name: SimpleETL
-
-## Overview
-A professional, production-grade ETL framework written in Python. Designed to run on local, AWS Glue, Databricks, and Azure Synapse platforms. Supports all major data formats with a focus on simplicity, readability, and production readiness.
-
-## Goals
-1. **Package Management**: Use uv for fast, reliable Python package management.
-2. **Testing**: Achieve 95%+ test coverage with comprehensive unit and integration tests.
-3. **Documentation**: All code comments in English; comprehensive user and developer documentation.
-4. **Platform Support**: Local development, AWS Glue, Databricks, Azure Synapse.
-5. **Format Support**: CSV, JSON, Parquet, Avro, ORC, XML, Excel, JDBC databases, etc.
-6. **Production Ready**: Docker and Kubernetes configurations, CI/CD pipelines, logging, monitoring hooks.
-7. **Clean Repository**: Proper .gitignore, licensing, and minimal, focused codebase.
-
----
-
-## Phase 0: Project Setup — COMPLETE ✅
+## Milestone 0: Foundation
 
 - [x] Initialize project with uv
 - [x] Create base directory structure
-- [x] Configure pyproject.toml with dependencies
+- [x] Configure pyproject.toml with dependencies (version 1.3.0)
 - [x] Set up initial Git repository
 - [x] Create CLAUDE.md with project guidelines
 - [x] Write basic README.md
 
-## Phase 1: Core ETL Framework — COMPLETE ✅
+## Milestone 1: Project Goals
+
+- [x] Package management: uv for fast, reliable Python package management
+- [x] Testing: comprehensive unit and integration test suite
+- [x] Documentation: all code comments in English; docs/ exists
+- [x] Platform support: local, AWS Glue, Databricks, Azure Synapse
+- [x] Format support: CSV, JSON, Parquet, Avro, ORC, XML, Excel, database
+- [x] Production ready: Docker, Kubernetes, CI/CD, logging, monitoring hooks
+- [x] Clean repository: .gitignore, LICENSE, focused codebase
+
+## Milestone 2: Core ETL Framework
 
 - [x] Design base ETL job interface/abstract class
 - [x] Implement configuration loading (YAML/JSON)
@@ -35,19 +29,19 @@ A professional, production-grade ETL framework written in Python. Designed to ru
 - [x] Add error handling and retry mechanisms
 - [x] Write unit tests for core components
 
-## Phase 2: Platform Adaptors — COMPLETE ✅
+## Milestone 3: Platform Adaptors
 
 - [x] Create platform-specific runners (Local, Glue, Databricks, Synapse)
 - [x] Implement platform detection and configuration
 - [x] Write integration tests for each platform
 
-## Phase 3: Format Support Expansion — COMPLETE ✅
+## Milestone 4: Format Support Expansion
 
 - [x] Implement readers/writers for all major formats
 - [x] Add format auto-detection based on file extension
 - [x] Write format-specific tests
 
-## Phase 4: Production Readiness (Initial) — COMPLETE ✅
+## Milestone 5: Production Readiness (Initial)
 
 - [x] Add Dockerfile and docker-compose.yml
 - [x] Create Kubernetes manifests
@@ -61,7 +55,7 @@ A professional, production-grade ETL framework written in Python. Designed to ru
 - [x] LICENSE file
 - [x] Comprehensive documentation (docs/)
 
-## Phase 5: CI/CD and Release — COMPLETE ✅
+## Milestone 6: CI/CD and Release
 
 - [x] Configure GitHub Actions CI pipeline
 - [x] Set up automated testing on push/pull request
@@ -69,19 +63,10 @@ A professional, production-grade ETL framework written in Python. Designed to ru
 - [x] Add dependency vulnerability scanning
 - [x] Performance benchmarking suite
 
-## Phase 6: Production-Grade Features — COMPLETE ✅
-
-### Current Status (2026-05-28)
-- **Tests**: 1546 passed, 2 skipped ✅
-- **Coverage**: 94% ✅
-- **Linting**: ruff clean (0 errors) ✅
-- **Type Checking**: mypy clean (0 errors) ✅
-- **Dependencies**: Lightweight core (6 deps), optional extras for cloud/spark/db ✅
-
-### 6.1 Streaming & Chunked Processing — COMPLETE ✅
+## Milestone 7: Streaming and Chunked Processing
 
 - [x] Chunked/chunk_size parameter in base reader/writer
-- [x] Chunked read/write for Parquet (iter_batches + ParquetWriter)
+- [x] Chunked read/write for Parquet
 - [x] Chunked read/write for CSV
 - [x] Chunked read/write for Database
 - [x] Chunked read/write for JSON
@@ -89,33 +74,32 @@ A professional, production-grade ETL framework written in Python. Designed to ru
 - [x] Support for reading/writing compressed files (gzip, snappy)
 - [x] Batch processing mode via transform_chain
 
-### 6.2 Incremental / Delta Loading — COMPLETE ✅
+## Milestone 8: Incremental and Delta Loading
 
 - [x] Watermark-based incremental extraction
 - [x] Checkpoint/resume support for long-running jobs
 - [x] Merge/UPSERT operations in DatabaseWriter
 - [x] State management between job runs (state store abstraction)
-- [x] `incremental_key` and `high_watermark` in job config
+- [x] incremental_key and high_watermark in job config
 
-### 6.3 Schema Management — COMPLETE ✅
+## Milestone 9: Schema Management
 
 - [x] Schema inference from data sources
 - [x] Schema evolution support (add/remove/rename columns)
 - [x] Schema registry interface (file-based)
 - [x] DDL generation for database targets
 - [x] Column mapping and renaming framework
-- [x] High test coverage (96%+)
 - [x] Support for nested/complex types (structs, arrays, maps)
 
-### 6.4 Cloud Storage Support — COMPLETE ✅
+## Milestone 10: Cloud Storage Support
 
 - [x] S3 support (s3:// paths) via fsspec
 - [x] GCS support (gs:// paths) via fsspec
 - [x] Azure Blob/ADLS support (abfss:// paths) via fsspec
 - [x] Unified filesystem abstraction layer
-- [x] Cloud read/write tested for all 7 formats (CSV, JSON, Parquet, Avro, ORC, Excel, XML)
+- [x] Cloud read/write tested for major formats
 
-### 6.5 Connection Management — COMPLETE ✅
+## Milestone 11: Connection Management
 
 - [x] Connection pooling for database readers/writers
 - [x] Integration with AWS Secrets Manager, Azure Key Vault, HashiCorp Vault
@@ -123,7 +107,7 @@ A professional, production-grade ETL framework written in Python. Designed to ru
 - [x] SSL/TLS configuration for database connections
 - [x] Connection timeout and retry configuration
 
-### 6.6 Error Handling & Recovery — COMPLETE ✅
+## Milestone 12: Error Handling and Recovery
 
 - [x] Dead letter queue (DLQ) for failed records
 - [x] Partial failure handling (continue on bad records, collect errors)
@@ -133,14 +117,14 @@ A professional, production-grade ETL framework written in Python. Designed to ru
 - [x] Error classification (transient vs permanent)
 - [x] Retry with jitter
 
-### 6.7 Parallelism & Performance — COMPLETE ✅
+## Milestone 13: Parallelism and Performance
 
 - [x] Multi-threaded read/write for independent operations
 - [x] Multi-process support for CPU-bound transformations
 - [x] Parallel partition processing
 - [x] Data partitioning strategy for writes (partition by column)
 
-### 6.8 Job Orchestration & DAG — COMPLETE ✅
+## Milestone 14: Job Orchestration and DAG
 
 - [x] DAG-based job dependency definition
 - [x] Fan-out/fan-in execution patterns
@@ -149,7 +133,7 @@ A professional, production-grade ETL framework written in Python. Designed to ru
 - [x] Job scheduling capability (cron expressions)
 - [x] Multi-job runner with dependency resolution
 
-### 6.9 Extensibility & Plugin System — COMPLETE ✅
+## Milestone 15: Extensibility and Plugin System
 
 - [x] Plugin registration system for custom formats
 - [x] Hook/interceptor system (pre/post extract, transform, load)
@@ -158,17 +142,17 @@ A professional, production-grade ETL framework written in Python. Designed to ru
 - [x] Middleware pipeline for data processing
 - [x] Entry_points-based external plugin discovery
 
-### 6.10 Platform Integration (Real) — COMPLETE ✅
+## Milestone 16: Platform Integration (Real)
 
 - [x] AWS Glue: boto3 integration, Glue context, DynamicFrame, S3
-- [x] Dependencies reorganized: pyspark, boto3, db drivers are now optional extras
+- [x] Dependencies reorganized: pyspark, boto3, db drivers optional extras
 - [x] AWS Glue: bookmark API calls (stubs)
 - [x] AWS Glue: pandas_to_dynamic_frame
 - [x] Databricks: Spark session, DBFS, Delta Lake, Databricks Connect
 - [x] Azure Synapse: Synapse Spark, ABFS, Synapse SDK
 - [x] Unified Spark-based processing engine option
 
-### 6.11 Data Lineage & Observability — COMPLETE ✅
+## Milestone 17: Data Lineage and Observability
 
 - [x] Data lineage tracking (source → transform → destination)
 - [x] LineageTracker with event recording and filtering
@@ -179,30 +163,30 @@ A professional, production-grade ETL framework written in Python. Designed to ru
 - [x] Per-record provenance
 - [x] Alerting integration hooks
 
-### 6.12 Security — COMPLETE ✅
+## Milestone 18: Security
 
-- [x] PII detection and masking (detect_pii_columns, detect_pii_values, mask_pii)
+- [x] PII detection and masking
 - [x] Column-level encryption support (ColumnEncryptor with Fernet)
-- [x] Audit logging for data access (AuditLogger with file output)
+- [x] Audit logging for data access
 - [x] Role-based access control hooks (RBACPolicy, apply_rbac_filter)
 - [x] Secure credential handling throughout
 
-### 6.13 Testing & Quality — COMPLETE ✅
+## Milestone 19: Testing and Quality
 
-- [x] Unit tests for all core modules (1521 tests)
-- [x] Fix all failing tests (CLI import, DAG import, schema dup)
+- [ ] Make the test suite skip gracefully when optional extras are missing (pytest.importorskip for cryptography, opentelemetry, fastavro, etc.). CI installs --all-extras and is fully green; a bare environment currently shows ~70 spurious failures, which will mislead any tooling that runs tests without extras
+- [ ] Raise coverage to >= 95% overall (measure with --all-extras installed)
+- [ ] Reconcile version numbering: code says 1.3.0 while some docs reference 1.0.0/1.1.0/1.2.0 — align docs and CHANGELOG on 1.3.0
+
+- [x] Unit tests for all core modules (2015 test functions exist)
 - [x] Integration tests with real databases (SQLite, PostgreSQL patterns)
 - [x] End-to-end pipeline tests
 - [x] conftest.py with shared fixtures
-- [x] Improve coverage from 78% to 96% ✅
-- [x] ruff linting clean (0 errors)
-- [x] mypy type checking clean (0 errors)
-- [x] Integration tests with real databases (PostgreSQL, MySQL)
-- [x] Failure injection tests (network, disk, permissions)
-- [x] Data volume tests (GB-scale)
-- [x] Performance regression tests
+- [ ] Integration tests with real databases (PostgreSQL, MySQL) — partial
+- [ ] Failure injection tests (network, disk, permissions)
+- [ ] Data volume tests (GB-scale)
+- [ ] Performance regression tests
 
-### 6.14 Transformations — COMPLETE ✅
+## Milestone 20: Transformations
 
 - [x] filter_data (column-based and function-based)
 - [x] map_values (dict and callable mapping)
@@ -220,479 +204,206 @@ A professional, production-grade ETL framework written in Python. Designed to ru
 - [x] group_by_aggregate_data (enhanced groupby)
 - [x] pivot_data / unpivot_data
 - [x] transform_chain (sequential transformation pipeline)
-- [x] window_functions (rank, dense_rank, lag, lead, row_number, percent_rank, cumsum, cume_dist)
-- [x] string_operations (trim, upper, lower, replace, split, contains, regex_extract, length, substring, pad_left, pad_right)
-- [x] date_operations (trunc, extract, diff, format, timezone, add, is_weekend, is_business_day)
+- [x] Window functions (rank, dense_rank, lag, lead, row_number, percent_rank, cumsum, cume_dist)
+- [x] string_operations
+- [x] date_operations
 - [x] TransformationChain (fluent chainable API)
 - [x] chain() convenience function
 
-### 6.15 Public API — COMPLETE ✅
+## Milestone 21: Public API and Exports
 
 - [x] Re-export key classes from package __init__.py
-- [x] Top-level convenience functions
-- [x] Version info and metadata
+- [x] Top-level convenience functions (read, write, run_job, run_dag)
+- [x] Version info and metadata (1.3.0)
 
-### 6.16 Quality Fixes — COMPLETE ✅
+## Milestone 22: Quality Fixes
 
-- [x] Fix 5 failing tests (tests/__init__.py, duplicate TestSchemaDiff class)
-- [x] Fix 76 ruff linting errors (unused imports, unused variables, redefinition)
-- [x] Fix all mypy type errors (config + targeted type: ignore)
-- [x] Fix `read_partitioned` double-read performance bug
-- [x] Fix `Schema.evolve()` dead code (unused dict comprehension)
-- [x] Fix `LazyTransformation.optimize()` narrow `_apply_filter` heuristic
-- [x] Fix `config.load_config()` ValidationError re-wrap
-- [x] Fix `ETLJob.extract()` signature for incremental mode kwargs
-- [x] Fix ORC reader/writer for PyArrow 24 API compatibility
+- [x] Add tests/__init__.py for importlib-based test discovery
 - [x] Make dependencies optional: pyspark, boto3, db drivers, cloud SDKs
 - [x] Make fastavro optional with pyarrow fallback for Avro reading
-- [x] Add `tests/__init__.py` for importlib-based test discovery
+- [x] Fix Schema.evolve() dead code
+- [x] Fix LazyTransformation.optimize() heuristic
+- [x] Fix config.load_config() ValidationError re-wrap
+- [x] Fix ETLJob.extract() signature for incremental mode kwargs
+- [x] Fix ORC reader/writer for PyArrow 24 API compatibility
+- [ ] Verify and fix the `read_partitioned` double-read performance bug (read the code first; may already be fixed)
 
----
+## Milestone 23: v1.0 Release
 
-## Phase 7: v1.0 Release — COMPLETE ✅ (2026-05-26)
-
-- [x] All Phase 6 features implemented
-- [x] Test coverage >= 95% — ACHIEVED: 96%
-- [x] Documentation complete and reviewed
-- [x] Docker builds for all target platforms
-- [x] CI/CD pipeline passes on all branches
-- [x] Code follows PEP 8 and passes linting (ruff, mypy)
-- [x] Framework can handle datasets larger than memory (streaming/chunked)
+- [x] All Phase 6 core features implemented
+- [ ] Documentation complete and reviewed
+- [x] Docker builds for target platforms
+- [x] CI/CD pipeline configured
+- [x] Code follows PEP 8 and passes linting (ruff)
+- [x] Framework supports streaming/chunked processing
 - [x] Framework supports incremental/delta loading
-- [x] Framework supports cloud platform integrations (Glue, Databricks, Synapse)
-- [x] Framework supports S3, GCS, and ABFS paths
-- [x] Dependencies reorganized as optional extras (lightweight core)
-- [x] ruff + mypy clean (0 errors each)
-- [x] All 1521 tests passing (0 failures)
-- [x] Security audit completed (pip-audit blocking in CI, docs/security.md)
+- [x] Framework supports cloud platform integrations
+- [x] Framework supports S3, GCS, ABFS paths
+- [x] Dependencies reorganized as optional extras
+- [x] Security audit documentation (docs/security.md)
 - [x] Performance benchmarks documented (benchmarks/, docs/performance.md)
-- [x] Examples and docs reviewed
 - [x] Lineage/audit/RBAC persistence added
-- [x] Version bumped to 1.0.0
 
-### 7.1 OpenLineage Integration — COMPLETE ✅
+## Milestone 24: OpenLineage Integration
 
-- [x] `OpenLineageConverter` class: converts `LineageEvent` → OpenLineage `RunEvent`
-- [x] `LineageTracker.emit_openlineage()` method
+- [x] OpenLineageConverter class
+- [x] LineageTracker.emit_openlineage() method
 - [x] HTTP emitter that POSTs to OpenLineage API endpoint
-- [x] Configurable via `ETLJobConfig.openlineage_url`
-- [x] Tests: `tests/test_lineage_openlineage.py` (38 tests)
+- [x] Configurable via ETLJobConfig.openlineage_url
+- [x] Tests: tests/test_lineage_openlineage.py
 
-### 7.2 Per-Record Provenance — COMPLETE ✅
+## Milestone 25: Per-Record Provenance
 
-- [x] `record_id` field on `LineageEvent`
-- [x] `LineageTracker.record_provenance()` method
-- [x] `ProvenanceHook` for automatic per-record tracking
-- [x] `ProvenanceTracker` standalone class with O(1) lookups
-- [x] Tests: `tests/test_lineage_provenance.py` (38 tests)
+- [x] record_id field on LineageEvent
+- [x] LineageTracker.record_provenance() method
+- [x] ProvenanceHook for automatic per-record tracking
+- [x] ProvenanceTracker standalone class with O(1) lookups
+- [x] Tests: tests/test_lineage_provenance.py
 
-### 7.3 Alerting Integration Hooks — COMPLETE ✅
+## Milestone 26: Alerting Integration Hooks
 
-- [x] `AlertRule.evaluate()` with context
-- [x] `AlertManager.check_and_dispatch()` → webhook/email/Slack stubs
-- [x] Alert channels: `WebhookChannel`, `EmailChannel` (stub), `SlackChannel` (stub)
-- [x] `AlertChannel` abstract base class
-- [x] Tests: `tests/test_alerting.py` (33 tests)
+- [x] AlertRule.evaluate() with context
+- [x] AlertManager.check_and_dispatch() (webhook/email/Slack stubs)
+- [x] Alert channels: WebhookChannel, EmailChannel (stub), SlackChannel (stub)
+- [x] AlertChannel abstract base class
+- [x] Tests: tests/test_alerting.py
 
-### 7.4 Nested/Complex Type Schema Support — COMPLETE ✅
+## Milestone 27: Nested and Complex Type Schema Support
 
-- [x] `StructType`, `ArrayType`, `MapType` classes in `schema.py`
-- [x] `FieldDef` class for struct fields
-- [x] `Schema.from_dataframe()` inference for nested types
-- [x] DDL generation for nested types (PostgreSQL JSONB, MySQL JSON, etc.)
-- [x] Tests: `tests/test_schema_nested.py` (58 tests)
+- [x] StructType, ArrayType, MapType classes in schema.py
+- [x] FieldDef class for struct fields
+- [x] Schema.from_dataframe() inference for nested types
+- [x] DDL generation for nested types
+- [x] Tests: tests/test_schema_nested.py
 
-### 7.5 Performance Benchmarks — COMPLETE ✅
+## Milestone 28: Performance Benchmarks
 
-- [x] `benchmarks/` directory with benchmark scripts
-- [x] Read/write benchmarks for all formats (`benchmark_read_write.py`)
-- [x] Transformation benchmarks — filter, join, aggregate, window (`benchmark_transformations.py`)
-- [x] Streaming/chunked processing benchmarks (`benchmark_streaming.py`)
-- [x] DAG operation benchmarks (`benchmark_dag.py`)
-- [x] `docs/performance.md` with documented results
+- [x] benchmarks/ directory with benchmark scripts
+- [x] Read/write benchmarks for all formats
+- [x] Transformation benchmarks
+- [x] Streaming/chunked processing benchmarks
+- [x] DAG operation benchmarks
+- [x] docs/performance.md with documented results
 
-### 7.6 Security Audit — COMPLETE ✅
+## Milestone 29: Security Audit and Documentation
 
-- [x] `pip-audit` blocking in CI
-- [x] Review all error messages for information leakage
+- [x] pip-audit blocking in CI
+- [x] Review error messages for information leakage
 - [x] Verify no secrets in logs
-- [x] Document security best practices in `docs/security.md`
+- [x] Document security best practices in docs/security.md
 
-### 7.7 Documentation Finalization — COMPLETE ✅
+## Milestone 30: Documentation Finalization
 
-- [x] `docs/performance.md` — benchmark results
-- [x] `docs/security.md` — security best practices
-- [x] `docs/openlineage.md` — OpenLineage integration guide
-- [x] `docs/provenance.md` — per-record provenance guide
-- [x] `docs/alerting.md` — alerting integration guide
-- [x] `docs/schema.md` — nested type support guide
-- [x] Review and update `README.md` with v1.0 features
-- [x] Final review of all docs for accuracy
+- [x] docs/performance.md
+- [x] docs/security.md
+- [x] docs/openlineage.md
+- [x] docs/provenance.md
+- [x] docs/alerting.md
+- [x] docs/schema.md
+- [x] Review and update README.md with latest features
 
----
+## Milestone 31: Modern Data Stack — Jinja2 Config Templates
 
-## Definition of Done — COMPLETE ✅
+- [x] jinja2 optional dependency
+- [x] Pre-process YAML/JSON configs through Jinja2
+- [x] Built-in template variables: env, now/today, params
+- [x] load_config() accepts optional template_vars kwarg; auto-detects {{ markers
+- [x] CLI: --param key=value flag
+- [x] render_config_template() exported
+- [x] Tests: tests/test_config_templates.py
 
-- [x] All Phase 6 features implemented
-- [x] Test coverage >= 95% — **ACHIEVED: 96%**
-- [x] Documentation complete and accessible
-- [x] Docker builds for all target platforms
-- [x] CI/CD pipeline passes on all branches
-- [x] Code follows PEP 8 and passes linting (ruff, mypy)
-- [x] Framework can handle datasets larger than memory (streaming/chunked)
-- [x] Framework supports incremental/delta loading
-- [x] Framework supports cloud platform integrations (Glue, Databricks, Synapse)
-- [x] Framework supports S3, GCS, and ABFS paths
-- [x] Dependencies reorganized as optional extras (lightweight core)
-- [x] ruff + mypy clean (0 errors each)
-- [x] All 1521 tests passing (0 failures)
-- [x] Security audit completed
-- [x] Performance benchmarks documented
-- [x] Examples and docs reviewed
-- [x] Lineage/audit/RBAC persistence added
-- [x] Version bumped to 1.0.0
+## Milestone 32: DuckDB Format and SQL Transform
 
-## Success Metrics
-- Framework can be instantiated and run a simple ETL job in <5 minutes of setup
-- New contributors can understand and modify the codebase within 1 hour
-- Framework handles production-scale data (GB+ volumes) efficiently
-- Framework supports incremental processing for daily batch jobs
-- Framework integrates with at least one major orchestrator (Airflow/Prefect/Dagster)
-- Minimal dependencies outside of standard data engineering stack
+- [x] duckdb optional dependency
+- [x] DuckDBReader: read from DuckDB file via SQL query or table name
+- [x] DuckDBWriter: write DataFrame to DuckDB table
+- [x] DuckDBReader.read_chunks() for streaming
+- [x] sql_transform() in transformations.py
+- [x] Format auto-detection for .duckdb extension
+- [x] Export from simpleetl.__init__
+- [x] Tests: tests/test_formats_duckdb.py
 
----
+## Milestone 33: Data Profiling Module
 
-## Post-v1.0 Audit Notes (2026-05-28)
-
-### Completed Fixes
-- [x] Fixed version mismatch: `__init__.py` and `cli.py` now report v1.0.0
-- [x] Added missing exports to `__init__.py`:
-  - `TransformationChain`, `chain` for fluent API
-  - `ProvenanceTracker`, `ProvenanceHook` for per-record lineage
-  - `AlertChannel`, `WebhookChannel`, `SlackChannel`, `EmailChannel`, `AlertManager` for alerting
-  - `DataFreshnessTracker` for data freshness monitoring
-  - `OpenLineageConverter` for OpenLineage integration
-  - `StructType`, `ArrayType`, `MapType`, `FieldDef` for nested schema support
-  - Security exports: `ColumnEncryptor`, `AuditLogger`, `RBACPolicy`, `apply_rbac_filter`, masking functions
-
-### Remaining Recommendations for Production Use
-
-#### High Priority
-- [x] Add `job_timer` decorator to exports (used in examples but not exported)
-- [x] Add `format_options` parameter to `ETLJobConfig` for format-specific read/write options
-- [x] Add `batch_size` config parameter to control chunk size in streaming mode
-
-#### Medium Priority
-- [x] Add unit tests for end-to-end jobs using new exported classes (tests in test_alerting.py, test_lineage_openlineage.py, test_lineage_provenance.py, test_schema_nested.py, test_security.py, test_main.py, test_table.py)
-- [x] Update README.md quickstart examples to use top-level `read()`/`write()` functions
-- [x] Add integration tests for Airflow/Prefect/Dagster hooks (hooks provided; users implement orchestrator-specific operators)
-- [x] Add `Table` class for database table abstraction (schema-aware table handles) (`src/simpleetl/formats/database.py:23-242`)
-
-#### Low Priority
-- [x] Add retry count and timing metrics to `MetricsCollector` (timing via `job_timer` decorator, retry-count tracked in hook metrics)
-- [x] Add `validate_output` method to `ETLJob` for automatic schema validation (`src/simpleetl/core/job.py:724-774`)
-- [x] Add type-safe config loading with `TypedDict` hints (Pydantic BaseModel provides runtime type safety; TypedDict optional)
-
-### Production Readiness Assessment
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Core ETL Job | ✅ Complete | Abstract base class with `extract/transform/load/run` lifecycle |
-| Format Support | ✅ Complete | CSV, JSON, Parquet, Avro, ORC, XML, Excel, Database |
-| Cloud Storage | ✅ Complete | S3, GCS, ABFS via fsspec |
-| Incremental Loading | ✅ Complete | Watermark-based with checkpoint/resume |
-| Streaming/Chunked | ✅ Complete | All formats support `read_chunks`/`write_chunks` |
-| Schema Management | ✅ Complete | Inference, evolution, nested types, DDL generation |
-| DAG Orchestration | ✅ Complete | Topological scheduling, dependency resolution |
-| Data Lineage | ✅ Complete | `LineageTracker`, OpenLineage export |
-| Per-Record Provenance | ✅ Complete | `ProvenanceHook`, `ProvenanceTracker` |
-| Alerting | ✅ Complete | Webhook, Slack, Email channels |
-| Security | ✅ Complete | Secrets management, PII masking, encryption, RBAC |
-| Data Quality | ✅ Complete | Validation, null checks, duplicate detection |
-| Connection Pooling | ✅ Complete | SQLAlchemy-based pool with secrets integration |
-| Error Handling | ✅ Complete | DLQ, partial failure, retry with jitter |
-| Plugin System | ✅ Complete | Entry points, format plugins, hooks |
-| Health Endpoints | ✅ Complete | HTTP /health and /ready endpoints |
-| Metrics | ✅ Complete | Prometheus-compatible counters/timers |
-| Platform Detect | ✅ Complete | Auto-detect local/Glue/Databricks/Synapse |
-| Documentation | ✅ Complete | Comprehensive docs in `docs/` |
-| Testing | ✅ Complete | 1546 tests, 94% coverage |
-| CI/CD | ✅ Complete | GitHub Actions, Docker, release workflow |
-
-### Limitations
-
-1. **Spark Platform Support**: Requires `pyspark` extra; full Spark DataFrames not yet implemented (only pandas-to-Spark conversion)
-2. **Cloud Credentials**: Users must provide AWS/GCP/Azure credentials via environment or secrets providers
-3. **Large File Processing**: Memory usage depends on pandas/PyArrow; true streaming requires explicit `read_chunks()` usage
-4. **Orchestrator Integration**: Hooks exist but full operator/integration packages need to be provided by users (Airflow/Prefect/Dagster operators not bundled)
-
----
-
-## Phase 8: v1.1 — Modern Data Stack Enhancements
-
-### Motivation
-v1.0 covers the ETL fundamentals thoroughly. v1.1 targets three gaps that come up immediately in real projects:
-- Config files hardcode dates/env-specific values (Jinja2 templates fix this)
-- No way to run SQL against in-memory DataFrames or DuckDB files (DuckDB format + `sql_transform`)
-- No built-in data profiling — engineers always reach for pandas `describe()` manually (profiling module)
-- REST APIs are the #1 data source in modern stacks but there's no `RestApiReader`
-- Delta Lake is the de facto lakehouse format but requires Spark today
-
-### 8.1 Jinja2 Config Templates — COMPLETE ✅
-
-- [x] Add `jinja2` as optional `template` dependency
-- [x] Pre-process YAML/JSON configs through Jinja2 before Pydantic parsing
-- [x] Built-in template variables: `env` (os.environ), `now`/`today` (datetime helpers), `params` (job-level key-value pairs)
-- [x] `load_config()` accepts optional `template_vars: dict` kwarg; auto-detects `{{` markers
-- [x] CLI: `--param key=value` flag to inject template variables
-- [x] `render_config_template()` exported from `simpleetl.__init__`
-- [x] Tests: `tests/test_config_templates.py` (22 tests)
-
-### 8.2 DuckDB Format + SQL Transform — COMPLETE ✅
-
-- [x] Add `duckdb` as optional `duckdb` dependency
-- [x] `DuckDBReader`: read from DuckDB file via SQL query or table name
-- [x] `DuckDBWriter`: write DataFrame to DuckDB table (append / replace / error modes)
-- [x] `DuckDBReader.read_chunks()` for streaming large result sets
-- [x] `sql_transform(df, query, *, table_name)` in `transformations.py`
-- [x] Format auto-detection for `.duckdb` extension
-- [x] Export from `simpleetl.__init__`
-- [x] Tests: `tests/test_formats_duckdb.py` (17 tests)
-
-### 8.3 Data Profiling Module — COMPLETE ✅
-
-- [x] `src/simpleetl/core/profiling.py` — `DataProfiler`, `ProfileReport`, `ColumnProfile` classes
-- [x] `DataProfiler.profile(df)` → `ProfileReport` with per-column stats
-- [x] Per-column stats: dtype, null_count, null_pct, distinct_count, distinct_pct, min, max, mean, std, top_values (top-N)
+- [x] src/simpleetl/core/profiling.py
+- [x] DataProfiler.profile() → ProfileReport
+- [x] Per-column stats: dtype, null_count, null_pct, distinct_count, distinct_pct, min, max, mean, std, top_values
 - [x] Dataset-level stats: row_count, column_count, memory_mb, duplicate_row_count
-- [x] `ProfileReport.to_dict()` / `to_json()` / `to_html()` / `to_markdown()` output methods
-- [x] CLI command: `simpleetl --profile <file>` — prints markdown report
-- [x] Export `DataProfiler`, `ProfileReport`, `ColumnProfile` from `simpleetl.__init__`
-- [x] Tests: `tests/test_profiling.py` (29 tests)
+- [x] ProfileReport output methods (to_dict, to_json, to_html, to_markdown)
+- [x] CLI command: simpleetl --profile <file>
+- [x] Export DataProfiler, ProfileReport, ColumnProfile
+- [x] Tests: tests/test_profiling.py
 
-### 8.4 REST API Reader/Writer — COMPLETE ✅
+## Milestone 34: REST API Reader and Writer
 
-- [x] Add `requests` as optional `rest` dependency
-- [x] `RestApiReader` in `src/simpleetl/formats/rest_api.py`
-  - [x] Authentication: none, Bearer token, API key (header or query-param), Basic auth
-  - [x] Pagination strategies: none, offset/limit, cursor (next_cursor field), link-header (RFC 5988)
-  - [x] Response formats: JSON (root key extraction), CSV text fallback
-  - [x] `read_chunks()` yields one page at a time
-  - [x] Rate limiting: `requests_per_second` with sleep-based throttle
-- [x] `RestApiWriter` — POST/PUT records as JSON to an endpoint (batched, optional record_key wrapping)
-- [x] Tests: `tests/test_formats_rest.py` (24 tests, all mocked)
+- [x] requests optional dependency
+- [x] RestApiReader with auth strategies (none, Bearer, API key, Basic)
+- [x] Pagination strategies: none, offset/limit, cursor, link-header
+- [x] Response formats: JSON, CSV fallback
+- [x] read_chunks() yields one page at a time
+- [x] Rate limiting: requests_per_second
+- [x] RestApiWriter — POST/PUT records as JSON
+- [x] Tests: tests/test_formats_rest.py
 
-### 8.5 Delta Lake Format — COMPLETE ✅
+## Milestone 35: Delta Lake Format
 
-- [x] Add `deltalake` as optional `delta` dependency (pure-Python, no Spark required)
-- [x] `DeltaLakeReader` in `src/simpleetl/formats/delta.py`
-  - [x] Read current snapshot as DataFrame
-  - [x] Time travel: `version` and `timestamp` parameters
-  - [x] `read_chunks()` via PyArrow dataset scanner with configurable batch size
-- [x] `DeltaLakeWriter`
-  - [x] Write modes: `append`, `overwrite`, `error`
-  - [x] Partition columns support
-  - [x] Schema mode forwarding (overwrite / merge)
-- [x] Export from `simpleetl.__init__`
-- [x] Tests: `tests/test_formats_delta.py` (13 tests)
+- [x] deltalake optional dependency
+- [x] DeltaLakeReader: read snapshot, time travel, read_chunks()
+- [x] DeltaLakeWriter: append/overwrite/error, partition columns
+- [x] Export from simpleetl.__init__
+- [x] Tests: tests/test_formats_delta.py
 
-### 8.6 Quality & Coverage — COMPLETE ✅
+## Milestone 36: v1.1 Quality and Coverage Gate
 
-- [x] All new modules pass ruff (0 errors)
-- [x] All new modules pass mypy (0 errors)
-- [x] Total tests: 1658 passed, 2 skipped (was 1546)
-- [x] Update `pyproject.toml` with new optional extras (`template`, `duckdb`, `rest`, `delta`)
-- [x] Update `all` extra to include new extras
-- [x] Bump version to `1.1.0` in `pyproject.toml`, `__init__.py`, `cli.py`
+- [x] All new modules pass ruff (0 errors) — verify with full extras
+- [x] All new modules pass mypy (0 errors) — verify with full extras
+- [x] Update pyproject.toml with new optional extras (template, duckdb, rest, delta)
+- [x] Update all extra
 
----
+## Milestone 37: v1.2 Reliability and Enterprise Observability
 
-## Phase 9: v1.2 — Reliability & Enterprise Observability — COMPLETE ✅ (2026-06-10)
+- [x] Declarative data quality rules (QualityRuleEngine, QualityRuleHook)
+- [x] Schema drift detection (SchemaDriftDetector, SchemaDriftHook, DriftReport)
+- [x] Apache Iceberg format (IcebergReader, IcebergWriter, SQLite catalog)
+- [x] OpenTelemetry tracing (TracingHook, setup_tracing)
+- [x] Stub completion: EmailChannel (SMTP), Glue bookmarks, MetricsCollector JSON
+- [x] CLI scaffolding and config validation (--init, --validate-config)
+- [x] New docs: quality_rules.md, schema_drift.md, iceberg.md, tracing.md
+- [ ] Wire new hooks into ETLJob lifecycle from config
+- [ ] Export new public classes from __init__
 
-### Final Status
-- **Tests**: 1883 passed, 2 skipped (was 1658) ✅
-- **Coverage**: 94% overall; new modules at 95–100% ✅
-- **Linting**: ruff clean (0 errors, src + tests) ✅
-- **Type Checking**: mypy clean (0 errors, src + tests) ✅
-- **Version**: 1.2.0 ✅
+## Milestone 38: Deferred to v1.3
 
-### Motivation
-v1.1 rounded out the modern-data-stack surface (templates, DuckDB, REST, Delta,
-profiling). v1.2 targets the gaps that block confident production rollouts:
-- Quality checks exist but are **programmatic only** — no way to declare
-  expectations in the job config (Great Expectations style)
-- `Schema.diff()` exists but nothing **detects drift between runs** automatically
-- Iceberg is the second pillar of the lakehouse next to Delta — not supported
-- No distributed tracing; Prometheus counters only (no OpenTelemetry)
-- Known stubs left in the code: `EmailChannel` (log-only), Glue job bookmarks
-  (log-only), `MetricsCollector._get_metrics_json()` (placeholder)
-- No project scaffolding (`init`) or standalone config validation in the CLI
+- [ ] Polars / engine abstraction (deep refactor of pandas-typed API)
+- [ ] Kafka streaming source (broker-backed integration tests needed)
+- [ ] Snowflake / BigQuery native dialects (needs real accounts for UPSERT validation)
 
-### 9.1 Declarative Data Quality Rules — config-driven validation
+## Milestone 39: v1.3 Performance, Streaming and Warehouses
 
-- [x] `validation_rules` section in `ETLJobConfig` (list of rule dicts)
-- [x] `src/simpleetl/core/quality_rules.py` — `QualityRule` dataclass +
-      `QualityRuleEngine` that parses config rules and evaluates a DataFrame
-- [x] Rule types: `not_null`, `unique`, `in_range`, `in_set`, `matches_regex`,
-      `min_length`/`max_length`, `row_count_min`/`row_count_max`, `expression`
-      (pandas `eval`-based custom predicate)
-- [x] Per-rule `severity`: `error` (fail job) vs `warning` (log + continue)
-- [x] `QualityRuleHook` (POST_TRANSFORM by default) that runs the engine and
-      raises on error-severity failures
-- [x] `RuleResult` / `RuleReport` with `to_dict()` for logging/alerting
-- [x] Tests: `tests/test_quality_rules.py`
+- [x] Add polars optional dependency
+- [x] Polars interop: to_polars, from_polars, polars_transform, polars_sql_transform
+- [x] engine="polars" option in CSV/Parquet readers and writers
+- [x] Kafka source/sink: KafkaReader, KafkaWriter, factory routing, lazy import
+- [x] Snowflake and BigQuery warehouse dialects: SQL detection, native MERGE INTO
+- [x] Schema DDL generation for SNOWFLAKE and BIGQUERY
+- [x] New optional extras in pyproject.toml; update all extra
+- [x] Docs: polars.md, kafka.md, warehouses.md
+- [x] Export new public names
 
-### 9.2 Schema Drift Detection — automatic, between runs
+## Milestone 40: Final Release and Quality Gates
 
-- [x] `schema_drift` section in `ETLJobConfig` (`enabled`, `registry_path`,
-      `schema_name`, `on_drift`, `auto_register`)
-- [x] `src/simpleetl/core/drift.py` — `SchemaDriftDetector` built on
-      `Schema.from_dataframe()` + `Schema.diff()` + `FileSchemaRegistry`
-- [x] `on_drift` actions: `fail` (raise `SchemaDriftError`), `warn` (log),
-      `evolve` (register new version and continue)
-- [x] First run auto-registers the baseline schema
-- [x] `SchemaDriftHook` (POST_EXTRACT) for job lifecycle integration
-- [x] `DriftReport` describing added/removed/type-changed columns
-- [x] Tests: `tests/test_drift.py`
+- [x] ruff clean (mostly; verify before final release)
+- [x] mypy clean (mostly; verify before final release)
+- [ ] Security audit completed
+- [ ] Performance benchmarks documented
+- [ ] Examples and docs reviewed
+- [ ] Lineage/audit/RBAC persistence verified end-to-end
 
-### 9.3 Apache Iceberg Format
+## Discovered
 
-- [x] Add `pyiceberg` as optional `iceberg` dependency
-- [x] `src/simpleetl/formats/iceberg.py` — `IcebergReader` / `IcebergWriter`
-- [x] Reader: catalog-based table load, column projection, row filter,
-      snapshot time travel (`snapshot_id`), `read_chunks()` streaming
-- [x] Writer: `append` / `overwrite` modes, table auto-create from DataFrame
-- [x] SQLite-backed local catalog support for zero-infra usage
-- [x] Graceful `ImportError` message pointing at `simpleetl[iceberg]`
-- [x] Tests: `tests/test_formats_iceberg.py` (skipped when pyiceberg missing)
-
-### 9.4 OpenTelemetry Tracing
-
-- [x] Add `opentelemetry-api`/`opentelemetry-sdk` as optional `otel` dependency
-- [x] `src/simpleetl/core/tracing.py` — `setup_tracing()`, `TracingHook`
-- [x] One span per job run with child spans per phase (extract/transform/load)
-- [x] Span attributes: job name, platform, record counts, error status
-- [x] OTLP exporter config via `tracing` config section (`enabled`,
-      `service_name`, `endpoint`); console/in-memory fallback for tests
-- [x] Works as no-op when opentelemetry is not installed
-- [x] Tests: `tests/test_tracing.py` (in-memory span exporter)
-
-### 9.5 Stub Completion — make every advertised feature real
-
-- [x] `EmailChannel`: real SMTP sending via stdlib `smtplib`
-      (host/port/STARTTLS/SSL/auth, from/to, subject template); keeps log-only
-      behavior when no host configured. Tests mock `smtplib.SMTP`.
-- [x] AWS Glue job bookmarks: guarded `awsglue.job.Job.init()/commit()` calls
-      when running inside Glue; logging fallback elsewhere. Tests mock awsglue.
-- [x] `MetricsCollector._get_metrics_json()`: real JSON serialization of
-      counters/gauges/histograms (name, value, labels, timestamp)
-
-### 9.6 CLI: Project Scaffolding & Config Validation
-
-- [x] `simpleetl --init <dir>` — generate a starter project: `config.yaml`,
-      `job.py` (ETLJob subclass), `README.md`, sample input CSV
-- [x] `simpleetl --validate-config <file>` — validate config (Pydantic +
-      validation_rules sanity check) and print a human-readable summary
-      without running the job
-- [x] Tests: extend `tests/test_cli.py`
-
-### 9.7 Quality Gate & Release
-
-- [x] Wire new hooks into `ETLJob` lifecycle from config
-      (validation_rules → QualityRuleHook, schema_drift → SchemaDriftHook,
-      tracing → TracingHook)
-- [x] Export new public classes from `simpleetl.__init__`
-- [x] New optional extras in `pyproject.toml` (`iceberg`, `otel`); update `all`
-- [x] Docs: `docs/quality_rules.md`, `docs/schema_drift.md`, `docs/iceberg.md`,
-      `docs/tracing.md`; README feature list update
-- [x] ruff + mypy clean (0 errors)
-- [x] Coverage ≥ 95% on new modules; full suite green
-- [x] Bump version to `1.2.0` in `pyproject.toml`, `__init__.py`, `cli.py`,
-      `docs/api-reference.md`
-
-### Deferred to v1.3 (consciously out of scope)
-- Polars / engine abstraction (requires deep refactor of pandas-typed API)
-- Kafka streaming source (needs broker-backed integration tests)
-- Snowflake / BigQuery native dialects (driver-heavy; needs real accounts to
-  validate UPSERT semantics)
-
----
-
-## Phase 10: v1.3 — Performance, Streaming & Warehouses — COMPLETE ✅ (2026-06-10)
-
-### Final Status
-- **Tests**: 2013 passed, 2 skipped (was 1883) ✅
-- **Coverage**: 95% overall; engine.py / kafka.py / parquet.py at 100% ✅
-- **Linting**: ruff clean (0 errors, src + tests) ✅
-- **Type Checking**: mypy clean (0 errors, src + tests) ✅
-- **Version**: 1.3.0 ✅
-
-### Motivation
-The three items consciously deferred from v1.2, scoped pragmatically:
-- **Polars**: a full engine abstraction would mean rewriting the pandas-typed
-  public API (40+ transformation functions, reader/writer signatures, hooks).
-  v1.3 instead ships *interop + IO acceleration*: zero-copy bridges between
-  pandas and Polars, a `polars_transform()` escape hatch for hot paths, and a
-  Polars-powered fast path inside the CSV/Parquet readers/writers. The pandas
-  API stays the single public contract.
-- **Kafka**: the #1 streaming source. A consumer/producer pair mapping JSON
-  messages to DataFrames fits the existing chunked-reader model. Unit tests
-  are fully mocked; broker-backed integration tests remain a user concern.
-- **Snowflake / BigQuery**: the two dominant cloud warehouses. SQLAlchemy
-  resolves dialects from the URL at runtime, so SimpleETL only needs dialect
-  detection, native `MERGE INTO` upsert SQL, and DDL type mappings — no
-  driver imports, drivers stay optional extras.
-
-### 10.1 Polars Interop & IO Acceleration
-
-- [x] Add `polars` as optional `polars` dependency
-- [x] `src/simpleetl/core/engine.py`:
-  - [x] `is_polars_available()` helper
-  - [x] `to_polars(df)` / `from_polars(pldf)` — Arrow-backed, zero-copy where
-        possible; clear ImportError pointing at `simpleetl[polars]`
-  - [x] `polars_transform(df, fn)` — pandas in → Polars `fn` → pandas out
-  - [x] `polars_sql_transform(df, query)` — Polars SQLContext-based SQL on a
-        DataFrame (complements DuckDB `sql_transform`)
-- [x] `engine="polars"` option in `CSVReader`/`CSVWriter` and
-      `ParquetReader`/`ParquetWriter` — Polars fast path with pandas fallback
-      (warning, not error, when Polars is missing)
-- [x] Tests: `tests/test_engine_polars.py`
-
-### 10.2 Kafka Source & Sink
-
-- [x] Add `confluent-kafka` as optional `kafka` dependency
-- [x] `src/simpleetl/formats/kafka.py`:
-  - [x] `KafkaReader`: consume a topic into a DataFrame — JSON value
-        deserialization, `max_messages`/`timeout` bounds, consumer-group
-        config, manual/auto commit
-  - [x] `KafkaReader.read_chunks()`: yield one DataFrame per poll batch for
-        continuous consumption
-  - [x] `KafkaWriter`: produce DataFrame rows as JSON messages —
-        `key_column` support, delivery flush, configurable producer config
-  - [x] Lazy import with clear `simpleetl[kafka]` ImportError
-- [x] Factory: route `kafka://host:port/topic` sources/destinations
-- [x] Tests: `tests/test_formats_kafka.py` (fully mocked, no broker)
-
-### 10.3 Snowflake & BigQuery Warehouse Dialects
-
-- [x] Add `snowflake` (snowflake-sqlalchemy) and `bigquery`
-      (sqlalchemy-bigquery) optional extras — never imported by SimpleETL
-      directly; SQLAlchemy resolves them from the URL
-- [x] `database.py`: detect `snowflake://` and `bigquery://` URLs
-- [x] `_merge_snowflake()`: native `MERGE INTO` via temp table
-- [x] `_merge_bigquery()`: native `MERGE` via temp table
-- [x] `schema.py`: `SQLDialect.SNOWFLAKE` and `SQLDialect.BIGQUERY` DDL
-      generation (type mappings incl. nested types → VARIANT / JSON)
-- [x] Tests: `tests/test_database_dialects.py` (SQL captured via mocked
-      engine; no real warehouse accounts required)
-
-### 10.4 Quality Gate & Release
-
-- [x] Export new public names from `simpleetl.__init__` / `formats.__init__`
-- [x] New optional extras in `pyproject.toml`; update `all`
-- [x] Docs: `docs/polars.md`, `docs/kafka.md`, `docs/warehouses.md`;
-      README feature list update
-- [x] ruff + mypy clean (0 errors)
-- [x] Coverage ≥ 95% on new modules; full suite green
-- [x] Bump version to `1.3.0` in `pyproject.toml`, `__init__.py`, `cli.py`,
-      `docs/api-reference.md`
+- [ ] Add `format_options` parameter to ETLJobConfig (used in examples but not exported properly)
+- [ ] Add `batch_size` config parameter to control chunk size in streaming mode
+- [ ] Add `job_timer` decorator to exports (used in examples but may not be fully exported)
+- [ ] Add `Table` class for database table abstraction (exists in formats/database.py but needs full integration)
+- [ ] Investigate TestDateOperationsTimezone: passes in CI with all extras — reproduce first, fix only if genuinely broken
+- [ ] Update README quickstart to use top-level `read()`/`write()` functions
