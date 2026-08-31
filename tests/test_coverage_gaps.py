@@ -297,6 +297,10 @@ class TestJSONCloudReadWrite:
 
 
 class TestAvroCloudReadWrite:
+    @classmethod
+    def setup_class(cls):
+        pytest.importorskip("fastavro")
+
     def test_avro_read_from_cloud(self):
         from simpleetl.formats.avro import AvroReader
 
@@ -459,6 +463,10 @@ class TestXMLCloudReadWrite:
 
 
 class TestAwsSecretsManagerProvider:
+    @classmethod
+    def setup_class(cls):
+        pytest.importorskip("boto3")
+
     @patch("boto3.Session")
     def test_init_with_region_and_profile(self, mock_session_cls):
         mock_session = MagicMock()
@@ -507,6 +515,11 @@ class TestAwsSecretsManagerProvider:
 
 
 class TestAzureKeyVaultProvider:
+    @classmethod
+    def setup_class(cls):
+        pytest.importorskip("azure.identity")
+        pytest.importorskip("azure.keyvault.secrets")
+
     @patch("azure.identity.DefaultAzureCredential")
     @patch("azure.keyvault.secrets.SecretClient")
     def test_init(self, mock_client_cls, mock_credential_cls):
@@ -534,6 +547,10 @@ class TestAzureKeyVaultProvider:
 
 
 class TestHashiCorpVaultProvider:
+    @classmethod
+    def setup_class(cls):
+        pytest.importorskip("hvac")
+
     @patch("hvac.Client")
     def test_init_defaults(self, mock_client_cls):
         mock_client = MagicMock()

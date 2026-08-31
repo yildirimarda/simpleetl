@@ -388,6 +388,10 @@ class TestParquetCloudRoundTrip:
 class TestAvroCloudRoundTrip:
     """Test Avro reader/writer with mocked cloud filesystem."""
 
+    @classmethod
+    def setup_class(cls):
+        pytest.importorskip("fastavro")
+
     def test_avro_read_from_cloud(self):
         """Test Avro reading from cloud storage with mocked filesystem."""
         import fastavro
@@ -602,6 +606,7 @@ class TestLocalPathsStillWork:
             os.unlink(temp_file)
 
     def test_avro_local_roundtrip(self):
+        pytest.importorskip("fastavro")
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         with tempfile.NamedTemporaryFile(suffix=".avro", delete=False) as f:
             temp_file = f.name

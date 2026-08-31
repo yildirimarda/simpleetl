@@ -11,6 +11,8 @@ Final coverage push — targets remaining gaps in:
 """
 
 import pytest
+
+pytest.importorskip("prometheus_client")
 import pandas as pd
 import os
 from unittest.mock import MagicMock, patch

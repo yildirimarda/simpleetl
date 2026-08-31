@@ -41,6 +41,7 @@ class TestHealthEndpoints:
 
     def test_metrics_endpoint(self, health_server):
         """Test /metrics returns 200 with Prometheus format."""
+        pytest.importorskip("prometheus_client")
         _, port = health_server
         resp = urllib.request.urlopen(f"http://127.0.0.1:{port}/metrics")
         assert resp.status == 200

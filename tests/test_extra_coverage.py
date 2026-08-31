@@ -138,6 +138,7 @@ class TestSecurityUncovered:
         assert result != "4111-1111-1111-1111"
 
     def test_column_encryptor(self):
+        pytest.importorskip("cryptography")
         from simpleetl.core.security import ColumnEncryptor
 
         encryptor = ColumnEncryptor()
@@ -234,6 +235,10 @@ class TestLineageRemaining:
 
 
 class TestMetricsRemaining:
+    @classmethod
+    def setup_class(cls):
+        pytest.importorskip("prometheus_client")
+
     def test_counter_with_labelnames(self):
         from prometheus_client import CollectorRegistry
         from simpleetl.core.metrics import MetricsCollector

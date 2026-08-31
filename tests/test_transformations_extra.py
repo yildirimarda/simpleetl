@@ -791,6 +791,10 @@ class TestTransformChain:
 
 
 class TestDateOperationsTimezone:
+    @classmethod
+    def setup_class(cls):
+        pytest.importorskip("tzdata")
+
     def test_timezone_naive(self):
         """Test timezone operation on a naive datetime column."""
         df = pd.DataFrame({"dt": ["2024-03-15", "2024-07-20"]})

@@ -19,6 +19,8 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
+
+pytest.importorskip("opentelemetry")
 from opentelemetry import trace as otel_trace_api
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
