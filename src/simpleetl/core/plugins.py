@@ -166,7 +166,7 @@ class PluginRegistry:
                 group_eps = eps.select(group=group)
             else:
                 # Python 3.9-3.11
-                group_eps = eps.get(group, [])  # type: ignore[attr-defined]
+                group_eps = eps.get(group, [])  # type: ignore[attr-defined, arg-type]
         except Exception as exc:
             logger.warning("Failed to load entry points for group '%s': %s", group, exc)
             return 0
