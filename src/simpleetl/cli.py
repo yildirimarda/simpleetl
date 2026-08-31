@@ -406,7 +406,10 @@ def run_job(
     """
     import importlib
 
-    config = load_config(config_path, template_vars=template_vars or {})
+    # Pass template_vars through unchanged: `or {}` would turn None into {},
+    # which load_config reads as "templating requested" and then requires
+    # jinja2 even for plain configs.
+    config = load_config(config_path, template_vars=template_vars)
     logger.info(f"Loaded job config: {config.name}")
     logger.info(f"Description: {config.description}")
     logger.info(f"Platform: {platform_override or config.platform}")
