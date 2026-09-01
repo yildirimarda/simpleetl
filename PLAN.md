@@ -184,7 +184,7 @@
 - [x] Integration tests with real databases (PostgreSQL, MySQL) — partial
 - [x] Failure injection tests (network, disk, permissions)
 - [x] Data volume tests (GB-scale)
-- [ ] Performance regression tests
+- [x] Performance regression tests
 
 ## Milestone 20: Transformations
 
