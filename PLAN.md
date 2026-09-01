@@ -397,7 +397,7 @@
 - [x] Security audit completed
 - [x] Performance benchmarks documented
 - [x] Examples and docs reviewed
-- [ ] Lineage/audit/RBAC persistence verified end-to-end
+- [x] Lineage/audit/RBAC persistence verified end-to-end
 
 ## Discovered
 
