@@ -16,3 +16,9 @@ graphify-out/
 .opencode/
 *.agentloop-new
 .agentloop.local
+
+# coverage artifacts
+.coverage
+coverage.json
+coverage.xml
+htmlcov/
