@@ -370,7 +370,7 @@
 - [x] CLI scaffolding and config validation (--init, --validate-config)
 - [x] New docs: quality_rules.md, schema_drift.md, iceberg.md, tracing.md
 - [x] Wire new hooks into ETLJob lifecycle from config
-- [ ] Export new public classes from __init__
+- [x] Export new public classes from __init__
 
 ## Milestone 38: Deferred to v1.3
 
