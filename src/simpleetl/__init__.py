@@ -21,7 +21,16 @@ Quick Start:
     job.run_with_error_handling()
 """
 
-__version__ = "0.1.0"
+# Single source of truth for the version is pyproject.toml; the installed
+# package metadata mirrors it. release-please bumps pyproject.toml only, so a
+# hardcoded string here would drift on every release.
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
+
+try:
+    __version__ = _pkg_version("simpleetl")
+except PackageNotFoundError:  # running from a source tree without install
+    __version__ = "0.0.0"
 __author__ = "SimpleETL Contributors"
 
 # -- Core ETL ----------------------------------------------------------------

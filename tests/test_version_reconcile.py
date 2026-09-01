@@ -1,5 +1,6 @@
-"""Tests that version numbering is reconciled to 0.1.0."""
+"""Tests that the package version follows pyproject.toml (single source)."""
 
+import re
 from pathlib import Path
 
 import simpleetl
@@ -7,7 +8,13 @@ from simpleetl.cli import create_parser
 
 
 def test_package_version_matches_pyproject():
-    assert simpleetl.__version__ == "0.1.0"
+    # No hardcoded version: release-please bumps pyproject.toml, and
+    # __version__ reads installed metadata — this asserts the plumbing, so
+    # release PRs stay green. (No tomllib: project supports Python 3.10.)
+    content = (Path(__file__).parent.parent / "pyproject.toml").read_text()
+    match = re.search(r'^version\s*=\s*"([^"]+)"', content, re.MULTILINE)
+    assert match, "version not found in pyproject.toml"
+    assert simpleetl.__version__ == match.group(1)
 
 
 def test_cli_version_string():
