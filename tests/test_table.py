@@ -139,6 +139,19 @@ class TestTable:
         with pytest.raises(ValueError, match="No database engine"):
             table.write(df)
 
+    def test_table_with_connection_pool(self):
+        """Test Table initializes and works with ConnectionPool."""
+        from simpleetl.core.connection import ConnectionPool, ConnectionConfig
+
+        pool = ConnectionPool(ConnectionConfig(url="sqlite:///:memory:"))
+        table = Table("pool_table", pool=pool)
+        assert table.engine is not None
+        df = pd.DataFrame({"id": [1], "name": ["Alice"]})
+        table.write(df, if_exists="replace")
+        result = table.read()
+        assert len(result) == 1
+        assert result.iloc[0]["name"] == "Alice"
+
     def test_table_upsert_no_engine_raises(self):
         """Test upsert() raises when engine is not available."""
         table = Table("users", connection_string="sqlite:///:memory:")

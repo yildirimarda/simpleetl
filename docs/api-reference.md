@@ -353,6 +353,34 @@ writer.write(df, "postgresql://user:pass@localhost/db", table_name="results", if
 
 ---
 
+### `Table`
+
+```python
+from simpleetl.formats.database import Table
+```
+
+Schema-aware database table abstraction for ETL operations.
+
+**Methods:**
+
+| Method | Description |
+|---|---|
+| `read(columns, where, order_by, limit)` | Read data from the table |
+| `read_chunks(chunk_size, columns, where)` | Chunked read |
+| `write(data, if_exists)` | Write DataFrame |
+| `upsert(data, key_columns)` | UPSERT via merge |
+| `truncate()` | Truncate table |
+| `exists()` | Check table existence |
+
+```python
+table = Table("users", connection_string="postgresql://localhost/db")
+df = table.read()
+table.write(df, if_exists="replace")
+table.upsert(df, key_columns=["id"])
+```
+
+---
+
 ### FormatFactory
 
 ```python
