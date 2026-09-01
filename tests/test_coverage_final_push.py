@@ -69,21 +69,25 @@ class TestPluginsPush:
 class TestRestApiPush:
     def test_rest_api_writer_post(self):
         from simpleetl.formats.rest_api import RestApiWriter
+
         writer = RestApiWriter()
         assert writer.auth_type == "none"
 
     def test_rest_api_reader_auth_strategies(self):
         from simpleetl.formats.rest_api import RestApiReader
+
         r = RestApiReader(auth_type="none")
         assert r.auth_type == "none"
 
     def test_rest_api_writer_put(self):
         from simpleetl.formats.rest_api import RestApiWriter
+
         writer = RestApiWriter()
         assert writer.auth_type == "none"
 
     def test_rate_limit_sleep(self):
         from simpleetl.formats.rest_api import RestApiReader
+
         r = RestApiReader()
         r._last_request_time = None
         r.requests_per_second = 0
@@ -91,6 +95,7 @@ class TestRestApiPush:
 
     def test_build_params(self):
         from simpleetl.formats.rest_api import RestApiReader
+
         r = RestApiReader()
         params = r._build_params({"a": 1}, {"b": 2})
         assert params == {"a": 1, "b": 2}
@@ -167,12 +172,12 @@ class TestSecurityPush:
 
         policy = RBACPolicy()
         df = pd.DataFrame({"id": [1, 2]})
-        result = apply_rbac_filter(df, role="admin", source="t",
-                                   policy=policy)
+        result = apply_rbac_filter(df, role="admin", source="t", policy=policy)
         assert len(result) == 2
 
     def test_audit_logger_filter_by_user(self):
         from simpleetl.core.security import AuditLogger
+
         logger = AuditLogger()
         logger.log_access(user="alice", action="read", source="s")
         # Filter by user should return at least one entry
@@ -181,6 +186,7 @@ class TestSecurityPush:
 
     def test_audit_logger_get_trail_empty(self):
         from simpleetl.core.security import AuditLogger
+
         logger = AuditLogger()
         assert logger.get_audit_trail() == []
 
@@ -211,8 +217,7 @@ class TestDatabasePush:
         engine.begin.return_value.__exit__ = MagicMock(return_value=False)
 
         df = pd.DataFrame({"id": [1]})
-        result = DatabaseWriter._merge_postgresql(engine, df, "t",
-                                                   ["id"], ["name"])
+        result = DatabaseWriter._merge_postgresql(engine, df, "t", ["id"], ["name"])
         assert result == 5
 
     def test_database_writer_merge_mysql_mock(self):
@@ -228,8 +233,7 @@ class TestDatabasePush:
         engine.begin.return_value.__exit__ = MagicMock(return_value=False)
 
         df = pd.DataFrame({"id": [1]})
-        result = DatabaseWriter._merge_mysql(engine, df, "t",
-                                              ["id"], ["name"])
+        result = DatabaseWriter._merge_mysql(engine, df, "t", ["id"], ["name"])
         assert result == 3
 
     def test_database_writer_read_with_sql(self):
@@ -243,12 +247,15 @@ class TestDatabasePush:
         try:
             sqlalchemy.create_engine(f"sqlite:///{db_path}")
             from simpleetl.formats.database import DatabaseWriter
+
             writer = DatabaseWriter()
             writer.write(df, f"sqlite:///{db_path}", table_name="items")
             reader = DatabaseReader()
-            result = reader.read(f"sqlite:///{db_path}",
-                                 table="items",
-                                 sql="SELECT * FROM items WHERE id > 1")
+            result = reader.read(
+                f"sqlite:///{db_path}",
+                table="items",
+                sql="SELECT * FROM items WHERE id > 1",
+            )
             assert len(result) == 1
         finally:
             os.unlink(db_path)
@@ -263,6 +270,7 @@ class TestTransformationsPush:
     def test_when_otherwise_default_path(self):
         from simpleetl.transformations import when_otherwise
         import pandas as pd
+
         df = pd.DataFrame({"a": [1, 2, 3]})
         result = when_otherwise(
             df,
@@ -275,6 +283,7 @@ class TestTransformationsPush:
     def test_limit_rows_edge(self):
         from simpleetl.transformations import limit_rows
         import pandas as pd
+
         df = pd.DataFrame({"x": range(10)})
         result = limit_rows(df, 5)
         assert len(result) == 5
@@ -282,6 +291,7 @@ class TestTransformationsPush:
     def test_cast_columns_edge(self):
         from simpleetl.transformations import cast_columns
         import pandas as pd
+
         df = pd.DataFrame({"a": ["1", "2", "3"]})
         result = cast_columns(df, {"a": "int64"})
         assert result["a"].dtype == "int64"
@@ -289,6 +299,7 @@ class TestTransformationsPush:
     def test_sample_data_edge(self):
         from simpleetl.transformations import sample_data
         import pandas as pd
+
         df = pd.DataFrame({"x": range(20)})
         result = sample_data(df, n=5)
         assert len(result) <= 5
@@ -296,6 +307,7 @@ class TestTransformationsPush:
     def test_distinct_data_edge(self):
         from simpleetl.transformations import distinct_data
         import pandas as pd
+
         df = pd.DataFrame({"a": [1, 1, 2, 2]})
         result = distinct_data(df)
         assert len(result) == 2
@@ -309,12 +321,13 @@ class TestTransformationsPush:
 class TestRestApiPushExtra:
     def test_rest_api_writer_write_mock_exists(self):
         from simpleetl.formats.rest_api import RestApiWriter
+
         writer = RestApiWriter()
         assert writer is not None
 
-
     def test_rest_api_writer_record_key(self):
         from simpleetl.formats.rest_api import RestApiWriter
+
         writer = RestApiWriter()
         # Just verify record_key parameter is accepted
         assert writer is not None
@@ -333,6 +346,7 @@ class TestAvroPushExtra:
     def test_avro_read_cloud_path_exists(self):
         pytest.importorskip("fastavro")
         from simpleetl.formats.avro import AvroReader
+
         reader = AvroReader()
         assert reader is not None
 
@@ -345,9 +359,11 @@ class TestAvroPushExtra:
 class TestSecurityExtra:
     def test_rbac_policy_save_and_load(self, tmp_path):
         from simpleetl.core.security import RBACPolicy
+
         policy = RBACPolicy()
-        policy.add_role(name="admin", permissions=["read"],
-                        allowed_columns={"t": ["col1"]})
+        policy.add_role(
+            name="admin", permissions=["read"], allowed_columns={"t": ["col1"]}
+        )
         path = str(tmp_path / "policy.json")
         policy.save_to_file(path)
         loaded = RBACPolicy.load_from_file(path)
@@ -356,17 +372,20 @@ class TestSecurityExtra:
     def test_mask_partial_with_na(self):
         import numpy as np
         from simpleetl.core.security import _mask_partial
+
         result = _mask_partial(np.nan, "email")
         assert str(result) == "nan"
 
     def test_mask_redact_na(self):
         import numpy as np
         from simpleetl.core.security import _mask_redact
+
         result = _mask_redact(np.nan, "email")
         assert str(result) == "nan"
 
     def test_audit_logger_file_none(self):
         from simpleetl.core.security import AuditLogger
+
         logger = AuditLogger(log_file=None)
         logger.log_access(user="u", action="r", source="s")
         # Just covers the no-file path
@@ -374,12 +393,11 @@ class TestSecurityExtra:
     def test_rbac_filter_empty_allowed(self):
         from simpleetl.core.security import RBACPolicy, apply_rbac_filter
         import pandas as pd
+
         policy = RBACPolicy()
-        policy.add_role(name="viewer", permissions=["read"],
-                        allowed_columns={"t": []})
+        policy.add_role(name="viewer", permissions=["read"], allowed_columns={"t": []})
         df = pd.DataFrame({"a": [1]})
-        result = apply_rbac_filter(df, role="viewer", source="t",
-                                   policy=policy)
+        result = apply_rbac_filter(df, role="viewer", source="t", policy=policy)
         assert len(result.columns) == 0
 
 
@@ -392,11 +410,13 @@ class TestDeltaPushExtra:
     def test_delta_writer_init_exists(self):
         pytest.importorskip("deltalake")
         from simpleetl.formats.delta import DeltaLakeWriter
+
         writer = DeltaLakeWriter()
         assert writer is not None
 
     def test_delta_reader_init_exists(self):
         pytest.importorskip("deltalake")
         from simpleetl.formats.delta import DeltaLakeReader
+
         reader = DeltaLakeReader()
         assert reader is not None
