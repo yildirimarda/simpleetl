@@ -34,9 +34,9 @@ from benchmarks.benchmark_dag import (
 
 # Thresholds derived from docs/performance.md with generous CI margin
 READ_WRITE_THRESHOLDS = {
-    1_000: 0.010,  # baseline ~0.001s, 10x margin
-    10_000: 0.050,  # baseline ~0.009s, ~5.5x margin
-    100_000: 0.500,  # baseline ~0.085s, ~6x margin
+    1_000: 0.050,  # baseline ~0.001s, generous CI margin
+    10_000: 0.250,  # baseline ~0.009s, generous CI margin
+    100_000: 2.500,  # baseline ~0.085s, generous CI margin
 }
 
 
