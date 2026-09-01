@@ -59,3 +59,31 @@ def test_get_format_options_merges_engine():
     )
     opts = job.get_format_options()
     assert opts.get("engine") == "polars"
+
+
+def test_batch_size_controls_chunk_size_in_streaming_mode():
+    """Test that batch_size config parameter controls chunk_size in streaming mode."""
+    from simpleetl.core.job import ETLJob
+
+    class DummyJob(ETLJob):
+        def run(self):
+            pass
+
+    job = DummyJob(
+        {
+            "name": "test",
+            "input_format": "csv",
+            "output_format": "parquet",
+            "batch_size": 500,
+        }
+    )
+    opts = job.get_format_options()
+    assert opts.get("chunk_size") == 500
+
+
+def test_batch_size_default_is_10000():
+    """Test that batch_size defaults to 10000."""
+    from simpleetl.core.config import ETLJobConfig
+
+    config = ETLJobConfig(name="test", input_format="csv", output_format="parquet")
+    assert config.batch_size == 10000
