@@ -226,7 +226,7 @@
 - [x] Fix config.load_config() ValidationError re-wrap
 - [x] Fix ETLJob.extract() signature for incremental mode kwargs
 - [x] Fix ORC reader/writer for PyArrow 24 API compatibility
-- [ ] Verify and fix the `read_partitioned` double-read performance bug (read the code first; may already be fixed)
+- [x] Verify and fix the `read_partitioned` double-read performance bug (read the code first; may already be fixed)
 
 ## Milestone 23: v1.0 Release
 

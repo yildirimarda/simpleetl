@@ -187,6 +187,28 @@ class TestParallelReader:
                 partitions=["val"],
             )
 
+    def test_read_partitioned_reads_once_no_double_read(self, csv_files, partitioned_df):
+        """Verify read_partitioned reads the source exactly once, not per partition."""
+        from unittest.mock import MagicMock, patch
+
+        reader = ParallelReader(max_workers=2, reader_class=CSVReader)
+        mock_reader_instance = MagicMock()
+        mock_reader_instance.read.return_value = partitioned_df.copy()
+
+        with patch.object(
+            reader, "_new_reader", return_value=mock_reader_instance
+        ):
+            result = reader.read_partitioned(
+                "dummy.csv",
+                partition_column="month",
+                partitions=["2024-01", "2024-02", "2024-03"],
+            )
+
+        # The source should be read exactly once, not once per partition
+        mock_reader_instance.read.assert_called_once()
+        # All partitioned rows present
+        assert len(result) == 6  # 3 partitions * 2 rows each
+
 
 # ---------------------------------------------------------------------------
 # ParallelWriter tests
