@@ -31,7 +31,7 @@ uv sync --group dev
 
 ```bash
 python -m simpleetl --version
-# Output: simpleetl 1.0.0
+# Output: simpleetl 0.1.0
 ```
 
 ## Your First ETL Job
