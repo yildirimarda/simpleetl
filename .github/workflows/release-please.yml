@@ -1,0 +1,31 @@
+# Opens/updates a release PR from conventional commits; merging it bumps the
+# version in pyproject.toml, updates CHANGELOG.md, and pushes the v* tag.
+# That tag then triggers the existing release.yml (PyPI publish).
+#
+# REQUIRED SETUP (once):
+#   1. Repo Settings -> Actions -> General ->
+#      "Allow GitHub Actions to create and approve pull requests" = ON
+#   2. AUTOMERGE_TOKEN repo secret (a PAT with Contents + Pull requests
+#      write). Needed for two reasons: bot-merged commits still trigger this
+#      workflow, and the tag it pushes still triggers release.yml — the
+#      default GITHUB_TOKEN would do neither.
+
+name: release-please
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:      # manual trigger from the Actions tab
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.AUTOMERGE_TOKEN || secrets.GITHUB_TOKEN }}
+          release-type: python
