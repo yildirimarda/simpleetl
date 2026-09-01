@@ -1,6 +1,6 @@
 [project]
 name = "simpleetl"
-version = "0.2.0"
+version = "0.3.0"
 description = "A lightweight, professional ETL framework for local, AWS Glue, Databricks, and Azure Synapse"
 readme = "README.md"
 requires-python = ">=3.10"
