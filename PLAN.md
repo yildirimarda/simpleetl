@@ -183,7 +183,7 @@
 - [x] conftest.py with shared fixtures
 - [x] Integration tests with real databases (PostgreSQL, MySQL) — partial
 - [x] Failure injection tests (network, disk, permissions)
-- [ ] Data volume tests (GB-scale)
+- [x] Data volume tests (GB-scale)
 - [ ] Performance regression tests
 
 ## Milestone 20: Transformations
