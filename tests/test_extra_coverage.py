@@ -290,6 +290,19 @@ class TestMetricsRemaining:
 
 
 # -------------------------------------------------------------------
+# core/metrics.py — export verification
+# -------------------------------------------------------------------
+
+
+class TestMetricsExports:
+    def test_job_timer_exported_from_core(self):
+        from simpleetl.core import job_timer, TimerContext
+
+        assert callable(job_timer)
+        assert TimerContext is not None
+
+
+# -------------------------------------------------------------------
 # core/plugins.py — remaining uncovered lines
 # -------------------------------------------------------------------
 
