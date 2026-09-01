@@ -31,6 +31,12 @@ A lightweight, professional ETL (Extract, Transform, Load) framework for Python.
 | [API Reference](api-reference.md) | Complete API documentation for all modules |
 | [Platforms](platforms.md) | Deployment guides for all supported platforms |
 | [Development](development.md) | Developer guide: project structure, testing, contributing |
+| [Performance](performance.md) | Benchmark results and analysis |
+| [Security](security.md) | Security best practices and audit guide |
+| [OpenLineage](openlineage.md) | OpenLineage integration guide |
+| [Provenance](provenance.md) | Per-record provenance tracking guide |
+| [Alerting](alerting.md) | Alerting integration guide |
+| [Schema](schema.md) | Nested type support guide |
 | [Quality Rules](quality_rules.md) | Declarative data quality rules guide |
 | [Schema Drift](schema_drift.md) | Schema drift detection guide |
 | [Iceberg](iceberg.md) | Apache Iceberg format guide |

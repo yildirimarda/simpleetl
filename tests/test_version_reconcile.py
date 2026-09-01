@@ -37,6 +37,18 @@ def test_readme_version_badge():
     assert "1.3.0" not in content
 
 
+def test_docs_index_links_all_docs():
+    docs_dir = Path(__file__).parent.parent / "docs"
+    index_path = docs_dir / "index.md"
+    index_content = index_path.read_text()
+    doc_files = sorted(p.name for p in docs_dir.glob("*.md") if p.name != "index.md")
+    for doc_file in doc_files:
+        # Each doc should be referenced in the index quick links table
+        assert f"({doc_file})" in index_content, (
+            f"Missing link to {doc_file} in docs/index.md"
+        )
+
+
 def test_lineage_default_producer_version():
     from simpleetl.core.lineage import OpenLineageConverter
 
