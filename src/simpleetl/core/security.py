@@ -697,9 +697,11 @@ class RBACPolicy:
         if role not in self._roles:
             return []
 
-        allowed = self._roles[role]["allowed_columns"].get(source, [])
-        if not allowed:
+        allowed = self._roles[role]["allowed_columns"].get(source)
+        if allowed is None:
             return columns
+        if allowed == []:
+            return []
 
         return [c for c in columns if c in allowed]
 
