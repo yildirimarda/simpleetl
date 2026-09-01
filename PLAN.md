@@ -374,7 +374,7 @@
 
 ## Milestone 38: Deferred to v1.3
 
-- [ ] Polars / engine abstraction (deep refactor of pandas-typed API)
+- [x] Polars / engine abstraction (deep refactor of pandas-typed API)
 - [ ] Kafka streaming source (broker-backed integration tests needed)
 - [ ] Snowflake / BigQuery native dialects (needs real accounts for UPSERT validation)
 

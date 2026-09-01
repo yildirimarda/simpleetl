@@ -287,9 +287,12 @@ class ETLJob(ABC):
             if format_name is not None
             else {}
         )
+        # Merge with engine from config
+        format_opts = dict(format_opts)
+        if self.config.engine:
+            format_opts.setdefault("engine", self.config.engine)
         # Merge with any chunk_size from batch_size config
         if self.config.batch_size:
-            format_opts = dict(format_opts)
             format_opts.setdefault("chunk_size", self.config.batch_size)
         return format_opts
 

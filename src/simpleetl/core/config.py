@@ -213,6 +213,7 @@ class ETLJobConfig(BaseModel):
     openlineage_url: Optional[str] = None
     openlineage_namespace: str = "simpleetl"
     format_options: Dict[str, Dict[str, Any]] = {}
+    engine: str = "pandas"
     batch_size: int = 10000
     validation_rules: List[Dict[str, Any]] = []
     schema_drift: SchemaDriftConfig = SchemaDriftConfig()
