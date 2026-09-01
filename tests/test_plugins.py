@@ -134,7 +134,7 @@ class TestPluginAbstract:
         assert plugin.version == "1.0.0"
 
     def test_default_version(self):
-        """Plugin subclasses that do not override version get '0.1.0'."""
+        """Plugin subclasses that do not override version get '0.2.0'."""
 
         class MinimalPlugin(Plugin):
             name = "minimal"
@@ -143,7 +143,7 @@ class TestPluginAbstract:
                 pass
 
         plugin = MinimalPlugin()
-        assert plugin.version == "0.1.0"
+        assert plugin.version == "0.2.0"
 
     def test_setup_is_called_on_register(self):
         """setup() is called when the plugin is registered."""

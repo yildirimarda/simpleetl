@@ -300,7 +300,7 @@ class TestPluginsRemaining:
 
         class NoNamePlugin(Plugin):
             name = ""
-            version = "0.1.0"
+            version = "0.2.0"
 
             def setup(self):
                 pass
@@ -318,7 +318,7 @@ class TestPluginsRemaining:
                 pass
 
         p = DefaultVersionPlugin()
-        assert p.version == "0.1.0"
+        assert p.version == "0.2.0"
 
 
 # -------------------------------------------------------------------

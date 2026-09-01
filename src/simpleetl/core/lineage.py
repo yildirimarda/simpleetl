@@ -447,7 +447,7 @@ class OpenLineageConverter:
     def __init__(
         self,
         namespace: str = "simpleetl",
-        producer: str = "simpleetl/0.1.0",
+        producer: str = "simpleetl/0.2.0",
     ) -> None:
         """Initialize the converter.
 
@@ -1481,7 +1481,7 @@ def configure_openlineage(
     global _openlineage_converter  # noqa: PLW0603
     _openlineage_converter = OpenLineageConverter(
         namespace=namespace,
-        producer="simpleetl/0.1.0",
+        producer="simpleetl/0.2.0",
     )
     logger.info(
         "OpenLineage configured with namespace '%s' and url '%s'",

@@ -98,7 +98,7 @@ class TestOpenLineageConverter:
         """Test creating a converter with defaults."""
         converter = OpenLineageConverter()
         assert converter.namespace == "simpleetl"
-        assert converter.producer == "simpleetl/0.1.0"
+        assert converter.producer == "simpleetl/0.2.0"
 
     def test_creation_with_custom_values(self):
         """Test creating a converter with custom namespace and producer."""
@@ -338,7 +338,7 @@ class TestLineageTrackerEmitOpenlineage:
         self.tracker.record_event(_make_event())
         self.tracker.emit_openlineage(self.url)
         body = MockOpenLineageHandler.received_bodies[0]
-        assert body["producer"] == "simpleetl/0.1.0"
+        assert body["producer"] == "simpleetl/0.2.0"
         assert body["job"]["namespace"] == "simpleetl"
 
     def test_emit_body_is_valid_json(self):
@@ -439,7 +439,7 @@ class TestConfigureOpenlineage:
     def test_producer_uri(self):
         """Test that producer URI uses the default format."""
         converter = configure_openlineage(url="http://localhost:5000")
-        assert converter.producer == "simpleetl/0.1.0"
+        assert converter.producer == "simpleetl/0.2.0"
 
     def test_get_openlineage_converter_none_initially(self):
         """Test that converter is None before configuration."""

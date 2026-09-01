@@ -30,7 +30,7 @@ def register_format(
     reader_cls: Type[DataReader],
     writer_cls: Type[DataWriter],
     plugin_name: str = "custom-format",
-    version: str = "0.1.0",
+    version: str = "0.2.0",
 ) -> None:
     """Register a custom format programmatically.
 

@@ -50,7 +50,7 @@ from simpleetl.core.lineage import OpenLineageConverter, get_lineage_tracker
 
 converter = OpenLineageConverter(
     namespace="my-company",
-    producer="simpleetl/0.1.0",
+    producer="simpleetl/0.2.0",
 )
 
 tracker = get_lineage_tracker()
