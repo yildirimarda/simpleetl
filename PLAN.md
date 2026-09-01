@@ -182,7 +182,7 @@
 - [x] End-to-end pipeline tests
 - [x] conftest.py with shared fixtures
 - [x] Integration tests with real databases (PostgreSQL, MySQL) — partial
-- [ ] Failure injection tests (network, disk, permissions)
+- [x] Failure injection tests (network, disk, permissions)
 - [ ] Data volume tests (GB-scale)
 - [ ] Performance regression tests
 
