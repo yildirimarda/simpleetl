@@ -27,6 +27,7 @@ Pydantic model for ETL job configuration.
 | `retry_delay` | `float` | `1.0` | Initial retry delay in seconds |
 | `log_level` | `str` | `"INFO"` | Logging level |
 | `params` | `Dict[str, Any]` | `{}` | Additional parameters |
+| `format_options` | `Dict[str, Dict[str, Any]]` | `{}` | Format-specific options (e.g. `{"csv": {"delimiter": ","}}`) |
 
 **Example:**
 

@@ -223,6 +223,17 @@ def test_etl_job_config_env_prefix_field():
     assert config.env_prefix == "ETL_"
 
 
+def test_etl_job_config_format_options_field():
+    """Test the format_options field on ETLJobConfig."""
+    config = ETLJobConfig(
+        name="test_job",
+        input_format="csv",
+        output_format="csv",
+        format_options={"csv": {"delimiter": ","}},
+    )
+    assert config.format_options == {"csv": {"delimiter": ","}}
+
+
 def test_etl_job_config_defaults_for_new_fields():
     """Test that new fields default to None."""
     config = ETLJobConfig(
