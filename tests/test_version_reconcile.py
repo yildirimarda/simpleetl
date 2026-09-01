@@ -59,6 +59,7 @@ def test_docs_index_links_all_docs():
 def test_example_job_importable():
     """Examples and docs reviewed: example job loads without errors."""
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
         "example_job", Path(__file__).parent.parent / "examples" / "example_job.py"
     )
