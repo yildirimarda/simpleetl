@@ -159,6 +159,7 @@ class TestPersistenceEndToEnd:
 
         # Post phase with data
         import pandas as pd
+
         df = pd.DataFrame({"id": [1, 2, 3], "value": ["a", "b", "c"]})
         post_ctx = HookContext(
             job=None,
