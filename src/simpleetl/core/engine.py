@@ -1,13 +1,18 @@
 """
-Polars interop helpers for SimpleETL.
+Polars engine abstraction for SimpleETL.
 
-Polars is an *optional* acceleration layer, not an engine abstraction:
-the public SimpleETL API stays pandas-typed.  This module provides
+This module provides the engine abstraction layer that allows the
+public SimpleETL API to switch between ``"pandas"`` (default) and
+``"polars"`` (optional acceleration) for CSV/Parquet IO and hot-path
+transformations.  The public API stays pandas-typed; ``engine`` selects
+which backend executes the operation.
+
+Features:
 
 * an interop bridge between pandas and polars (:func:`to_polars`,
   :func:`from_polars`),
 * an escape hatch for hot transformation paths
-  (:func:`polars_transform`, :func:`polars_sql_transform`), and
+  (:func:`polars_transform`, :func:`polars_sql_transform`),
 * helpers used by the CSV/Parquet IO fast paths
   (:func:`is_polars_available`, :func:`validate_engine`).
 
@@ -23,7 +28,7 @@ import pandas as pd
 if TYPE_CHECKING:  # pragma: no cover - only for type checkers
     import polars as pl
 
-#: Engine names accepted by the CSV/Parquet readers and writers.
+#: Engine names accepted by the framework's engine abstraction.
 VALID_ENGINES: Tuple[str, ...] = ("pandas", "polars")
 
 
@@ -61,10 +66,10 @@ def is_polars_available() -> bool:
 
 
 def validate_engine(engine: str) -> str:
-    """Validate an IO engine name for CSV/Parquet readers and writers.
+    """Validate an engine name for the framework's engine abstraction.
 
     Args:
-        engine: Engine name to validate.
+        engine: Engine name to validate (``"pandas"`` or ``"polars"``).
 
     Returns:
         The validated engine name (unchanged).

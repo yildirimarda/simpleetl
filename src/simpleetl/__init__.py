@@ -162,6 +162,8 @@ from simpleetl.core.engine import (
     from_polars,
     polars_transform,
     polars_sql_transform,
+    validate_engine,
+    VALID_ENGINES,
 )
 
 # -- Connection --------------------------------------------------------------
@@ -609,6 +611,8 @@ __all__ = [
     "from_polars",
     "polars_transform",
     "polars_sql_transform",
+    "validate_engine",
+    "VALID_ENGINES",
     # Connection
     "ConnectionConfig",
     "ConnectionPool",
