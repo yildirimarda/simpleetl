@@ -406,5 +406,5 @@
 - [x] Add `job_timer` decorator to exports (used in examples but may not be fully exported)
 - [x] Add `Table` class for database table abstraction (exists in formats/database.py but needs full integration)
 - [x] Investigate TestDateOperationsTimezone: passes in CI with all extras — reproduce first, fix only if genuinely broken
-- [ ] Update README quickstart to use top-level `read()`/`write()` functions
+- [x] Update README quickstart to use top-level `read()`/`write()` functions
 - [ ] Fix `pyiceberg` build failure (missing `cc`) blocking `--all-extras` coverage measurement
