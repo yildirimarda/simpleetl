@@ -56,9 +56,14 @@ class SampleETLJob(ETLJob):
         data = reader.read(source_file)
 
         self.logger.info(
-            "Read %d records from %s", len(data), source_file,
-            extra={"event": "data_read", "source": source_file,
-                   "record_count": len(data)},
+            "Read %d records from %s",
+            len(data),
+            source_file,
+            extra={
+                "event": "data_read",
+                "source": source_file,
+                "record_count": len(data),
+            },
         )
         self.metrics.inc_counter("etl_records_extracted", len(data))
 
@@ -100,9 +105,7 @@ class SampleETLJob(ETLJob):
             "agg_spec", {"customer_id": "count", "age": "mean"}
         )
         available_groupby = [c for c in groupby_cols if c in data.columns]
-        available_agg = {
-            k: v for k, v in agg_spec.items() if k in data.columns
-        }
+        available_agg = {k: v for k, v in agg_spec.items() if k in data.columns}
 
         if available_groupby and available_agg:
             aggregated = aggregate_data(
@@ -112,7 +115,8 @@ class SampleETLJob(ETLJob):
             aggregated = data
 
         self.logger.info(
-            "Transformation complete: %d records", len(aggregated),
+            "Transformation complete: %d records",
+            len(aggregated),
             extra={"event": "data_transform", "record_count": len(data)},
         )
         self.metrics.inc_counter("etl_records_transformed", len(data))
@@ -141,9 +145,14 @@ class SampleETLJob(ETLJob):
         writer.write(data, destination)
 
         self.logger.info(
-            "Wrote %d records to %s", len(data), destination,
-            extra={"event": "data_write", "destination": destination,
-                   "record_count": len(data)},
+            "Wrote %d records to %s",
+            len(data),
+            destination,
+            extra={
+                "event": "data_write",
+                "destination": destination,
+                "record_count": len(data),
+            },
         )
         self.metrics.inc_counter("etl_records_loaded", len(data))
 
@@ -190,9 +199,7 @@ class TransformJob(ETLJob):
 
         writer = FormatFactory.get_writer(output_path)
         writer.write(data, output_path)
-        self.logger.info(
-            "Transformed %d records to %s", len(data), output_path
-        )
+        self.logger.info("Transformed %d records to %s", len(data), output_path)
 
 
 class LoadJob(ETLJob):
@@ -212,9 +219,7 @@ class LoadJob(ETLJob):
 
         writer = FormatFactory.get_writer(destination_path)
         writer.write(data, destination_path)
-        self.logger.info(
-            "Loaded %d records to %s", len(data), destination_path
-        )
+        self.logger.info("Loaded %d records to %s", len(data), destination_path)
 
 
 def _create_sample_data() -> str:

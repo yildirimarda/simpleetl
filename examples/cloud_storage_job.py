@@ -28,14 +28,13 @@ syntax, e.g. ``s3://${S3_BUCKET}/input/data.csv``.
 """
 
 import logging
-import os
 
 import pandas as pd
 
 from simpleetl.core.job import ETLJob
 from simpleetl.core.logger import get_logger
 from simpleetl.formats import FormatFactory
-from simpleetl.transformations import filter_data, map_values
+from simpleetl.transformations import filter_data
 
 
 class S3ToParquetJob(ETLJob):
@@ -138,7 +137,6 @@ class AbfsMergeJob(ETLJob):
         )
 
         # Concatenate and deduplicate
-        import pandas as pd
 
         combined = pd.concat([existing_data, new_data], ignore_index=True)
 

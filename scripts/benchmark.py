@@ -18,28 +18,37 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from simpleetl.formats import (
-    CSVReader, CSVWriter,
-    JSONReader, JSONWriter,
-    ParquetReader, ParquetWriter,
-    AvroReader, AvroWriter,
-    OrcReader, OrcWriter,
-    XMLReader, XMLWriter,
-    ExcelReader, ExcelWriter,
+    CSVReader,
+    CSVWriter,
+    JSONReader,
+    JSONWriter,
+    ParquetReader,
+    ParquetWriter,
+    AvroReader,
+    AvroWriter,
+    OrcReader,
+    OrcWriter,
+    ExcelReader,
+    ExcelWriter,
 )
 
 
 def generate_data(rows: int) -> pd.DataFrame:
     """Generate a sample DataFrame with the given number of rows."""
-    return pd.DataFrame({
-        "id": range(rows),
-        "name": [f"user_{i}" for i in range(rows)],
-        "age": [20 + (i % 50) for i in range(rows)],
-        "score": [round(100 * (i % 100) / 100, 2) for i in range(rows)],
-        "city": [f"city_{i % 10}" for i in range(rows)],
-    })
+    return pd.DataFrame(
+        {
+            "id": range(rows),
+            "name": [f"user_{i}" for i in range(rows)],
+            "age": [20 + (i % 50) for i in range(rows)],
+            "score": [round(100 * (i % 100) / 100, 2) for i in range(rows)],
+            "city": [f"city_{i % 10}" for i in range(rows)],
+        }
+    )
 
 
-def benchmark_format(name: str, reader, writer, df: pd.DataFrame, suffix: str, iterations: int = 3) -> dict:
+def benchmark_format(
+    name: str, reader, writer, df: pd.DataFrame, suffix: str, iterations: int = 3
+) -> dict:
     """Benchmark a format's write and read performance."""
     write_times = []
     read_times = []
@@ -86,7 +95,9 @@ def print_results(results: list) -> None:
     print(header)
     print("-" * len(header))
     for r in results:
-        print(f"{r['format']:<10} {r['rows']:>8} {r['file_size_kb']:>10.1f} {r['write_ms']:>10.1f} {r['read_ms']:>10.1f}")
+        print(
+            f"{r['format']:<10} {r['rows']:>8} {r['file_size_kb']:>10.1f} {r['write_ms']:>10.1f} {r['read_ms']:>10.1f}"
+        )
 
 
 def main():
@@ -102,9 +113,9 @@ def main():
     ]
 
     for size in sizes:
-        print(f"\n{'='*52}")
+        print(f"\n{'=' * 52}")
         print(f"  Benchmark: {size:,} rows")
-        print(f"{'='*52}")
+        print(f"{'=' * 52}")
 
         df = generate_data(size)
         results = []
