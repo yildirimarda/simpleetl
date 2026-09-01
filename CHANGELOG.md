@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.2.0](https://github.com/yildirimarda/simpleetl/compare/v0.1.0...v0.2.0) (2026-09-01)
+
+
+### Features
+
+* deep refactor of polars engine abstraction ([#21](https://github.com/yildirimarda/simpleetl/issues/21)) ([3bab90e](https://github.com/yildirimarda/simpleetl/commit/3bab90e0ecae5656e21929b929cd8361fdb70cee))
+* export new public classes from __init__ ([#20](https://github.com/yildirimarda/simpleetl/issues/20)) ([b22c3da](https://github.com/yildirimarda/simpleetl/commit/b22c3da28f67af59727515ed99c43843e33e46d0))
+* wire new hooks (metrics, lineage, provenance, quality) into ETLJob lifecycle from config ([#19](https://github.com/yildirimarda/simpleetl/issues/19)) ([9b9c827](https://github.com/yildirimarda/simpleetl/commit/9b9c827cbdd1556386830f375b3edcfc33fad950))
+
+
+### Bug Fixes
+
+* derive __version__ from installed metadata so release bumps cannot drift; test compares against pyproject instead of a hardcoded string ([657cbab](https://github.com/yildirimarda/simpleetl/commit/657cbabf6c020b2f71817563bb177aea5eec4faf))
+* reconcile version numbering to 0.1.0 across docs and source ([#10](https://github.com/yildirimarda/simpleetl/issues/10)) ([8167382](https://github.com/yildirimarda/simpleetl/commit/81673824f0ac66208c3c996dd571e1a980835c6f))
+
+
+### Documentation
+
+* complete documentation index links and add review test ([#18](https://github.com/yildirimarda/simpleetl/issues/18)) ([f3e4e9e](https://github.com/yildirimarda/simpleetl/commit/f3e4e9ea2c64a5bbc90519a38a6db2574ec9a4e2))
+* document deferred Snowflake/BigQuery live-account validation; add integration scaffold ([#23](https://github.com/yildirimarda/simpleetl/issues/23)) ([a26cafc](https://github.com/yildirimarda/simpleetl/commit/a26cafc2a6627feaf3e052b0e4b3ba0d38dc4626))
+
 ## 0.1.0 (2026-09-01)
 
 
