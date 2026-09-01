@@ -174,7 +174,7 @@
 ## Milestone 19: Testing and Quality
 
 - [x] Make the test suite skip gracefully when optional extras are missing (pytest.importorskip for cryptography, opentelemetry, fastavro, etc.). CI installs --all-extras and is fully green; a bare environment currently shows ~70 spurious failures, which will mislead any tooling that runs tests without extras
-- [ ] Raise coverage to >= 95% overall (measure with --all-extras installed)
+- [x] Raise coverage to >= 95% overall (measure with --all-extras installed)
 - [ ] Reconcile version numbering: code says 1.3.0 while some docs reference 1.0.0/1.1.0/1.2.0 — versioning restarted at 0.1.0 via release-please; update stale 1.x references in docs and src/simpleetl/__init__.py to follow pyproject.toml
 
 - [x] Unit tests for all core modules (2015 test functions exist)
@@ -407,3 +407,4 @@
 - [ ] Add `Table` class for database table abstraction (exists in formats/database.py but needs full integration)
 - [ ] Investigate TestDateOperationsTimezone: passes in CI with all extras — reproduce first, fix only if genuinely broken
 - [ ] Update README quickstart to use top-level `read()`/`write()` functions
+- [ ] Fix `pyiceberg` build failure (missing `cc`) blocking `--all-extras` coverage measurement
