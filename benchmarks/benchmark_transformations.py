@@ -49,7 +49,7 @@ def benchmark_fn(
     *args: Any,
     n_runs: int = 5,
     **kwargs: Any,
-) -> Dict[str, float]:
+) -> Dict[str, Any]:
     """Run a function n_runs times and return timing stats."""
     times = [time_call(func, *args, **kwargs) for _ in range(n_runs)]
     return {
@@ -61,7 +61,7 @@ def benchmark_fn(
     }
 
 
-def run_filter_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
+def run_filter_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Benchmark filter_data at various selectivities."""
     return [
         benchmark_fn(
@@ -75,7 +75,7 @@ def run_filter_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
     ]
 
 
-def run_map_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
+def run_map_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Benchmark map_values with dict and callable mappings."""
     city_map = {"NYC": "New York", "LA": "Los Angeles", "Chicago": "Chicago",
                 "Houston": "Houston", "Phoenix": "Phoenix"}
@@ -91,7 +91,7 @@ def run_map_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
     ]
 
 
-def run_aggregate_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
+def run_aggregate_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Benchmark aggregate_data with various aggregation specs."""
     return [
         benchmark_fn(
@@ -111,7 +111,7 @@ def run_aggregate_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
     ]
 
 
-def run_join_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
+def run_join_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Benchmark join_data with inner join."""
     lookup = pd.DataFrame({
         "city": ["NYC", "LA", "Chicago", "Houston", "Phoenix"],
@@ -124,14 +124,14 @@ def run_join_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
     ]
 
 
-def run_union_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
+def run_union_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Benchmark union_data."""
     return [
         benchmark_fn("union", union_data, df, df),
     ]
 
 
-def run_window_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
+def run_window_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Benchmark window_functions."""
     sample = df.head(min(len(df), 100_000)).copy()
     return [
@@ -163,7 +163,7 @@ def run_window_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
     ]
 
 
-def run_string_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
+def run_string_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Benchmark string_operations."""
     sample = df.head(min(len(df), 100_000)).copy()
     return [
@@ -201,7 +201,7 @@ def run_string_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
     ]
 
 
-def run_date_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
+def run_date_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Benchmark date_operations."""
     sample = df.head(min(len(df), 100_000)).copy()
     return [
@@ -239,7 +239,7 @@ def run_date_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
     ]
 
 
-def run_chain_benchmarks(df: pd.DataFrame) -> List[Dict[str, float]]:
+def run_chain_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Benchmark transform_chain with varying step counts."""
     city_map = {"NYC": "NY", "LA": "CA", "Chicago": "IL",
                 "Houston": "TX", "Phoenix": "AZ"}
