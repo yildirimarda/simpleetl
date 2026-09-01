@@ -71,6 +71,16 @@ Type mappings:
 `IF NOT EXISTS` and `NOT NULL` clauses are emitted consistently with the
 other dialects.
 
+## Validation Status
+
+Native `MERGE` SQL shapes and DDL mappings are validated with mocked
+SQLAlchemy engines (`tests/test_database_dialects.py`). Validation
+against live Snowflake or BigQuery warehouses requires real accounts
+and the corresponding driver packages (`snowflake-sqlalchemy`,
+`sqlalchemy-bigquery`). A deferred integration-test scaffold lives in
+`tests/test_warehouse_integration.py` and skips gracefully when
+`SNOWFLAKE_URL` / `BIGQUERY_URL` environment variables are not set.
+
 ## Credentials
 
 Provide credentials the way the underlying drivers expect (URL fields,

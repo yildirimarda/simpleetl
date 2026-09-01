@@ -675,6 +675,10 @@ class DatabaseWriter(DataWriter):
         Loads the data into a session-scoped temporary staging table,
         then issues a single atomic MERGE statement against the target.
         The staging table is dropped in a finally block.
+
+        Note: Live-account UPSERT validation is deferred (needs real
+        Snowflake account + snowflake-sqlalchemy driver). Mock-based
+        SQL-shape tests cover the current implementation.
         """
         schema = kwargs.pop("schema", None)
         full_table = f"{schema}.{table_name}" if schema else table_name
@@ -738,6 +742,10 @@ class DatabaseWriter(DataWriter):
         BigQuery only supports CREATE TEMP TABLE inside scripts, so a
         real staging table with a unique suffix is created instead and
         dropped in a finally block. Identifiers are backtick-quoted.
+
+        Note: Live-account UPSERT validation is deferred (needs real
+        BigQuery dataset + sqlalchemy-bigquery driver). Mock-based
+        SQL-shape tests cover the current implementation.
         """
         schema = kwargs.pop("schema", None)
         full_table = f"{schema}.{table_name}" if schema else table_name
