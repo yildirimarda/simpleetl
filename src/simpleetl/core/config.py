@@ -217,6 +217,11 @@ class ETLJobConfig(BaseModel):
     validation_rules: List[Dict[str, Any]] = []
     schema_drift: SchemaDriftConfig = SchemaDriftConfig()
     tracing: TracingConfig = TracingConfig()
+    metrics_enabled: bool = False
+    provenance_enabled: bool = False
+    provenance_record_id_column: str = "id"
+    quality_checks: Optional[Dict[str, Any]] = None
+    lineage_enabled: bool = False
 
 
 def _apply_env_prefix(

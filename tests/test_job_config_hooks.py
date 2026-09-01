@@ -18,6 +18,8 @@ from simpleetl.core.hooks import (
 )
 from simpleetl.core.job import ETLJob
 from simpleetl.core.quality_rules import QualityRuleError, QualityRuleHook
+from simpleetl.core.hooks import MetricsHook, QualityCheckHook
+from simpleetl.core.lineage import LineageHook, ProvenanceHook
 from simpleetl.core.tracing import TracingHook
 
 
@@ -184,6 +186,63 @@ class TestTracingWiring:
         job = PassthroughJob(config, frame)
         job.run()
         assert job.loaded is not None
+
+
+class TestNewHookWiring:
+    def test_metrics_hook_registered_when_enabled(self, frame):
+        config = _config(metrics_enabled=True)
+        job = PassthroughJob(config, frame)
+        assert any(
+            isinstance(h, MetricsHook)
+            for hooks in job._config_hooks.values()
+            for h in hooks
+        )
+
+    def test_lineage_hook_registered_when_openlineage_url_set(self, frame):
+        config = _config(openlineage_url="http://example.com/lineage")
+        job = PassthroughJob(config, frame)
+        assert any(
+            isinstance(h, LineageHook)
+            for hooks in job._config_hooks.values()
+            for h in hooks
+        )
+
+    def test_lineage_hook_registered_when_lineage_enabled(self, frame):
+        config = _config(lineage_enabled=True)
+        job = PassthroughJob(config, frame)
+        assert any(
+            isinstance(h, LineageHook)
+            for hooks in job._config_hooks.values()
+            for h in hooks
+        )
+
+    def test_provenance_hook_registered_when_enabled(self, frame):
+        config = _config(provenance_enabled=True)
+        job = PassthroughJob(config, frame)
+        assert any(
+            isinstance(h, ProvenanceHook)
+            for hooks in job._config_hooks.values()
+            for h in hooks
+        )
+
+    def test_quality_check_hook_registered_when_quality_checks_configured(self, frame):
+        config = _config(quality_checks={"required_columns": ["id"]})
+        job = PassthroughJob(config, frame)
+        assert any(
+            isinstance(h, QualityCheckHook)
+            for hooks in job._config_hooks.values()
+            for h in hooks
+        )
+
+    def test_no_new_hooks_registered_by_default(self, frame):
+        job = PassthroughJob(_config(), frame)
+        for hooks in job._config_hooks.values():
+            assert not any(
+                isinstance(
+                    h, (MetricsHook, LineageHook, ProvenanceHook, QualityCheckHook)
+                )
+                for h in hooks
+            )
 
 
 class TestCombinedWiring:

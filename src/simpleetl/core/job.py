@@ -351,6 +351,50 @@ class ETLJob(ABC):
             ):
                 self._config_hooks.setdefault(point, []).append(tracing_hook)
 
+        # Wire new hooks from config
+        if self.config.metrics_enabled:
+            from .hooks import MetricsHook
+
+            metrics_hook = MetricsHook()
+            for point in (
+                PRE_EXTRACT,
+                POST_EXTRACT,
+                PRE_TRANSFORM,
+                POST_TRANSFORM,
+                PRE_LOAD,
+                POST_LOAD,
+            ):
+                self._config_hooks.setdefault(point, []).append(metrics_hook)
+
+        if self.config.openlineage_url or self.config.lineage_enabled:
+            from .lineage import LineageHook
+
+            lineage_hook = LineageHook()
+            for point in (POST_EXTRACT, POST_TRANSFORM, POST_LOAD):
+                self._config_hooks.setdefault(point, []).append(lineage_hook)
+
+        if self.config.provenance_enabled:
+            from .lineage import ProvenanceHook
+
+            provenance_hook = ProvenanceHook(
+                record_id_column=self.config.provenance_record_id_column
+            )
+            for point in (POST_EXTRACT, POST_TRANSFORM, POST_LOAD):
+                self._config_hooks.setdefault(point, []).append(provenance_hook)
+
+        if self.config.quality_checks is not None:
+            from .hooks import QualityCheckHook
+
+            quality_hook = QualityCheckHook(
+                required_columns=self.config.quality_checks.get("required_columns", []),
+                null_threshold=self.config.quality_checks.get("null_threshold", 1.0),
+                duplicate_threshold=self.config.quality_checks.get(
+                    "duplicate_threshold", 1.0
+                ),
+            )
+            for point in (POST_EXTRACT, POST_TRANSFORM):
+                self._config_hooks.setdefault(point, []).append(quality_hook)
+
     def _execute_hooks(
         self, hook_point: str, data: Any = None, error: Optional[Exception] = None
     ) -> HookContext:
@@ -380,6 +424,18 @@ class ETLJob(ABC):
         self._hook_registry.execute(hook_point, ctx)
         for hook in self._config_hooks.get(hook_point, []):
             hook.execute(ctx)
+
+        # Emit openlineage events when the lifecycle completes
+        if hook_point == ON_COMPLETE and self.config.openlineage_url:
+            try:
+                from .lineage import get_lineage_tracker
+
+                tracker = get_lineage_tracker()
+                if tracker.get_events():
+                    tracker.emit_openlineage(self.config.openlineage_url)
+            except Exception:
+                self.logger.warning("Failed to emit openlineage events", exc_info=True)
+
         return ctx
 
     def _setup_logging(self) -> None:
