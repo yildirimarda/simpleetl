@@ -189,6 +189,7 @@ report.raise_on_failures()
 | `retry_delay` | `float` | `1.0` | Initial delay between retries in seconds (exponential backoff applied) |
 | `log_level` | `str` | `"INFO"` | Logging level: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |
 | `params` | `Dict[str, Any]` | `{}` | Additional job-specific parameters |
+| `format_options` | `Dict[str, Dict[str, Any]]` | `{}` | Format-specific read/write options (e.g. `csv`: `{"delimiter": ","}`) |
 
 ### Environment Configurations
 
