@@ -114,67 +114,26 @@ uv run python -m simpleetl --version
 
 ## Quick Start
 
-### 1. Create a Configuration File (`job.yaml`)
-
-```yaml
-name: quickstart_job
-description: "Filter users by age and write to Parquet"
-platform: local
-input_format: csv
-output_format: parquet
-log_level: INFO
-params:
-  input_path: data/users.csv
-  output_path: data/adults.parquet
-  filter_column: age
-  filter_min_value: 18
-```
-
-### 2. Define Your Job
-
-```python
-from simpleetl.core.job import ETLJob
-from simpleetl.formats import FormatFactory
-
-class QuickstartJob(ETLJob):
-    def extract(self):
-        reader = FormatFactory.get_reader(self.config.params["input_path"])
-        return reader.read(self.config.params["input_path"])
-
-    def transform(self, data):
-        col = self.config.params.get("filter_column", "age")
-        min_val = self.config.params.get("filter_min_value", 0)
-        return data[data[col] >= min_val]
-
-    def load(self, data):
-        writer = FormatFactory.get_writer(self.config.params["output_path"])
-        writer.write(data, self.config.params["output_path"])
-
-if __name__ == "__main__":
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    job = QuickstartJob("job.yaml")
-    job.run_with_error_handling()
-```
-
-### 3. Run
-
-```bash
-uv run python my_job.py
-
-# Or via CLI
-uv run simpleetl --config job.yaml
-```
-
-### Alternatively: Use the Top-Level API
+### 1. Read, Filter, and Write
 
 ```python
 import simpleetl
 
-# Read, filter, and write in one line
+# Read data from CSV
 df = simpleetl.read("data/users.csv")
+
+# Filter by age
 filtered = df[df["age"] >= 18]
+
+# Write to Parquet
 simpleetl.write(filtered, "data/adults.parquet")
+```
+
+### 2. Run with Config
+
+```bash
+# Using CLI
+uv run simpleetl --config job.yaml
 ```
 
 ---
