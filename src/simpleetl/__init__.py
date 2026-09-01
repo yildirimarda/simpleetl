@@ -21,7 +21,7 @@ Quick Start:
     job.run_with_error_handling()
 """
 
-__version__ = "1.3.0"
+__version__ = "0.1.0"
 __author__ = "SimpleETL Contributors"
 
 # -- Core ETL ----------------------------------------------------------------
