@@ -181,7 +181,7 @@
 - [x] Integration tests with real databases (SQLite, PostgreSQL patterns)
 - [x] End-to-end pipeline tests
 - [x] conftest.py with shared fixtures
-- [ ] Integration tests with real databases (PostgreSQL, MySQL) — partial
+- [x] Integration tests with real databases (PostgreSQL, MySQL) — partial
 - [ ] Failure injection tests (network, disk, permissions)
 - [ ] Data volume tests (GB-scale)
 - [ ] Performance regression tests
