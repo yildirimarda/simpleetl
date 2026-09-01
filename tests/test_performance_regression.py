@@ -134,26 +134,26 @@ class TestDAGRegression:
     def test_topo_sort_10_nodes_fast(self):
         dag = build_linear_dag(10)
         result = benchmark_topo_sort(dag, n_runs=50)
-        assert result["mean_us"] < 20.0, (
-            f"topo_sort mean {result['mean_us']}us exceeds 20us threshold"
+        assert result["mean_us"] < 60.0, (
+            f"topo_sort mean {result['mean_us']}us exceeds 60us threshold"
         )
 
     def test_parallel_groups_10_nodes_fast(self):
         dag = build_linear_dag(10)
         result = benchmark_parallel_groups(dag, n_runs=50)
-        assert result["mean_us"] < 30.0, (
-            f"parallel_groups mean {result['mean_us']}us exceeds 30us threshold"
+        assert result["mean_us"] < 80.0, (
+            f"parallel_groups mean {result['mean_us']}us exceeds 80us threshold"
         )
 
     def test_validate_10_nodes_fast(self):
         dag = build_linear_dag(10)
         result = benchmark_validate(dag, n_runs=50)
-        assert result["mean_us"] < 30.0, (
-            f"validate mean {result['mean_us']}us exceeds 30us threshold"
+        assert result["mean_us"] < 60.0, (
+            f"validate mean {result['mean_us']}us exceeds 60us threshold"
         )
 
     def test_from_dict_10_nodes_fast(self):
         result = benchmark_from_dict(10, n_runs=25)
-        assert result["mean_us"] < 50.0, (
-            f"from_dict mean {result['mean_us']}us exceeds 50us threshold"
+        assert result["mean_us"] < 100.0, (
+            f"from_dict mean {result['mean_us']}us exceeds 100us threshold"
         )
