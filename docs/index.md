@@ -1,6 +1,6 @@
 # SimpleETL Documentation
 
-**Version 0.1.0**
+**Version 0.2.0**
 
 A lightweight, professional ETL (Extract, Transform, Load) framework for Python. SimpleETL supports local execution, AWS Glue, Databricks, and Azure Synapse platforms with multiple data formats including CSV, JSON, Parquet, Avro, ORC, XML, Excel, and databases.
 

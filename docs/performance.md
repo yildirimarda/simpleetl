@@ -2,8 +2,8 @@
 
 ## Environment
 
-- Python 3.14, macOS ARM (Darwin 25.5.0)
-- SimpleETL v0.1.0
+- Python 3.14, Linux aarch64
+- SimpleETL v0.2.0
 - pandas, pyarrow, numpy
 
 ## Read/Write Performance
