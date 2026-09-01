@@ -15,6 +15,10 @@ def test_parallel_functions_exported():
     assert callable(simpleetl.parallel_write)
 
 
+def test_table_exported():
+    assert simpleetl.Table is not None
+
+
 def test_schema_registry_classes_exported():
     assert simpleetl.SchemaRegistry is not None
     assert simpleetl.FileSchemaRegistry is not None
