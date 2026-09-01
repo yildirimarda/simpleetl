@@ -16,10 +16,10 @@ def build_linear_dag(n: int) -> DAG:
     """Build a linear chain DAG: node_0 -> node_1 -> ... -> node_n."""
     dag = DAG(name=f"linear_{n}")
     for i in range(n):
-        deps = [f"node_{i-1}"] if i > 0 else []
+        deps = [f"node_{i - 1}"] if i > 0 else []
         dag.add_node(make_dummy_node(f"node_{i}", deps))
     for i in range(1, n):
-        dag.add_edge(f"node_{i-1}", f"node_{i}")
+        dag.add_edge(f"node_{i - 1}", f"node_{i}")
     return dag
 
 
@@ -96,9 +96,10 @@ def benchmark_from_dict(n_nodes: int, n_runs: int = 50) -> Dict[str, float]:
     """Benchmark DAG.from_dict construction."""
     import time as _time
     import statistics as _stats
+
     jobs = []
     for i in range(n_nodes):
-        deps = [f"node_{i-1}"] if i > 0 else []
+        deps = [f"node_{i - 1}"] if i > 0 else []
         jobs.append({"name": f"node_{i}", "dependencies": deps})
     data = {"name": f"bench_{n_nodes}", "jobs": jobs}
 
@@ -116,9 +117,9 @@ def benchmark_from_dict(n_nodes: int, n_runs: int = 50) -> Dict[str, float]:
 
 
 if __name__ == "__main__":
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("DAG Topological Sort Benchmark")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     for n in [3, 5, 10, 50, 100]:
         dag = build_linear_dag(n)
         result = benchmark_topo_sort(dag)
@@ -128,9 +129,9 @@ if __name__ == "__main__":
             f"median={result['median_us']:.1f}us"
         )
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("DAG Parallel Groups Benchmark")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     for n in [3, 5, 10, 50, 100]:
         dag = build_linear_dag(n)
         result = benchmark_parallel_groups(dag)
@@ -140,9 +141,9 @@ if __name__ == "__main__":
             f"median={result['median_us']:.1f}us"
         )
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("DAG Validate Benchmark")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     for n in [3, 5, 10, 50, 100]:
         dag = build_linear_dag(n)
         result = benchmark_validate(dag)
@@ -152,9 +153,9 @@ if __name__ == "__main__":
             f"median={result['median_us']:.1f}us"
         )
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("DAG from_dict Construction Benchmark")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     for n in [3, 5, 10, 50, 100]:
         result = benchmark_from_dict(n)
         print(
@@ -163,9 +164,9 @@ if __name__ == "__main__":
             f"median={result['median_us']:.1f}us"
         )
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("DAG Shape Comparison (10 nodes)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     for label, dag in [
         ("linear (10)", build_linear_dag(10)),
         ("parallel (10)", build_parallel_dag(10)),

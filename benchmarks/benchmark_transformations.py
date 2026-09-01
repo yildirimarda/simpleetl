@@ -23,17 +23,19 @@ from simpleetl.transformations import (
 def generate_test_data(n_rows: int) -> pd.DataFrame:
     """Generate a test DataFrame with mixed types."""
     np.random.seed(42)
-    return pd.DataFrame({
-        "id": range(n_rows),
-        "name": [f"user_{i}" for i in range(n_rows)],
-        "age": np.random.randint(18, 80, n_rows),
-        "score": np.random.uniform(0, 100, n_rows).round(2),
-        "active": np.random.choice([True, False], n_rows),
-        "city": np.random.choice(
-            ["NYC", "LA", "Chicago", "Houston", "Phoenix"], n_rows
-        ),
-        "signup_date": pd.date_range("2020-01-01", periods=n_rows, freq="h"),
-    })
+    return pd.DataFrame(
+        {
+            "id": range(n_rows),
+            "name": [f"user_{i}" for i in range(n_rows)],
+            "age": np.random.randint(18, 80, n_rows),
+            "score": np.random.uniform(0, 100, n_rows).round(2),
+            "active": np.random.choice([True, False], n_rows),
+            "city": np.random.choice(
+                ["NYC", "LA", "Chicago", "Houston", "Phoenix"], n_rows
+            ),
+            "signup_date": pd.date_range("2020-01-01", periods=n_rows, freq="h"),
+        }
+    )
 
 
 def time_call(func: Callable, *args: Any, **kwargs: Any) -> float:
@@ -77,8 +79,13 @@ def run_filter_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
 
 def run_map_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Benchmark map_values with dict and callable mappings."""
-    city_map = {"NYC": "New York", "LA": "Los Angeles", "Chicago": "Chicago",
-                "Houston": "Houston", "Phoenix": "Phoenix"}
+    city_map = {
+        "NYC": "New York",
+        "LA": "Los Angeles",
+        "Chicago": "Chicago",
+        "Houston": "Houston",
+        "Phoenix": "Phoenix",
+    }
     return [
         benchmark_fn("map (dict)", map_values, df, "city", city_map),
         benchmark_fn(
@@ -113,12 +120,13 @@ def run_aggregate_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
 
 def run_join_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Benchmark join_data with inner join."""
-    lookup = pd.DataFrame({
-        "city": ["NYC", "LA", "Chicago", "Houston", "Phoenix"],
-        "state": ["NY", "CA", "IL", "TX", "AZ"],
-        "population": [8_336_817, 3_979_576, 2_693_976,
-                       2_320_268, 1_680_992],
-    })
+    lookup = pd.DataFrame(
+        {
+            "city": ["NYC", "LA", "Chicago", "Houston", "Phoenix"],
+            "state": ["NY", "CA", "IL", "TX", "AZ"],
+            "population": [8_336_817, 3_979_576, 2_693_976, 2_320_268, 1_680_992],
+        }
+    )
     return [
         benchmark_fn("join (inner)", join_data, df, lookup, on="city"),
     ]
@@ -241,8 +249,13 @@ def run_date_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
 
 def run_chain_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Benchmark transform_chain with varying step counts."""
-    city_map = {"NYC": "NY", "LA": "CA", "Chicago": "IL",
-                "Houston": "TX", "Phoenix": "AZ"}
+    city_map = {
+        "NYC": "NY",
+        "LA": "CA",
+        "Chicago": "IL",
+        "Houston": "TX",
+        "Phoenix": "AZ",
+    }
 
     steps_4: List[Tuple[Callable, Dict[str, Any]]] = [
         (filter_data, {"column": "age", "min_value": 25}),
@@ -260,8 +273,7 @@ def run_chain_benchmarks(df: pd.DataFrame) -> List[Dict[str, Any]]:
     ]
 
     results = []
-    for label, steps in [("chain (4 steps)", steps_4),
-                         ("chain (9 steps)", steps_9)]:
+    for label, steps in [("chain (4 steps)", steps_4), ("chain (9 steps)", steps_9)]:
         results.append(benchmark_fn(label, transform_chain, df, steps))
     return results
 
@@ -281,9 +293,9 @@ if __name__ == "__main__":
 
     for size in [10_000, 100_000, 1_000_000]:
         df = generate_test_data(size)
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Dataset: {size:,} rows, {len(df.columns)} columns")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         for _label, runner in categories:
             for result in runner(df):
                 print(

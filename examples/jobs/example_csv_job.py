@@ -4,7 +4,6 @@ Example ETL job that reads a CSV, filters by age, and writes the result to anoth
 
 from simpleetl.core.job import ETLJob
 from simpleetl.formats.csv import CSVReader, CSVWriter
-import pandas as pd
 
 
 class ExampleCSVJob(ETLJob):
@@ -60,9 +59,12 @@ if __name__ == "__main__":
     # This allows running the job directly for testing
     import logging
     import os
+
     logging.basicConfig(level=logging.INFO)
 
     # Load the configuration from the example config file
-    config_path = os.path.join(os.path.dirname(__file__), "..", "configs", "example_job.yaml")
+    config_path = os.path.join(
+        os.path.dirname(__file__), "..", "configs", "example_job.yaml"
+    )
     job = ExampleCSVJob(config_path)
     job.run_with_error_handling()
