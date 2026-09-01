@@ -65,9 +65,7 @@ class TestNetworkFailureInjection:
                 raise ConnectionError("network failure")
             return "ok"
 
-        result = _retry_operation(
-            fail_then_succeed, retry_count=5, retry_delay=0
-        )
+        result = _retry_operation(fail_then_succeed, retry_count=5, retry_delay=0)
         assert result == "ok"
         assert call_count == 3
 
@@ -86,9 +84,13 @@ class TestNetworkFailureInjection:
 
     def test_connection_pool_retry_on_transient_failure(self):
         """ConnectionPool should retry transient database connection errors."""
-        config = ConnectionConfig(url="sqlite:///:memory:", retry_count=2, retry_delay=0)
+        config = ConnectionConfig(
+            url="sqlite:///:memory:", retry_count=2, retry_delay=0
+        )
         with patch.object(
-            ConnectionPool, "get_connection", side_effect=[ConnectionError("fail"), MagicMock()]
+            ConnectionPool,
+            "get_connection",
+            side_effect=[ConnectionError("fail"), MagicMock()],
         ):
             pool = ConnectionPool(config)
             # We only verify retry logic applies to the internal call path
@@ -216,6 +218,7 @@ class TestPermissionFailureInjection:
 
     def test_permission_error_in_retry_is_not_retried(self):
         """Permanent permission errors should not trigger retries."""
+
         def always_permission_fail():
             raise PermissionError("denied")
 
@@ -288,8 +291,6 @@ class TestCombinedFailureInjection:
                 raise TimeoutError("transient 2")
             return "success"
 
-        result = _retry_operation(
-            mixed_errors, retry_count=5, retry_delay=0
-        )
+        result = _retry_operation(mixed_errors, retry_count=5, retry_delay=0)
         assert result == "success"
         assert call_count == 3
