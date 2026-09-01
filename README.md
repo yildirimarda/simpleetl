@@ -1,6 +1,6 @@
 # SimpleETL
 
-[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/yourusername/simpleetl)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/yourusername/simpleetl)
 [![Python](https://img.shields.io/badge/python-3.9%2B-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-2013%20passed-brightgreen.svg)]()
@@ -109,7 +109,7 @@ pip install "simpleetl[all]"
 
 ```bash
 uv run python -m simpleetl --version
-# Output: simpleetl 1.0.0
+# Output: simpleetl 0.1.0
 ```
 
 ## Quick Start
