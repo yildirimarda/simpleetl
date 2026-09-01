@@ -40,7 +40,7 @@ def test_docs_version_references():
 def test_readme_version_badge():
     readme = Path(__file__).parent.parent / "README.md"
     content = readme.read_text()
-    assert "0.1.0" in content
+    assert "0.2.0" in content
     assert "1.3.0" not in content
 
 
@@ -56,8 +56,30 @@ def test_docs_index_links_all_docs():
         )
 
 
+def test_example_job_importable():
+    """Examples and docs reviewed: example job loads without errors."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "example_job", Path(__file__).parent.parent / "examples" / "example_job.py"
+    )
+    assert spec is not None and spec.loader is not None
+
+
+def test_docs_and_examples_no_stale_version():
+    """Examples and docs reviewed: no stale 0.1.0 framework references remain."""
+    base = Path(__file__).parent.parent
+    stale = ["simpleetl/0.1.0", "simpleetl 0.1.0", "v0.1.0"]
+    paths = list(base.glob("docs/*.md")) + list(base.glob("README.md"))
+    for p in paths:
+        content = p.read_text()
+        for s in stale:
+            assert s not in content, (
+                f"Stale framework version reference '{s}' found in {p.name}"
+            )
+
+
 def test_lineage_default_producer_version():
     from simpleetl.core.lineage import OpenLineageConverter
 
     converter = OpenLineageConverter()
-    assert converter.producer == "simpleetl/0.1.0"
+    assert converter.producer == "simpleetl/0.2.0"

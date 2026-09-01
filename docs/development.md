@@ -91,7 +91,7 @@ simpleetl/
 | Serialization | fastavro, xmltodict, openpyxl |
 | Testing | pytest, pytest-cov |
 | Linting | ruff |
-| Formatting | black |
+| Formatting | ruff format |
 | Package Management | uv |
 
 ## Setting Up the Development Environment
@@ -200,11 +200,11 @@ uv run ruff check --fix src/ tests/
 ### Formatting
 
 ```bash
-# Format with black
-uv run black src/ tests/
+# Format with ruff
+uv run ruff format src/ tests/
 
-# Sort imports with isort
-uv run isort src/ tests/
+# Sort imports with ruff
+uv run ruff check --select I --fix src/ tests/
 ```
 
 ### Type Checking
@@ -242,7 +242,7 @@ uv run mypy src/simpleetl/
    ```bash
    uv run pytest tests/ -v --cov=src/simpleetl --cov-fail-under=95
    uv run ruff check src/ tests/
-   uv run black --check src/ tests/
+    uv run ruff format --check src/ tests/
    ```
 
 5. **Commit with a clear message:**
@@ -292,7 +292,7 @@ The project uses GitHub Actions for continuous integration. The pipeline:
 
 1. Runs on every push and pull request
 2. Installs dependencies with uv
-3. Runs linting (ruff, black)
+3. Runs linting (ruff)
 4. Runs type checking (mypy)
 5. Runs tests with coverage (pytest, pytest-cov)
 6. Fails if coverage is below 95%
