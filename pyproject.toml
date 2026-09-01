@@ -136,6 +136,7 @@ dev = [
     "isort>=6.1.0",
     "kubernetes>=35.0.0",
     "mypy>=1.19.1",
+    "pip-audit>=2.10.1",
     "pytest>=8.4.2",
     "pytest-cov>=7.1.0",
     "ruff>=0.15.13",

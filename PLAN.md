@@ -394,7 +394,7 @@
 
 - [x] ruff clean (mostly; verify before final release)
 - [x] mypy clean (mostly; verify before final release)
-- [ ] Security audit completed
+- [x] Security audit completed
 - [ ] Performance benchmarks documented
 - [ ] Examples and docs reviewed
 - [ ] Lineage/audit/RBAC persistence verified end-to-end
