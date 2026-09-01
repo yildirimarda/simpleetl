@@ -240,6 +240,24 @@ from simpleetl.core.dag import (
     DAGMissingDependencyError,
 )
 
+# -- Parallel -----------------------------------------------------------------
+
+from simpleetl.core.parallel import (
+    ParallelReader,
+    ParallelWriter,
+    PartitionStrategy,
+    LazyTransformation,
+    parallel_read,
+    parallel_write,
+)
+
+# -- Schema Registry ----------------------------------------------------------
+
+from simpleetl.core.schema_registry import (
+    SchemaRegistry,
+    FileSchemaRegistry,
+)
+
 # -- Schedule ----------------------------------------------------------------
 
 from simpleetl.core.schedule import (
@@ -742,4 +760,14 @@ __all__ = [
     "SynapsePlatformRunner",
     "get_current_platform",
     "get_platform_info",
+    # Parallel
+    "ParallelReader",
+    "ParallelWriter",
+    "PartitionStrategy",
+    "LazyTransformation",
+    "parallel_read",
+    "parallel_write",
+    # Schema Registry
+    "SchemaRegistry",
+    "FileSchemaRegistry",
 ]
