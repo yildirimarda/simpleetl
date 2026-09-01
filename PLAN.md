@@ -403,7 +403,7 @@
 
 - [x] Add `format_options` parameter to ETLJobConfig (used in examples but not exported properly)
 - [x] Add `batch_size` config parameter to control chunk size in streaming mode
-- [ ] Add `job_timer` decorator to exports (used in examples but may not be fully exported)
+- [x] Add `job_timer` decorator to exports (used in examples but may not be fully exported)
 - [ ] Add `Table` class for database table abstraction (exists in formats/database.py but needs full integration)
 - [ ] Investigate TestDateOperationsTimezone: passes in CI with all extras — reproduce first, fix only if genuinely broken
 - [ ] Update README quickstart to use top-level `read()`/`write()` functions

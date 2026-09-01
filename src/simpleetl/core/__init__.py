@@ -9,7 +9,7 @@ from .config import (
 )
 from .job import ETLJob
 from .logger import StructuredLogger, get_logger
-from .metrics import MetricsCollector, get_metrics
+from .metrics import MetricsCollector, get_metrics, job_timer, TimerContext
 from .health import HealthServer, start_health_server
 from .filesystem import (
     get_filesystem,
@@ -68,6 +68,8 @@ __all__ = [
     "get_logger",
     "MetricsCollector",
     "get_metrics",
+    "job_timer",
+    "TimerContext",
     "HealthServer",
     "start_health_server",
     "get_filesystem",
