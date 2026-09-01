@@ -407,4 +407,4 @@
 - [x] Add `Table` class for database table abstraction (exists in formats/database.py but needs full integration)
 - [x] Investigate TestDateOperationsTimezone: passes in CI with all extras — reproduce first, fix only if genuinely broken
 - [x] Update README quickstart to use top-level `read()`/`write()` functions
-- [ ] Fix `pyiceberg` build failure (missing `cc`) blocking `--all-extras` coverage measurement
+- [x] Fix `pyiceberg` build failure (missing `cc`) blocking `--all-extras` coverage measurement
