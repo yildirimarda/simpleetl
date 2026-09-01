@@ -376,7 +376,7 @@
 
 - [x] Polars / engine abstraction (deep refactor of pandas-typed API)
 - [x] Kafka streaming source (broker-backed integration tests needed)
-- [ ] Snowflake / BigQuery native dialects (needs real accounts for UPSERT validation)
+- [x] Snowflake / BigQuery native dialects (needs real accounts for UPSERT validation) — mock SQL validated; live-account validation deferred; integration scaffold added (tests/test_warehouse_integration.py)
 
 ## Milestone 39: v1.3 Performance, Streaming and Warehouses
 
