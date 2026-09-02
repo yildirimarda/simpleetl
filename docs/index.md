@@ -32,6 +32,7 @@ A lightweight, professional ETL (Extract, Transform, Load) framework for Python.
 | [Platforms](platforms.md) | Deployment guides for all supported platforms |
 | [Development](development.md) | Developer guide: project structure, testing, contributing |
 | [Performance](performance.md) | Benchmark results and analysis |
+| [Benchmarks](BENCHMARKS.md) | Pandas-only baseline results on 1M-row datasets |
 | [Security](security.md) | Security best practices and audit guide |
 | [OpenLineage](openlineage.md) | OpenLineage integration guide |
 | [Provenance](provenance.md) | Per-record provenance tracking guide |

@@ -20,3 +20,22 @@ def test_performance_doc_has_version():
     with open("docs/performance.md") as f:
         content = f.read()
     assert "v0.2.0" in content
+
+
+def test_benchmark_doc_exists():
+    assert os.path.isfile("docs/BENCHMARKS.md")
+
+
+def test_benchmark_doc_has_pandas_baseline():
+    with open("docs/BENCHMARKS.md") as f:
+        content = f.read()
+    assert "pandas" in content.lower()
+    assert "1,000,000" in content
+
+
+def test_benchmark_doc_has_read_write_results():
+    with open("docs/BENCHMARKS.md") as f:
+        content = f.read()
+    assert "CSV" in content
+    assert "JSON" in content
+    assert "Parquet" in content
