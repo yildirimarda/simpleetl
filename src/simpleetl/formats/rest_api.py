@@ -255,6 +255,7 @@ class RestApiReader(DataReader):
         self,
         source: str,
         chunk_size: int = 100,
+        max_buffer_mb: float = 0,
         *,
         method: str = "GET",
         params: Optional[Dict[str, Any]] = None,

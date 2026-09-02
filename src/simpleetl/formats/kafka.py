@@ -358,6 +358,7 @@ class KafkaReader(DataReader):
         self,
         source: Optional[str] = None,
         chunk_size: int = 1000,
+        max_buffer_mb: float = 0,
         *,
         topic: Optional[str] = None,
         max_messages: Optional[int] = None,

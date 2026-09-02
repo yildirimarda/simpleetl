@@ -250,6 +250,7 @@ class IcebergReader(_IcebergFormatBase, DataReader):
         self,
         source: Optional[str] = None,
         chunk_size: int = 10000,
+        max_buffer_mb: float = 0,
         *,
         table: Optional[str] = None,
         columns: Optional[List[str]] = None,

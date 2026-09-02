@@ -105,10 +105,10 @@ class ParquetReader(DataReader):
 
     def read_chunks(
         self,
-        source: str,
+        source: Any,
         chunk_size: int = 10000,
-        engine: str = "pandas",
         max_buffer_mb: float = 0,
+        engine: str = "pandas",
         **kwargs,
     ) -> Iterator[pd.DataFrame]:
         """
