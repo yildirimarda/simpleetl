@@ -6,6 +6,7 @@ import pytest
 import tempfile
 import os
 import sys
+from pathlib import Path
 from unittest.mock import patch
 from io import StringIO
 
@@ -47,10 +48,10 @@ class TestCLIParser:
         assert args.config == "test.yaml"
 
     def test_parser_dry_run(self):
-        """Test --dry-run argument."""
+        """Test --dry-run argument with integer value."""
         parser = create_parser()
-        args = parser.parse_args(["--config", "test.yaml", "--dry-run"])
-        assert args.dry_run is True
+        args = parser.parse_args(["--config", "test.yaml", "--dry-run", "10"])
+        assert args.dry_run == 10
 
     def test_parser_platform_override(self):
         """Test --platform argument."""
@@ -209,7 +210,7 @@ class TestCLIMain:
                 main()
 
     def test_main_dry_run(self):
-        """Test main with --dry-run."""
+        """Test main with --dry-run on first 10 rows."""
         config_data = {
             "name": "test_job",
             "platform": "local",
@@ -225,10 +226,12 @@ class TestCLIMain:
 
         try:
             with patch.object(
-                sys, "argv", ["simpleetl", "--config", temp_path, "--dry-run"]
+                sys, "argv", ["simpleetl", "--config", temp_path, "--dry-run", "10"]
             ):
-                with patch("sys.stdout", new_callable=StringIO):
+                with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                     main()
+                    output = mock_stdout.getvalue()
+                assert "Dry-run" in output or "dry-run" in output.lower()
         finally:
             os.unlink(temp_path)
 
@@ -613,3 +616,121 @@ class _DummyJob:
 
     def run_with_error_handling(self):
         pass
+
+
+class TestDryRun:
+    """Tests for --dry-run N mode."""
+
+    def test_dry_run_prints_schema_and_sample(self, tmp_path):
+        """Dry-run on a job with real extract/transform/load prints output."""
+
+        # Write a temporary job module
+        job_py = tmp_path / "dry_run_job.py"
+        job_py.write_text(
+            "import pandas as pd\n"
+            "from simpleetl.core.job import ETLJob\n"
+            "class DryRunJob(ETLJob):\n"
+            "    def run(self):\n"
+            "        data = self.extract()\n"
+            "        transformed = self.transform(data)\n"
+            "        self.load(transformed)\n"
+            "    def extract(self):\n"
+            "        return pd.DataFrame({'a': [1, 2, 3, 4], 'b': ['x', 'y', 'z', 'w']})\n"
+            "    def transform(self, data):\n"
+            "        return data\n"
+            "    def load(self, data):\n"
+            "        pass\n"
+        )
+
+        import yaml
+
+        config_path = tmp_path / "config.yaml"
+        config_path.write_text(
+            yaml.safe_dump(
+                {
+                    "name": "dry_run_test",
+                    "platform": "local",
+                    "input_format": "csv",
+                    "output_format": "csv",
+                    "params": {"job_class": "dry_run_job.DryRunJob"},
+                }
+            )
+        )
+
+        with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+            original_cwd = str(Path.cwd())
+            try:
+                import os
+
+                os.chdir(str(tmp_path))
+                with patch.object(
+                    sys,
+                    "argv",
+                    ["simpleetl", "--config", str(config_path), "--dry-run", "2"],
+                ):
+                    main()
+            finally:
+                os.chdir(original_cwd)
+
+        output = mock_stdout.getvalue()
+        assert "Dry-run output schema" in output
+        assert "Dry-run sample" in output
+        assert "Row count:" in output
+
+    def test_dry_run_does_not_write_output(self, tmp_path):
+        """Dry-run should not create any output file."""
+        output_path = tmp_path / "should_not_exist.parquet"
+
+        job_py = tmp_path / "dry_run_no_write.py"
+        job_py.write_text(
+            "import pandas as pd\n"
+            "from simpleetl.core.job import ETLJob\n"
+            "from simpleetl.formats.parquet import ParquetWriter\n"
+            "class NoWriteJob(ETLJob):\n"
+            "    def __init__(self, config):\n"
+            "        super().__init__(config)\n"
+            "        self.writer = ParquetWriter()\n"
+            "    def run(self):\n"
+            "        self.load(self.extract())\n"
+            "    def extract(self):\n"
+            "        return pd.DataFrame({'x': [1]})\n"
+            "    def load(self, data):\n"
+            "        # In real life this writes; dry-run patches it out\n"
+            "        self.writer.write(data, str(self.config.params.get('output_path', '/tmp/fake')))\n"
+        )
+
+        import yaml
+        import os
+
+        config_path = tmp_path / "config.yaml"
+        config_path.write_text(
+            yaml.safe_dump(
+                {
+                    "name": "no_write",
+                    "platform": "local",
+                    "input_format": "csv",
+                    "output_format": "parquet",
+                    "params": {
+                        "job_class": "dry_run_no_write.NoWriteJob",
+                        "output_path": str(output_path),
+                    },
+                }
+            )
+        )
+
+        original_cwd = str(Path.cwd())
+        try:
+            os.chdir(str(tmp_path))
+            with patch.object(
+                sys,
+                "argv",
+                ["simpleetl", "--config", str(config_path), "--dry-run", "1"],
+            ):
+                with patch("sys.stdout", new_callable=StringIO):
+                    main()
+        finally:
+            os.chdir(original_cwd)
+
+        assert not output_path.exists(), (
+            "Dry-run wrote a file — it must not write anything"
+        )
