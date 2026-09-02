@@ -56,8 +56,10 @@ class DataReader(ABC):
             pandas DataFrame chunks.
         """
         if max_buffer_mb > 0:
-            chunk_size = _chunk_size_from_max_buffer(max_buffer_mb)  # noqa: F841
-        yield self.read(source, **kwargs)
+            chunk_size = _chunk_size_from_max_buffer(max_buffer_mb)
+        df = self.read(source, **kwargs)
+        for i in range(0, len(df), chunk_size):
+            yield df.iloc[i : i + chunk_size].reset_index(drop=True)
 
 
 class DataWriter(ABC):

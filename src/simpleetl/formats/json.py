@@ -64,7 +64,9 @@ class JSONReader(DataReader):
         if max_buffer_mb > 0:
             chunk_size = _chunk_size_from_max_buffer(max_buffer_mb)
 
-        if isinstance(source, str) and (source.strip().startswith("{") or source.strip().startswith("[")):
+        if isinstance(source, str) and (
+            source.strip().startswith("{") or source.strip().startswith("[")
+        ):
             yield pd.read_json(StringIO(source), **kwargs)
             return
 
@@ -72,7 +74,12 @@ class JSONReader(DataReader):
         lines = kwargs.get("lines", True)
         orient = kwargs.get("orient", "records")
 
-        if lines and (orient == "records" or orient is None or isinstance(orient, str) and "record" in orient):
+        if lines and (
+            orient == "records"
+            or orient is None
+            or isinstance(orient, str)
+            and "record" in orient
+        ):
             file_path = source
             file_obj = None
             try:
