@@ -1,6 +1,6 @@
 # SimpleETL
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/yourusername/simpleetl)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/yildirimarda/simpleetl)
 [![Python](https://img.shields.io/badge/python-3.9%2B-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-2013%20passed-brightgreen.svg)]()
@@ -78,7 +78,7 @@ A **production-grade** ETL framework for Python. Designed to run on **local**, *
 ### Install from Source
 
 ```bash
-git clone https://github.com/yourusername/simpleetl.git
+git clone https://github.com/yildirimarda/simpleetl.git
 cd simpleetl
 
 # Install core (recommended)
