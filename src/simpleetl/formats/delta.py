@@ -210,7 +210,9 @@ class DeltaLakeWriter(DataWriter):
         destination: str,
         **kwargs: Any,
     ) -> None:
+        kwargs.pop("filesystem", None)
         _require_deltalake()
         import deltalake  # noqa: PLC0415
+
         table, write_kwargs = data
         deltalake.write_deltalake(destination, table, **write_kwargs)

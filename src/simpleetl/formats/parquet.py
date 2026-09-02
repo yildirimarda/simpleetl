@@ -186,6 +186,7 @@ class ParquetWriter(DataWriter):
     def _do_write(
         self, data: pd.DataFrame, destination: str, engine: str = "pandas", **kwargs
     ) -> None:
+        filesystem = kwargs.pop("filesystem", None)
         validate_engine(engine)
         if engine == "polars" and self._write_polars(data, destination, kwargs):
             return
@@ -194,7 +195,6 @@ class ParquetWriter(DataWriter):
             kwargs["compression"] = "snappy"
 
         if is_cloud_path(destination):
-            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(destination)
             data.to_parquet(destination, filesystem=filesystem, **kwargs)

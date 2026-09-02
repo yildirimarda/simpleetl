@@ -63,10 +63,10 @@ class ExcelWriter(DataWriter):
         return execute_atomic(self, data, destination, **kwargs)
 
     def _do_write(self, data: pd.DataFrame, destination: str, **kwargs) -> None:
+        filesystem = kwargs.pop("filesystem", None)
         sheet_name = kwargs.pop("sheet_name", "Sheet1")
 
         if is_cloud_path(destination):
-            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(destination)
             buffer = BytesIO()

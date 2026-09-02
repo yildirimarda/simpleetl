@@ -141,13 +141,13 @@ class JSONWriter(DataWriter):
         return execute_atomic(self, data, destination, **kwargs)
 
     def _do_write(self, data: pd.DataFrame, destination: str, **kwargs) -> None:
+        filesystem = kwargs.pop("filesystem", None)
         # If writing to string, handle differently (not atomic)
         if destination == "-":
             json_str = data.to_json(**kwargs)
             print(json_str, end="")
             return
         if is_cloud_path(destination):
-            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(destination)
             with filesystem.open(destination, "w") as f:

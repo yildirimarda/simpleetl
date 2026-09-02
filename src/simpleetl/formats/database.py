@@ -452,7 +452,34 @@ class DatabaseWriter(DataWriter):
     ) -> None:
         """Exactly-once database write using staging-table + swap."""
         table_name = kwargs.get("table_name", "data")
+        if_exists = kwargs.get("if_exists", "fail")
+        index = kwargs.get("index", False)
         schema = kwargs.pop("schema", None)
+
+        if if_exists == "append":
+            data.to_sql(
+                name=table_name,
+                con=engine,
+                if_exists="append",
+                index=index,
+                **{
+                    k: v
+                    for k, v in kwargs.items()
+                    if k not in ("table_name", "if_exists", "index", "schema")
+                },
+            )
+            return
+
+        if if_exists == "fail":
+            inspector = sqlalchemy.inspect(engine)
+            existing = (
+                inspector.get_table_names(schema=schema)
+                if schema
+                else inspector.get_table_names()
+            )
+            if table_name in existing:
+                raise ValueError(f"Table '{table_name}' already exists.")
+
         full_table = f"{schema}.{table_name}" if schema else table_name
         staging = f"{table_name}_staging_{uuid.uuid4().hex[:8]}"
         full_staging = f"{schema}.{staging}" if schema else staging
@@ -466,9 +493,7 @@ class DatabaseWriter(DataWriter):
                 column_defs = ", ".join(
                     [f'"{col["name"]}" {str(col["type"])}' for col in columns_info]
                 )
-                conn.execute(
-                    text(f"CREATE TABLE {full_staging} ({column_defs})")
-                )
+                conn.execute(text(f"CREATE TABLE {full_staging} ({column_defs})"))
             except Exception:
                 # Fallback: infer schema from DataFrame using pandas to_sql
                 # (creates table automatically)
@@ -480,7 +505,11 @@ class DatabaseWriter(DataWriter):
             con=engine,
             if_exists="replace",
             index=kwargs.get("index", False),
-            **{k: v for k, v in kwargs.items() if k not in ("table_name", "if_exists", "index")},
+            **{
+                k: v
+                for k, v in kwargs.items()
+                if k not in ("table_name", "if_exists", "index")
+            },
         )
 
         # Swap: drop original and rename staging
