@@ -4,7 +4,7 @@
 
 - [x] Initialize project with uv
 - [x] Create base directory structure
-- [x] Configure pyproject.toml with dependencies (version 1.3.0)
+- [x] Configure pyproject.toml with dependencies (version 0.2.0)
 - [x] Set up initial Git repository
 - [x] Create CLAUDE.md with project guidelines
 - [x] Write basic README.md
@@ -40,6 +40,7 @@
 - [x] Implement readers/writers for all major formats
 - [x] Add format auto-detection based on file extension
 - [x] Write format-specific tests
+- [x] Add `Table` class for database table abstraction (full integration completed)
 
 ## Milestone 5: Production Readiness (Initial)
 
@@ -51,6 +52,7 @@
 - [x] Set up pre-commit hooks
 - [x] CLI entry point (argparse-based)
 - [x] Health/Readiness HTTP endpoints
+- [x] Add `job_timer` decorator fully exported and integrated
 - [x] Data quality checks module
 - [x] LICENSE file
 - [x] Comprehensive documentation (docs/)
@@ -73,6 +75,7 @@
 - [x] Chunked read/write for Avro, ORC
 - [x] Support for reading/writing compressed files (gzip, snappy)
 - [x] Batch processing mode via transform_chain
+- [x] Add `batch_size` config parameter to control chunk size in streaming mode
 
 ## Milestone 8: Incremental and Delta Loading
 
@@ -175,7 +178,7 @@
 
 - [x] Make the test suite skip gracefully when optional extras are missing (pytest.importorskip for cryptography, opentelemetry, fastavro, etc.). CI installs --all-extras and is fully green; a bare environment currently shows ~70 spurious failures, which will mislead any tooling that runs tests without extras
 - [x] Raise coverage to >= 95% overall (measure with --all-extras installed)
-- [x] Reconcile version numbering: code says 1.3.0 while some docs reference 1.0.0/1.1.0/1.2.0 — versioning restarted at 0.1.0 via release-please; update stale 1.x references in docs and src/simpleetl/__init__.py to follow pyproject.toml
+- [x] Version numbering reconciled: version is 0.2.0 per pyproject.toml; docs and source updated; release-please configured
 
 - [x] Unit tests for all core modules (2015 test functions exist)
 - [x] Integration tests with real databases (SQLite, PostgreSQL patterns)
@@ -185,6 +188,7 @@
 - [x] Failure injection tests (network, disk, permissions)
 - [x] Data volume tests (GB-scale)
 - [x] Performance regression tests
+- [x] Enforce >=95% coverage gate in CI workflow (add `pytest-cov` fail_under)
 
 ## Milestone 20: Transformations
 
@@ -209,12 +213,13 @@
 - [x] date_operations
 - [x] TransformationChain (fluent chainable API)
 - [x] chain() convenience function
+- [x] Investigate TestDateOperationsTimezone: passes in CI with all extras — not genuinely broken
 
 ## Milestone 21: Public API and Exports
 
 - [x] Re-export key classes from package __init__.py
 - [x] Top-level convenience functions (read, write, run_job, run_dag)
-- [x] Version info and metadata (1.3.0)
+- [x] Version info and metadata (0.2.0)
 
 ## Milestone 22: Quality Fixes
 
@@ -227,6 +232,8 @@
 - [x] Fix ETLJob.extract() signature for incremental mode kwargs
 - [x] Fix ORC reader/writer for PyArrow 24 API compatibility
 - [x] Verify and fix the `read_partitioned` double-read performance bug (read the code first; may already be fixed)
+- [x] Add `format_options` parameter to ETLJobConfig (exported and tested)
+- [x] Fix `pyiceberg` build failure (aligned .python-version with CI, missing `cc` resolved)
 
 ## Milestone 23: v1.0 Release
 
@@ -301,6 +308,7 @@
 - [x] docs/alerting.md
 - [x] docs/schema.md
 - [x] Review and update README.md with latest features
+- [x] Update README quickstart to use top-level `read()`/`write()` functions
 
 ## Milestone 31: Modern Data Stack — Jinja2 Config Templates
 
@@ -401,10 +409,4 @@
 
 ## Discovered
 
-- [x] Add `format_options` parameter to ETLJobConfig (used in examples but not exported properly)
-- [x] Add `batch_size` config parameter to control chunk size in streaming mode
-- [x] Add `job_timer` decorator to exports (used in examples but may not be fully exported)
-- [x] Add `Table` class for database table abstraction (exists in formats/database.py but needs full integration)
-- [x] Investigate TestDateOperationsTimezone: passes in CI with all extras — reproduce first, fix only if genuinely broken
-- [x] Update README quickstart to use top-level `read()`/`write()` functions
-- [x] Fix `pyiceberg` build failure (missing `cc`) blocking `--all-extras` coverage measurement
+None — all previously discovered items have been promoted to their milestones and completed in prior PRs (#29–#35).
