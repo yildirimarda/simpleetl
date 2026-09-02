@@ -257,16 +257,22 @@ class TestTransformationRegression:
 
 
 class TestDAGRegression:
-    """Regression tests for DAG operations — ratio-based, CI-safe."""
+    """Regression tests for DAG operations — ratio-based, CI-safe.
+
+    DAG ops are microsecond-scale, far below CI noise (GC pauses, CPU
+    migration can inflate a single run 100x+). So we compare the MIN of many
+    runs, not the mean: noise only ever adds time, so the minimum is the
+    stable estimate of true cost.
+    """
 
     def test_topo_sort_10_nodes_ratio(self):
         baseline_dag = build_linear_dag(3)
-        baseline_result = benchmark_topo_sort(baseline_dag, n_runs=50)
-        baseline_mean = baseline_result["mean_us"]
+        baseline_result = benchmark_topo_sort(baseline_dag, n_runs=200)
+        baseline_mean = baseline_result["min_us"]
 
         target_dag = build_linear_dag(10)
-        target_result = benchmark_topo_sort(target_dag, n_runs=50)
-        target_mean = target_result["mean_us"]
+        target_result = benchmark_topo_sort(target_dag, n_runs=200)
+        target_mean = target_result["min_us"]
 
         ratio = target_mean / max(baseline_mean, 0.1)
         assert ratio < DAG_RATIO, (
@@ -281,12 +287,12 @@ class TestDAGRegression:
 
     def test_parallel_groups_10_nodes_ratio(self):
         baseline_dag = build_linear_dag(3)
-        baseline_result = benchmark_parallel_groups(baseline_dag, n_runs=50)
-        baseline_mean = baseline_result["mean_us"]
+        baseline_result = benchmark_parallel_groups(baseline_dag, n_runs=200)
+        baseline_mean = baseline_result["min_us"]
 
         target_dag = build_linear_dag(10)
-        target_result = benchmark_parallel_groups(target_dag, n_runs=50)
-        target_mean = target_result["mean_us"]
+        target_result = benchmark_parallel_groups(target_dag, n_runs=200)
+        target_mean = target_result["min_us"]
 
         ratio = target_mean / max(baseline_mean, 0.1)
         assert ratio < DAG_RATIO, (
@@ -301,12 +307,12 @@ class TestDAGRegression:
 
     def test_validate_10_nodes_ratio(self):
         baseline_dag = build_linear_dag(3)
-        baseline_result = benchmark_validate(baseline_dag, n_runs=50)
-        baseline_mean = baseline_result["mean_us"]
+        baseline_result = benchmark_validate(baseline_dag, n_runs=200)
+        baseline_mean = baseline_result["min_us"]
 
         target_dag = build_linear_dag(10)
-        target_result = benchmark_validate(target_dag, n_runs=50)
-        target_mean = target_result["mean_us"]
+        target_result = benchmark_validate(target_dag, n_runs=200)
+        target_mean = target_result["min_us"]
 
         ratio = target_mean / max(baseline_mean, 0.1)
         assert ratio < DAG_RATIO, (
@@ -321,10 +327,10 @@ class TestDAGRegression:
 
     def test_from_dict_10_nodes_ratio(self):
         baseline_result = benchmark_from_dict(3, n_runs=25)
-        baseline_mean = baseline_result["mean_us"]
+        baseline_mean = baseline_result["min_us"]
 
         target_result = benchmark_from_dict(10, n_runs=25)
-        target_mean = target_result["mean_us"]
+        target_mean = target_result["min_us"]
 
         ratio = target_mean / max(baseline_mean, 0.1)
         assert ratio < DAG_RATIO, (
