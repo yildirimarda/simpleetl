@@ -1,0 +1,26 @@
+[
+  {
+    "before": null,
+    "after": {"id": 101, "name": "Alice", "amount": 99.50, "status": "pending"},
+    "op": "c",
+    "source": {"connector": "postgresql", "db": "inventory", "table": "orders"}
+  },
+  {
+    "before": {"id": 101, "name": "Alice", "amount": 99.50, "status": "pending"},
+    "after": {"id": 101, "name": "Alice", "amount": 99.50, "status": "completed"},
+    "op": "u",
+    "source": {"connector": "postgresql", "db": "inventory", "table": "orders"}
+  },
+  {
+    "before": {"id": 102, "name": "Bob", "amount": 45.00, "status": "pending"},
+    "after": null,
+    "op": "d",
+    "source": {"connector": "postgresql", "db": "inventory", "table": "orders"}
+  },
+  {
+    "before": null,
+    "after": {"id": 103, "name": "Charlie", "amount": 120.00, "status": "pending"},
+    "op": "c",
+    "source": {"connector": "postgresql", "db": "inventory", "table": "orders"}
+  }
+]
