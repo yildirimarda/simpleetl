@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.0](https://github.com/yildirimarda/simpleetl/compare/v0.2.0...v0.3.0) (2026-09-01)
+
+
+### Features
+
+* add batch_size config parameter to control chunk size in streaming mode ([#30](https://github.com/yildirimarda/simpleetl/issues/30)) ([fe4f7bf](https://github.com/yildirimarda/simpleetl/commit/fe4f7bf649b896940063b2676395364b23fb59e4))
+* document and test format_options in ETLJobConfig ([#29](https://github.com/yildirimarda/simpleetl/issues/29)) ([e99bfa5](https://github.com/yildirimarda/simpleetl/commit/e99bfa51fbf3cefb69ed18283a2d38127ea96cb9))
+* export job_timer and TimerContext from simpleetl.core ([#31](https://github.com/yildirimarda/simpleetl/issues/31)) ([1f7c979](https://github.com/yildirimarda/simpleetl/commit/1f7c979537020170eb25aa70aa197149749b6eba))
+* fully integrate Table database abstraction ([#32](https://github.com/yildirimarda/simpleetl/issues/32)) ([43373e6](https://github.com/yildirimarda/simpleetl/commit/43373e66af18a46929c10773d0c5c561152a47c0))
+
+
+### Bug Fixes
+
+* align .python-version with CI (3.11) to avoid pyiceberg build failure (missing cc) ([#35](https://github.com/yildirimarda/simpleetl/issues/35)) ([5dce1e2](https://github.com/yildirimarda/simpleetl/commit/5dce1e2bf82ff2219838a2ff4504fff4fa8a414f))
+
+
+### Documentation
+
+* review examples and docs, reconcile version refs to 0.2.0 ([#27](https://github.com/yildirimarda/simpleetl/issues/27)) ([7bfc820](https://github.com/yildirimarda/simpleetl/commit/7bfc820c0a82bf44a09d147db9960a00e73bca0a))
+* update performance benchmark docs (v0.2.0, Linux env); add verification test ([#25](https://github.com/yildirimarda/simpleetl/issues/25)) ([2ac0954](https://github.com/yildirimarda/simpleetl/commit/2ac0954f402a976a276b2cfb4727baccdb955186))
+* update README quickstart to use top-level read()/write() functions ([#34](https://github.com/yildirimarda/simpleetl/issues/34)) ([f93513d](https://github.com/yildirimarda/simpleetl/commit/f93513d529f3a41d6b23c5e3a46d67b835966dfc))
+
 ## [0.2.0](https://github.com/yildirimarda/simpleetl/compare/v0.1.0...v0.2.0) (2026-09-01)
 
 
