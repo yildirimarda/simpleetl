@@ -450,7 +450,16 @@ class TestAvroCloudRoundTrip:
         writer = AvroWriter()
         writer.write(df, "s3://bucket/data.avro", filesystem=mock_fs)
 
-        mock_fs.open.assert_called_once_with("s3://bucket/data.avro", "wb")
+        # Transactional sink writes to temp path then atomically renames.
+        open_calls = [
+            call
+            for call in mock_fs.open.call_args_list
+            if ".tmp_" in str(call.args[0]) and str(call.args[0]).endswith("_data.avro")
+        ]
+        assert len(open_calls) == 1
+        mock_fs.mv.assert_called_once()
+        args, _ = mock_fs.mv.call_args
+        assert args[1] == "s3://bucket/data.avro"
         # Verify Avro data was written to the BytesIO buffer
         mock_file.seek(0)
         reader = fastavro.reader(mock_file)
