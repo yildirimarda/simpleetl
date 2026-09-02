@@ -18,9 +18,12 @@ class TestTable:
 
     def test_table_init_with_schema(self):
         """Test Table with schema name."""
+        from unittest.mock import MagicMock
+        mock_engine = MagicMock()
+        mock_engine.dialect.name = "postgresql"
         table = Table(
             "users",
-            connection_string="sqlite:///:memory:",
+            engine=mock_engine,
             schema="analytics",
         )
         assert table.schema == "analytics"
@@ -159,3 +162,44 @@ class TestTable:
         table._engine = None
         with pytest.raises(ValueError, match="No database engine"):
             table.upsert(df, key_columns=["id"])
+
+    def test_table_catalog_three_part_name(self):
+        """Test Table resolves catalog.schema.table for Unity Catalog."""
+        from unittest.mock import MagicMock
+        mock_engine = MagicMock()
+        mock_engine.dialect.name = "postgresql"
+        table = Table(
+            "users",
+            engine=mock_engine,
+            catalog="main",
+            schema="analytics",
+        )
+        assert table.catalog == "main"
+        assert table.get_full_name() == "main.analytics.users"
+
+    def test_table_catalog_only(self):
+        """Test Table resolves catalog.table when only catalog is set."""
+        from unittest.mock import MagicMock
+        mock_engine = MagicMock()
+        mock_engine.dialect.name = "postgresql"
+        table = Table(
+            "users",
+            engine=mock_engine,
+            catalog="unity_catalog",
+        )
+        assert table.get_full_name() == "unity_catalog.users"
+
+    def test_table_catalog_and_schema_write_read(self):
+        """Test Table read/write with catalog and schema on SQLite ignores catalog."""
+        # SQLite does not support three-level names; writer ignores catalog for SQLite
+        table = Table(
+            "uc_table",
+            connection_string="sqlite:///:memory:",
+            catalog="main",
+            schema="analytics",
+        )
+        assert table.get_full_name() == "uc_table"
+        df = pd.DataFrame({"id": [1, 2], "name": ["Alice", "Bob"]})
+        table.write(df, if_exists="replace")
+        result = table.read()
+        assert len(result) == 2

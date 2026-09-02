@@ -416,7 +416,7 @@
 
 ## Milestone 42: Product Roadmap — Platform Depth
 
-- [ ] Real Unity Catalog integration on the Databricks platform: resolve tables via catalog.schema.table, propagate lineage to UC, document required cluster permissions
+- [x] Real Unity Catalog integration on the Databricks platform: resolve tables via catalog.schema.table, propagate lineage to UC, document required cluster permissions
 - [ ] Predicate pushdown for JDBC sources: translate filter configs into WHERE clauses executed on the database instead of in pandas, with tests asserting the generated SQL
 - [ ] Glue platform: register outputs in the Glue Data Catalog (glue_catalog.py exists — wire it into the job lifecycle behind a config flag)
 

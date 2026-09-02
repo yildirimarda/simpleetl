@@ -54,6 +54,7 @@ class Table:
         engine: Optional[sqlalchemy.engine.Engine] = None,
         pool: Optional[ConnectionPool] = None,
         schema: Optional[str] = None,
+        catalog: Optional[str] = None,
     ) -> None:
         """Initialize a database table abstraction.
 
@@ -63,9 +64,11 @@ class Table:
             engine: SQLAlchemy engine (alternative to connection_string).
             pool: ConnectionPool instance (alternative to connection_string).
             schema: Optional database schema name.
+            catalog: Optional Unity Catalog / three-level namespace catalog.
         """
         self.table_name = table_name
         self.schema = schema
+        self.catalog = catalog
         self._reader = DatabaseReader()
         self._writer = DatabaseWriter()
         self._pool: Optional[ConnectionPool]
@@ -91,7 +94,26 @@ class Table:
         return None
 
     def get_full_name(self) -> str:
-        """Return the fully-qualified table name (schema.table if applicable)."""
+        """Return the fully-qualified table name.
+
+        For Unity Catalog integration, resolves as ``catalog.schema.table``
+        when *catalog* is provided, ``schema.table`` when only *schema* is set,
+        otherwise just ``table``. SQLite ignores catalog and schema.
+        """
+        # SQLite does not support three-level names
+        try:
+            if hasattr(self, "_engine") and self._engine is not None:
+                dialect = self.engine.dialect.name if self.engine else None
+            else:
+                dialect = None
+            if dialect == "sqlite":
+                return self.table_name
+        except Exception:
+            pass
+        if self.catalog and self.schema:
+            return f"{self.catalog}.{self.schema}.{self.table_name}"
+        if self.catalog:
+            return f"{self.catalog}.{self.table_name}"
         if self.schema:
             return f"{self.schema}.{self.table_name}"
         return self.table_name
@@ -190,6 +212,7 @@ class Table:
             table_name=self.table_name,
             if_exists=if_exists,
             schema=self.schema,
+            catalog=self.catalog,
             **kwargs,
         )
 
@@ -219,6 +242,7 @@ class Table:
             table_name=self.table_name,
             key_columns=key_columns,
             schema=self.schema,
+            catalog=self.catalog,
             **kwargs,
         )
 
@@ -455,6 +479,7 @@ class DatabaseWriter(DataWriter):
         if_exists = kwargs.get("if_exists", "fail")
         index = kwargs.get("index", False)
         schema = kwargs.pop("schema", None)
+        catalog = kwargs.pop("catalog", None)
 
         if if_exists == "append":
             data.to_sql(
@@ -480,9 +505,29 @@ class DatabaseWriter(DataWriter):
             if table_name in existing:
                 raise ValueError(f"Table '{table_name}' already exists.")
 
-        full_table = f"{schema}.{table_name}" if schema else table_name
+        # SQLite does not support three-level catalog.schema.table names
+        dialect = getattr(engine.dialect, "name", None)
+        if dialect == "sqlite":
+            catalog = None
+            schema = None
+
+        if catalog and schema:
+            full_table = f"{catalog}.{schema}.{table_name}"
+        elif catalog:
+            full_table = f"{catalog}.{table_name}"
+        elif schema:
+            full_table = f"{schema}.{table_name}"
+        else:
+            full_table = table_name
         staging = f"{table_name}_staging_{uuid.uuid4().hex[:8]}"
-        full_staging = f"{schema}.{staging}" if schema else staging
+        if catalog and schema:
+            full_staging = f"{catalog}.{schema}.{staging}"
+        elif catalog:
+            full_staging = f"{catalog}.{staging}"
+        elif schema:
+            full_staging = f"{schema}.{staging}"
+        else:
+            full_staging = staging
 
         # Create staging table with same structure
         with engine.begin() as conn:
@@ -652,7 +697,20 @@ class DatabaseWriter(DataWriter):
     ) -> int:
         """PostgreSQL UPSERT using ON CONFLICT ... DO UPDATE."""
         schema = kwargs.pop("schema", None)
-        full_table = f"{schema}.{table_name}" if schema else table_name
+        catalog = kwargs.pop("catalog", None)
+        # SQLite does not support three-level catalog.schema.table names
+        dialect = getattr(engine.dialect, "name", None)
+        if dialect == "sqlite":
+            catalog = None
+            schema = None
+        if catalog and schema:
+            full_table = f"{catalog}.{schema}.{table_name}"
+        elif catalog:
+            full_table = f"{catalog}.{table_name}"
+        elif schema:
+            full_table = f"{schema}.{table_name}"
+        else:
+            full_table = table_name
 
         columns = list(data.columns)
         col_list = ", ".join(columns)
@@ -685,13 +743,28 @@ class DatabaseWriter(DataWriter):
         **kwargs,
     ) -> int:
         """MySQL UPSERT using INSERT ... ON DUPLICATE KEY UPDATE."""
+        schema = kwargs.pop("schema", None)
+        catalog = kwargs.pop("catalog", None)
+        # SQLite does not support three-level catalog.schema.table names
+        dialect = getattr(engine.dialect, "name", None)
+        if dialect == "sqlite":
+            catalog = None
+            schema = None
+        if catalog and schema:
+            full_table = f"{catalog}.{schema}.{table_name}"
+        elif catalog:
+            full_table = f"{catalog}.{table_name}"
+        elif schema:
+            full_table = f"{schema}.{table_name}"
+        else:
+            full_table = table_name
         columns = list(data.columns)
         col_list = ", ".join(columns)
         val_placeholders = ", ".join([f":{c}" for c in columns])
         update_clause = ", ".join([f"{c} = VALUES({c})" for c in update_columns])
 
         sql = (
-            f"INSERT INTO {table_name} ({col_list}) VALUES ({val_placeholders}) "
+            f"INSERT INTO {full_table} ({col_list}) VALUES ({val_placeholders}) "
             f"ON DUPLICATE KEY UPDATE {update_clause}"
         )
 
@@ -715,6 +788,21 @@ class DatabaseWriter(DataWriter):
         **kwargs,
     ) -> int:
         """SQLite UPSERT using INSERT ... ON CONFLICT ... DO UPDATE (3.24+)."""
+        schema = kwargs.pop("schema", None)
+        catalog = kwargs.pop("catalog", None)
+        # SQLite does not support three-level catalog.schema.table names
+        dialect = getattr(engine.dialect, "name", None)
+        if dialect == "sqlite":
+            catalog = None
+            schema = None
+        if catalog and schema:
+            full_table = f"{catalog}.{schema}.{table_name}"
+        elif catalog:
+            full_table = f"{catalog}.{table_name}"
+        elif schema:
+            full_table = f"{schema}.{table_name}"
+        else:
+            full_table = table_name
         columns = list(data.columns)
         col_list = ", ".join(columns)
         val_placeholders = ", ".join([f":{c}" for c in columns])
@@ -722,7 +810,7 @@ class DatabaseWriter(DataWriter):
         update_clause = ", ".join([f"{c} = excluded.{c}" for c in update_columns])
 
         sql = (
-            f"INSERT INTO {table_name} ({col_list}) VALUES ({val_placeholders}) "
+            f"INSERT INTO {full_table} ({col_list}) VALUES ({val_placeholders}) "
             f"ON CONFLICT ({conflict_cols}) DO UPDATE SET {update_clause}"
         )
 
@@ -756,9 +844,29 @@ class DatabaseWriter(DataWriter):
         SQL-shape tests cover the current implementation.
         """
         schema = kwargs.pop("schema", None)
-        full_table = f"{schema}.{table_name}" if schema else table_name
+        catalog = kwargs.pop("catalog", None)
+        # SQLite does not support three-level catalog.schema.table names
+        dialect = getattr(engine.dialect, "name", None)
+        if dialect == "sqlite":
+            catalog = None
+            schema = None
+        if catalog and schema:
+            full_table = f"{catalog}.{schema}.{table_name}"
+        elif catalog:
+            full_table = f"{catalog}.{table_name}"
+        elif schema:
+            full_table = f"{schema}.{table_name}"
+        else:
+            full_table = table_name
         staging = f"{table_name}_staging_{uuid.uuid4().hex[:8]}"
-        full_staging = f"{schema}.{staging}" if schema else staging
+        if catalog and schema:
+            full_staging = f"{catalog}.{schema}.{staging}"
+        elif catalog:
+            full_staging = f"{catalog}.{staging}"
+        elif schema:
+            full_staging = f"{schema}.{staging}"
+        else:
+            full_staging = staging
 
         columns = list(data.columns)
         col_list = ", ".join(columns)
@@ -823,9 +931,29 @@ class DatabaseWriter(DataWriter):
         SQL-shape tests cover the current implementation.
         """
         schema = kwargs.pop("schema", None)
-        full_table = f"{schema}.{table_name}" if schema else table_name
+        catalog = kwargs.pop("catalog", None)
+        # SQLite does not support three-level catalog.schema.table names
+        dialect = getattr(engine.dialect, "name", None)
+        if dialect == "sqlite":
+            catalog = None
+            schema = None
+        if catalog and schema:
+            full_table = f"{catalog}.{schema}.{table_name}"
+        elif catalog:
+            full_table = f"{catalog}.{table_name}"
+        elif schema:
+            full_table = f"{schema}.{table_name}"
+        else:
+            full_table = table_name
         staging = f"{table_name}_staging_{uuid.uuid4().hex[:8]}"
-        full_staging = f"{schema}.{staging}" if schema else staging
+        if catalog and schema:
+            full_staging = f"{catalog}.{schema}.{staging}"
+        elif catalog:
+            full_staging = f"{catalog}.{staging}"
+        elif schema:
+            full_staging = f"{schema}.{staging}"
+        else:
+            full_staging = staging
 
         columns = list(data.columns)
         col_list = ", ".join(columns)
@@ -879,7 +1007,20 @@ class DatabaseWriter(DataWriter):
     ) -> int:
         """Generic UPSERT fallback using DELETE + INSERT in a transaction."""
         schema = kwargs.pop("schema", None)
-        full_table = f"{schema}.{table_name}" if schema else table_name
+        catalog = kwargs.pop("catalog", None)
+        # SQLite does not support three-level catalog.schema.table names
+        dialect = getattr(engine.dialect, "name", None)
+        if dialect == "sqlite":
+            catalog = None
+            schema = None
+        if catalog and schema:
+            full_table = f"{catalog}.{schema}.{table_name}"
+        elif catalog:
+            full_table = f"{catalog}.{table_name}"
+        elif schema:
+            full_table = f"{schema}.{table_name}"
+        else:
+            full_table = table_name
 
         rows_affected = 0
         with engine.begin() as conn:

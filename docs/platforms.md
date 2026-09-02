@@ -168,10 +168,43 @@ SimpleETL can run on Databricks. The `DatabricksPlatformRunner` detects the Data
 
 3. **Configure as a Job Task:**
 
-   - Go to Databricks Jobs
-   - Create a new Notebook task
-   - Point to your ETL notebook
-   - Set the cluster configuration
+    - Go to Databricks Jobs
+    - Create a new Notebook task
+    - Point to your ETL notebook
+    - Set the cluster configuration
+
+### Unity Catalog Integration
+
+SimpleETL supports resolving tables via Unity Catalog's three-level namespace (`catalog.schema.table`). When running on Databricks with Unity Catalog enabled, use the `Table` abstraction with the `catalog` parameter:
+
+```python
+from simpleetl.formats.database import Table
+
+# Resolve via Unity Catalog: catalog.schema.table
+table = Table(
+    "users",
+    connection_string="postgresql://localhost/db",
+    catalog="main",
+    schema="analytics",
+)
+print(table.get_full_name())  # main.analytics.users
+```
+
+Lineage events are automatically propagated to Unity Catalog when the `catalog` field is set on `LineageEvent` or when running inside a Databricks environment. The `LineageHook` detects `DATABRICKS_RUNTIME_VERSION` and sets `catalog="unity_catalog"` by default, and the `LineageTracker.propagate_to_unity_catalog()` method emits events qualified with the UC namespace.
+
+### Required Cluster Permissions
+
+To use Unity Catalog integration with SimpleETL on Databricks, the cluster service principal or user must have the following permissions:
+
+| Permission | Scope | Description |
+|---|---|---|
+| `USE CATALOG` | Catalog | Required to access tables within the Unity Catalog namespace |
+| `USE SCHEMA` | Schema | Required to read/write tables in the target schema |
+| `SELECT` | Table | Required for read operations (`Table.read`, `read_chunks`) |
+| `MODIFY` | Table | Required for write, upsert, and truncate operations (`Table.write`, `upsert`, `truncate`) |
+| `CREATE` | Schema | Required for staging-table creation during atomic writes |
+
+Additionally, the cluster must have the **Unity Catalog-enabled** policy and a valid **service credential** (OAuth token or PAT) configured via the `DATABRICKS_TOKEN` environment variable or Databricks secrets scope for lineage emission to the UC endpoint.
 
 ### Environment Detection
 

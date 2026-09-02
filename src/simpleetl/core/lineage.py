@@ -70,6 +70,7 @@ class LineageEvent:
     output_rows: int = 0
     duration_seconds: float = 0.0
     metadata: Dict[str, Any] = field(default_factory=dict)
+    catalog: str = ""
     record_provenance: Dict[str, List[str]] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -431,6 +432,65 @@ class LineageTracker:
         )
         return emitted
 
+    def propagate_to_unity_catalog(
+        self,
+        url: str,
+        catalog_name: str = "unity_catalog",
+        converter: Optional[OpenLineageConverter] = None,
+    ) -> int:
+        """Propagate lineage events to Unity Catalog with catalog namespace.
+
+        Similar to ``emit_openlineage`` but qualifies the dataset namespace
+        with the Unity Catalog name so that Databricks UC can resolve
+        ``catalog.schema.table`` identifiers properly.
+
+        Args:
+            url: The OpenLineage-compatible HTTP endpoint.
+            catalog_name: Unity Catalog name used to qualify the namespace.
+            converter: Optional ``OpenLineageConverter`` instance.
+
+        Returns:
+            The number of events successfully emitted.
+        """
+        if converter is None:
+            converter = OpenLineageConverter(namespace=f"simpleetl:{catalog_name}")
+        emitted = 0
+        for event in self._events:
+            event.catalog = event.catalog or catalog_name
+            run_event = converter.event_to_run_event(event)
+            payload = json.dumps(run_event).encode("utf-8")
+            req = urllib.request.Request(
+                url,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    if resp.status in (200, 201, 202, 204):
+                        emitted += 1
+                    else:
+                        logger.warning(
+                            "UC emit returned HTTP %d for event %s",
+                            resp.status,
+                            event.event_id,
+                        )
+            except (urllib.error.URLError, OSError) as exc:
+                logger.error(
+                    "Failed to emit UC event %s to %s: %s",
+                    event.event_id,
+                    url,
+                    exc,
+                )
+        logger.info(
+            "Propagated %d/%d lineage events to Unity Catalog (%s) at %s",
+            emitted,
+            len(self._events),
+            catalog_name,
+            url,
+        )
+        return emitted
+
 
 # ---------------------------------------------------------------------------
 # OpenLineageConverter
@@ -477,9 +537,17 @@ class OpenLineageConverter:
         outputs: list[Dict[str, Any]] = []
 
         if event.source:
-            inputs.append(self._build_dataset(event.source, event.input_schema))
+            inputs.append(
+                self._build_dataset(
+                    event.source, event.input_schema, event.catalog
+                )
+            )
         if event.destination:
-            outputs.append(self._build_dataset(event.destination, event.output_schema))
+            outputs.append(
+                self._build_dataset(
+                    event.destination, event.output_schema, event.catalog
+                )
+            )
 
         return {
             "producer": self.producer,
@@ -540,32 +608,43 @@ class OpenLineageConverter:
         if is_input:
             name = event.source
             schema = event.input_schema
+            catalog = event.catalog
         else:
             name = event.destination
             schema = event.output_schema
+            catalog = event.catalog
 
-        return self._build_dataset(name, schema)
+        return self._build_dataset(name, schema, catalog)
 
     def _build_dataset(
-        self, name: str, schema_fields: Dict[str, str]
+        self,
+        name: str,
+        schema_fields: Dict[str, str],
+        catalog: str = "",
     ) -> Dict[str, Any]:
         """Build an OpenLineage Dataset dict from a name and schema.
 
+        When *catalog* is provided (Unity Catalog integration), the dataset
+        namespace is qualified with the catalog name for proper UC propagation.
+
         Args:
-            name: The dataset name (e.g. ``s3://bucket/data.csv``).
+            name: The dataset name (e.g. ``catalog.schema.table``).
             schema_fields: Mapping of field names to type names.
+            catalog: Optional Unity Catalog name for lineage propagation.
 
         Returns:
-            An OpenLineage Dataset dictionary.
+            An OpenLineage-compatible Dataset dictionary.
         """
         fields: list[Dict[str, Any]] = [
             {"name": field_name, "type": field_type}
             for field_name, field_type in schema_fields.items()
         ]
+        namespace = self.namespace
+        if catalog:
+            namespace = f"{namespace}:{catalog}" if namespace else catalog
         return {
-            "namespace": self.namespace,
-            "name": name or "unknown",
-            "facets": {
+            "namespace": namespace,
+            "name": name or "unknown",            "facets": {
                 "schema": {
                     "fields": fields,
                     "_producer": self.producer,
@@ -778,6 +857,13 @@ class LineageHook(Hook):
         # Try to get input_rows from metadata
         input_rows = context.metadata.get("extracted_rows", 0)
 
+        # Propagate Unity Catalog info when available
+        catalog = context.metadata.get("catalog", "")
+        if not catalog:
+            from ..platforms.detector import is_databricks
+            if is_databricks():
+                catalog = "unity_catalog"
+
         event = LineageEvent(
             job_name=job_name,
             phase=phase,
@@ -787,6 +873,7 @@ class LineageHook(Hook):
             output_schema=output_schema,
             duration_seconds=round(duration, 6),
             metadata=dict(context.metadata),
+            catalog=catalog,
         )
 
         self._get_tracker().record_event(event)

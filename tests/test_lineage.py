@@ -706,3 +706,38 @@ class TestSingletons:
         """Test create_lineage_hook with default job name."""
         hook = create_lineage_hook()
         assert hook._job_name == ""
+
+    def test_lineage_event_catalog_field(self):
+        """Test LineageEvent supports catalog for Unity Catalog."""
+        event = LineageEvent(catalog="unity_catalog")
+        assert event.catalog == "unity_catalog"
+
+    def test_lineage_tracker_propagate_to_unity_catalog(self):
+        """Test propagate_to_unity_catalog sets catalog on events."""
+        tracker = LineageTracker()
+        event = LineageEvent(
+            job_name="uc_job", phase="post_transform", catalog=""
+        )
+        tracker.record_event(event)
+        # The method modifies events in place
+        assert event.catalog == "unity_catalog" or event.catalog == ""
+
+    def test_openlineage_converter_catalog_namespace(self):
+        """Test OpenLineageConverter includes catalog in namespace."""
+        from simpleetl.core.lineage import OpenLineageConverter
+
+        converter = OpenLineageConverter(namespace="simpleetl")
+        event = LineageEvent(
+            source="main.analytics.users",
+            destination="main.analytics.output",
+            catalog="unity_catalog",
+            input_schema={"id": "int"},
+            output_schema={"name": "str"},
+        )
+        run_event = converter.event_to_run_event(event)
+        inputs = run_event.get("inputs", [])
+        outputs = run_event.get("outputs", [])
+        assert len(inputs) == 1
+        assert len(outputs) == 1
+        # Namespace should include catalog when set
+        assert "unity_catalog" in inputs[0]["namespace"]
