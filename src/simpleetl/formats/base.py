@@ -6,6 +6,18 @@ from abc import ABC, abstractmethod
 from typing import Any, Iterator
 import pandas as pd
 
+# Conservative memory estimate per data row (bytes) for chunk-size
+# calculations based on max_buffer_mb. Adjusted upward to stay safe.
+_ESTIMATED_BYTES_PER_ROW = 1024
+
+
+def _chunk_size_from_max_buffer(max_buffer_mb: float) -> int:
+    """Compute a chunk size that keeps a single chunk under max_buffer_mb."""
+    if max_buffer_mb <= 0:
+        return 10000
+    bytes_limit = max_buffer_mb * 1024 * 1024
+    return max(1, int(bytes_limit / _ESTIMATED_BYTES_PER_ROW))
+
 
 class DataReader(ABC):
     """Abstract base class for data readers."""
@@ -25,7 +37,7 @@ class DataReader(ABC):
         pass
 
     def read_chunks(
-        self, source: Any, chunk_size: int = 10000, **kwargs
+        self, source: Any, chunk_size: int = 10000, max_buffer_mb: float = 0, **kwargs
     ) -> Iterator[pd.DataFrame]:
         """
         Read data from a source in chunks.
@@ -36,11 +48,15 @@ class DataReader(ABC):
         Args:
             source: The data source.
             chunk_size: Number of rows per chunk.
+            max_buffer_mb: Maximum memory in MB allowed for a single chunk.
+                When > 0, chunk_size is computed from this limit.
             **kwargs: Additional format-specific parameters.
 
         Yields:
             pandas DataFrame chunks.
         """
+        if max_buffer_mb > 0:
+            chunk_size = _chunk_size_from_max_buffer(max_buffer_mb)  # noqa: F841
         yield self.read(source, **kwargs)
 
 

@@ -6,7 +6,7 @@ import logging
 
 import pandas as pd
 from typing import Any, Dict, Iterator, Optional
-from .base import DataReader, DataWriter
+from .base import DataReader, DataWriter, _chunk_size_from_max_buffer
 from ..core.engine import is_polars_available, validate_engine
 from ..core.filesystem import is_cloud_path, get_filesystem
 
@@ -101,7 +101,12 @@ class CSVReader(DataReader):
         return pl.read_csv(source, **pl_kwargs).to_pandas()
 
     def read_chunks(
-        self, source: str, chunk_size: int = 10000, engine: str = "pandas", **kwargs
+        self,
+        source: str,
+        chunk_size: int = 10000,
+        engine: str = "pandas",
+        max_buffer_mb: float = 0,
+        **kwargs,
     ) -> Iterator[pd.DataFrame]:
         """
         Read CSV data in chunks.
@@ -113,6 +118,8 @@ class CSVReader(DataReader):
             source: Path to the CSV file.
             chunk_size: Number of rows per chunk.
             engine: ``"pandas"`` (default) or ``"polars"``.
+            max_buffer_mb: Maximum memory in MB for a single chunk.
+                When > 0, chunk_size is derived from this limit.
             **kwargs: Additional arguments to pass to pandas.read_csv.
 
         Yields:
@@ -122,6 +129,8 @@ class CSVReader(DataReader):
             ValueError: If *engine* is not ``"pandas"`` or ``"polars"``.
         """
         validate_engine(engine)
+        if max_buffer_mb > 0:
+            chunk_size = _chunk_size_from_max_buffer(max_buffer_mb)
         if engine == "polars":
             logger.debug(
                 "Chunked CSV reads always use pandas; ignoring engine='polars'."

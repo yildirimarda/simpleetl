@@ -215,6 +215,7 @@ class ETLJobConfig(BaseModel):
     format_options: Dict[str, Dict[str, Any]] = {}
     engine: str = "pandas"
     batch_size: int = 10000
+    max_buffer_mb: float = 100.0
     validation_rules: List[Dict[str, Any]] = []
     schema_drift: SchemaDriftConfig = SchemaDriftConfig()
     tracing: TracingConfig = TracingConfig()
