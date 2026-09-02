@@ -715,9 +715,7 @@ class TestSingletons:
     def test_lineage_tracker_propagate_to_unity_catalog(self):
         """Test propagate_to_unity_catalog sets catalog on events."""
         tracker = LineageTracker()
-        event = LineageEvent(
-            job_name="uc_job", phase="post_transform", catalog=""
-        )
+        event = LineageEvent(job_name="uc_job", phase="post_transform", catalog="")
         tracker.record_event(event)
         # The method modifies events in place
         assert event.catalog == "unity_catalog" or event.catalog == ""

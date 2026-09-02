@@ -19,6 +19,7 @@ class TestTable:
     def test_table_init_with_schema(self):
         """Test Table with schema name."""
         from unittest.mock import MagicMock
+
         mock_engine = MagicMock()
         mock_engine.dialect.name = "postgresql"
         table = Table(
@@ -166,6 +167,7 @@ class TestTable:
     def test_table_catalog_three_part_name(self):
         """Test Table resolves catalog.schema.table for Unity Catalog."""
         from unittest.mock import MagicMock
+
         mock_engine = MagicMock()
         mock_engine.dialect.name = "postgresql"
         table = Table(
@@ -180,6 +182,7 @@ class TestTable:
     def test_table_catalog_only(self):
         """Test Table resolves catalog.table when only catalog is set."""
         from unittest.mock import MagicMock
+
         mock_engine = MagicMock()
         mock_engine.dialect.name = "postgresql"
         table = Table(

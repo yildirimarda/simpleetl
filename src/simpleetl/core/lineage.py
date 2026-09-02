@@ -538,9 +538,7 @@ class OpenLineageConverter:
 
         if event.source:
             inputs.append(
-                self._build_dataset(
-                    event.source, event.input_schema, event.catalog
-                )
+                self._build_dataset(event.source, event.input_schema, event.catalog)
             )
         if event.destination:
             outputs.append(
@@ -644,7 +642,8 @@ class OpenLineageConverter:
             namespace = f"{namespace}:{catalog}" if namespace else catalog
         return {
             "namespace": namespace,
-            "name": name or "unknown",            "facets": {
+            "name": name or "unknown",
+            "facets": {
                 "schema": {
                     "fields": fields,
                     "_producer": self.producer,
@@ -861,6 +860,7 @@ class LineageHook(Hook):
         catalog = context.metadata.get("catalog", "")
         if not catalog:
             from ..platforms.detector import is_databricks
+
             if is_databricks():
                 catalog = "unity_catalog"
 
