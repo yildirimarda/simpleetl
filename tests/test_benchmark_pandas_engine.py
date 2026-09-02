@@ -13,8 +13,19 @@ def _find_engine_pandas_calls(filepath: str) -> list:
         if isinstance(node, ast.Call):
             # Check keyword args for engine="pandas"
             for kw in node.keywords:
-                if kw.arg == "engine" and isinstance(kw.value, ast.Constant) and kw.value.value == "pandas":
-                    calls.append((node.func.__name__ if hasattr(node.func, '__name__') else str(node.func), kw.arg))
+                if (
+                    kw.arg == "engine"
+                    and isinstance(kw.value, ast.Constant)
+                    and kw.value.value == "pandas"
+                ):
+                    calls.append(
+                        (
+                            node.func.__name__
+                            if hasattr(node.func, "__name__")
+                            else str(node.func),
+                            kw.arg,
+                        )
+                    )
     return calls
 
 
