@@ -97,6 +97,12 @@ from simpleetl.formats import (
     FormatFactory,
 )
 
+from simpleetl.cdc import (
+    CDCEvent,
+    CDCFixtureReader,
+    CDCIngestor,
+)
+
 # -- Schema ------------------------------------------------------------------
 
 from simpleetl.core.schema import (
@@ -572,6 +578,10 @@ __all__ = [
     "KafkaReader",
     "KafkaWriter",
     "FormatFactory",
+    # CDC ingestion
+    "CDCEvent",
+    "CDCFixtureReader",
+    "CDCIngestor",
     # Schema
     "Schema",
     "ColumnDef",

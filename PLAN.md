@@ -412,7 +412,7 @@
 - [x] Backpressure and bounded memory for streaming reads: chunked CSV/JSON/Parquet readers must respect a max in-flight buffer (config: max_buffer_mb), with a test proving constant memory on a 1M-row synthetic file
 - [x] Transactional sink contract for exactly-once file writes: write to temp path + atomic rename for filesystem sinks, staging-table + swap for JDBC sinks; document the guarantee per format
 - [x] Retry with exponential backoff + jitter and a circuit breaker for rest_api and database sources (config: max_retries, backoff_base, breaker_threshold), with failure-injection tests
-- [ ] CDC ingestion: read Debezium-format change events from Kafka and apply insert/update/delete to a Delta or JDBC sink, with an integration test using recorded event fixtures
+- [x] CDC ingestion: read Debezium-format change events from Kafka and apply insert/update/delete to a Delta or JDBC sink, with an integration test using recorded event fixtures
 
 ## Milestone 42: Product Roadmap — Platform Depth
 
