@@ -288,8 +288,10 @@ class QualityReportArtifact:
                 f"</table>\n"
             )
 
-        sample_html = "\n".join(sample_sections) if sample_sections else (
-            "<p>No failing row samples available.</p>\n"
+        sample_html = (
+            "\n".join(sample_sections)
+            if sample_sections
+            else ("<p>No failing row samples available.</p>\n")
         )
 
         return (
@@ -308,13 +310,13 @@ class QualityReportArtifact:
             f"<b>Passed:</b> {sum(1 for r in self.report.results if r.passed)} | "
             f"<b>Errors:</b> {len(self.report.failures)} | "
             f"<b>Warnings:</b> {len(self.report.warnings)}</p>\n"
-            '<h2>Rule Results</h2>\n'
+            "<h2>Rule Results</h2>\n"
             '<table border="1" cellpadding="6" cellspacing="0">\n'
-            '<tr><th>Rule Type</th><th>Column</th><th>Status</th>'
-            '<th>Severity</th><th>Message</th><th>Failed Count</th></tr>\n'
+            "<tr><th>Rule Type</th><th>Column</th><th>Status</th>"
+            "<th>Severity</th><th>Message</th><th>Failed Count</th></tr>\n"
             f"{report_table_rows}"
             "</table>\n"
-            '<h2>Row Samples (Failed Rules)</h2>\n'
+            "<h2>Row Samples (Failed Rules)</h2>\n"
             f"{sample_html}\n"
             "</body>\n</html>"
         )
@@ -337,8 +339,16 @@ class QualityReportArtifact:
                     mask = dup_mask
                 elif r.rule_type == "in_range":
                     series = self.df[r.column].dropna()
-                    min_v = r.metadata.get("violations", {}).get("below_min", {}).get("min_value")
-                    max_v = r.metadata.get("violations", {}).get("above_max", {}).get("max_value")
+                    min_v = (
+                        r.metadata.get("violations", {})
+                        .get("below_min", {})
+                        .get("min_value")
+                    )
+                    max_v = (
+                        r.metadata.get("violations", {})
+                        .get("above_max", {})
+                        .get("max_value")
+                    )
                     if min_v is not None and max_v is not None:
                         mask = (self.df[r.column] < min_v) | (self.df[r.column] > max_v)
                     elif min_v is not None:
@@ -368,7 +378,10 @@ class QualityReportArtifact:
                     expr = r.metadata.get("expr") or r.rule_type
                     try:
                         result = self.df.eval(expr)
-                        mask = ~result
+                        if isinstance(result, pd.Series) and result.dtype == bool:
+                            mask = ~result
+                        else:
+                            mask = pd.Series(False, index=self.df.index)
                     except Exception:
                         mask = pd.Series(False, index=self.df.index)
                 elif r.rule_type in ("min_length", "max_length"):
@@ -385,7 +398,7 @@ class QualityReportArtifact:
                 if isinstance(mask, pd.Series) and mask.index.equals(self.df.index):
                     sampled = self.df[mask].head(self.max_row_samples)
                 else:
-                    sampled = self.df.iloc[:self.max_row_samples]
+                    sampled = self.df.iloc[: self.max_row_samples]
                 if not sampled.empty:
                     samples[key] = sampled
             except Exception as exc:

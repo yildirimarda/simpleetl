@@ -661,7 +661,10 @@ class TestQualityReportArtifact:
         ]
         report = QualityRuleEngine(rules).evaluate(sample_df)
         artifact = QualityReportArtifact(
-            report=report, df=sample_df, output_path=str(tmp_path / "report.json"), report_format="json"
+            report=report,
+            df=sample_df,
+            output_path=str(tmp_path / "report.json"),
+            report_format="json",
         )
         path = artifact.write()
         assert path == str(tmp_path / "report.json")
@@ -675,7 +678,10 @@ class TestQualityReportArtifact:
         rules = [{"type": "in_range", "column": "age", "min": 0}]
         report = QualityRuleEngine(rules).evaluate(df)
         artifact = QualityReportArtifact(
-            report=report, df=df, output_path=str(tmp_path / "report.html"), report_format="html"
+            report=report,
+            df=df,
+            output_path=str(tmp_path / "report.html"),
+            report_format="html",
         )
         path = artifact.write()
         content = open(path).read()
