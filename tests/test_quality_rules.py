@@ -24,6 +24,7 @@ from simpleetl.core.quality_rules import (
     QualityRuleEngine,
     QualityRuleError,
     QualityRuleHook,
+    QualityReportArtifact,
     RuleReport,
     RuleResult,
 )
@@ -645,3 +646,67 @@ class TestQualityRuleHook:
         context = HookContext(phase=POST_TRANSFORM, data=sample_df)
         execute_hooks(POST_TRANSFORM, context)
         assert context.metadata["quality_rule_report"].passed is True
+
+
+# ---------------------------------------------------------------------------
+# Quality report artifact
+# ---------------------------------------------------------------------------
+
+
+class TestQualityReportArtifact:
+    def test_to_json_contains_row_samples(self, sample_df, tmp_path):
+        rules = [
+            {"type": "not_null", "column": "id"},
+            {"type": "in_range", "column": "age", "min": 0},
+        ]
+        report = QualityRuleEngine(rules).evaluate(sample_df)
+        artifact = QualityReportArtifact(
+            report=report,
+            df=sample_df,
+            output_path=str(tmp_path / "report.json"),
+            report_format="json",
+        )
+        path = artifact.write()
+        assert path == str(tmp_path / "report.json")
+        content = open(path).read()
+        assert '"passed"' in content
+        assert '"row_samples"' in content
+
+    def test_to_html_contains_table_and_samples(self, sample_df, tmp_path):
+        df = sample_df.copy()
+        df.loc[0, "age"] = -100  # Force a failure
+        rules = [{"type": "in_range", "column": "age", "min": 0}]
+        report = QualityRuleEngine(rules).evaluate(df)
+        artifact = QualityReportArtifact(
+            report=report,
+            df=df,
+            output_path=str(tmp_path / "report.html"),
+            report_format="html",
+        )
+        path = artifact.write()
+        content = open(path).read()
+        assert "Data Quality Report Artifact" in content
+        assert "FAIL" in content
+        assert "Row Samples" in content
+
+    def test_artifact_without_df_omits_samples(self, sample_df, tmp_path):
+        rules = [{"type": "not_null", "column": "id"}]
+        report = QualityRuleEngine(rules).evaluate(sample_df)
+        artifact = QualityReportArtifact(
+            report=report, df=None, output_path=str(tmp_path / "report.html")
+        )
+        path = artifact.write()
+        content = open(path).read()
+        assert "No failing row samples available" in content
+
+    def test_hook_emits_artifact_when_enabled(self, sample_df, tmp_path):
+        hook = QualityRuleHook(
+            rules=[{"type": "not_null", "column": "id"}],
+            emit_report=True,
+            report_path=str(tmp_path / "artifact.html"),
+            report_format="html",
+        )
+        context = HookContext(phase=POST_TRANSFORM, data=sample_df)
+        hook.execute(context)
+        assert (tmp_path / "artifact.html").exists()
+        assert "quality_rule_report" in context.metadata

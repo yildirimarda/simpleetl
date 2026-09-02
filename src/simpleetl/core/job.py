@@ -323,7 +323,13 @@ class ETLJob(ABC):
             from .quality_rules import QualityRuleHook
 
             self._config_hooks.setdefault(POST_TRANSFORM, []).append(
-                QualityRuleHook(self.config.validation_rules)
+                QualityRuleHook(
+                    rules=self.config.validation_rules,
+                    emit_report=self.config.quality_report_enabled,
+                    report_path=self.config.quality_report_path,
+                    report_format=self.config.quality_report_format,
+                    max_row_samples=self.config.quality_report_max_samples,
+                )
             )
 
         if self.config.schema_drift.enabled:

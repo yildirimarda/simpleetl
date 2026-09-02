@@ -227,6 +227,10 @@ class ETLJobConfig(BaseModel):
     provenance_enabled: bool = False
     provenance_record_id_column: str = "id"
     quality_checks: Optional[Dict[str, Any]] = None
+    quality_report_enabled: bool = False
+    quality_report_path: str = "quality_report.html"
+    quality_report_format: str = "html"
+    quality_report_max_samples: int = 5
     lineage_enabled: bool = False
     register_glue_catalog: bool = False
 
