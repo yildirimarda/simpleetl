@@ -163,6 +163,8 @@ class DatabaseConfig(BaseModel):
     write_timeout: int = 30
     retry_count: int = 3
     retry_delay: float = 1.0
+    backoff_base: float = 1.0
+    breaker_threshold: int = 5
 
 
 class SchemaDriftConfig(BaseModel):
@@ -201,6 +203,8 @@ class ETLJobConfig(BaseModel):
     output_format: str
     max_retries: int = 0
     retry_delay: float = 1.0
+    backoff_base: float = 1.0
+    breaker_threshold: int = 5
     log_level: str = "INFO"
     params: Dict[str, Any] = {}
     secrets_provider: Optional[str] = None
