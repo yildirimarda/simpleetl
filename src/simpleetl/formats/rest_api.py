@@ -18,6 +18,7 @@ from typing import Any, Dict, Iterator, Optional
 import pandas as pd
 
 from .base import DataReader, DataWriter
+from simpleetl.core.retry import RetryCircuitBreaker
 
 
 def _require_requests():
@@ -93,6 +94,9 @@ class RestApiReader(DataReader):
         timeout: int = 30,
         verify_ssl: bool = True,
         requests_per_second: Optional[float] = None,
+        max_retries: int = 3,
+        backoff_base: float = 1.0,
+        breaker_threshold: int = 5,
     ) -> None:
         valid_auth = {"none", "bearer", "api_key", "basic"}
         if auth_type not in valid_auth:
@@ -111,6 +115,11 @@ class RestApiReader(DataReader):
         self.verify_ssl = verify_ssl
         self.requests_per_second = requests_per_second
         self._last_request_time: Optional[float] = None
+        self.retry_circuit = RetryCircuitBreaker(
+            max_retries=max_retries,
+            backoff_base=backoff_base,
+            breaker_threshold=breaker_threshold,
+        )
 
     # ------------------------------------------------------------------
     # Internals
@@ -181,16 +190,20 @@ class RestApiReader(DataReader):
         json_body: Optional[Dict[str, Any]] = None,
     ) -> Any:
         self._rate_limit()
-        response = session.request(
-            method,
-            url,
-            params=params,
-            json=json_body,
-            timeout=self.timeout,
-            verify=self.verify_ssl,
-        )
-        response.raise_for_status()
-        return response
+
+        def _request():
+            response = session.request(
+                method,
+                url,
+                params=params,
+                json=json_body,
+                timeout=self.timeout,
+                verify=self.verify_ssl,
+            )
+            response.raise_for_status()
+            return response
+
+        return self.retry_circuit.call(_request)
 
     # ------------------------------------------------------------------
     # Public API
@@ -403,6 +416,9 @@ class RestApiWriter(DataWriter):
         headers: Optional[Dict[str, str]] = None,
         timeout: int = 30,
         verify_ssl: bool = True,
+        max_retries: int = 3,
+        backoff_base: float = 1.0,
+        breaker_threshold: int = 5,
     ) -> None:
         self.auth_type = auth_type
         self.auth_token = auth_token
@@ -413,6 +429,11 @@ class RestApiWriter(DataWriter):
         self.extra_headers: Dict[str, str] = headers or {}
         self.timeout = timeout
         self.verify_ssl = verify_ssl
+        self.retry_circuit = RetryCircuitBreaker(
+            max_retries=max_retries,
+            backoff_base=backoff_base,
+            breaker_threshold=breaker_threshold,
+        )
 
     def _get_session(self) -> Any:
         _require_requests()
@@ -459,14 +480,19 @@ class RestApiWriter(DataWriter):
         for i in range(0, len(records), batch_size):
             batch = records[i : i + batch_size]
             payload: Any = {record_key: batch} if record_key else batch
-            response = session.request(
-                method,
-                destination,
-                json=payload,
-                timeout=self.timeout,
-                verify=self.verify_ssl,
-            )
-            response.raise_for_status()
+
+            def _post():
+                resp = session.request(
+                    method,
+                    destination,
+                    json=payload,
+                    timeout=self.timeout,
+                    verify=self.verify_ssl,
+                )
+                resp.raise_for_status()
+                return resp
+
+            self.retry_circuit.call(_post)
 
 
 # Convenience type alias for external imports

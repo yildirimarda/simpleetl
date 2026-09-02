@@ -14,6 +14,8 @@ from urllib.parse import urlparse
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
+from simpleetl.core.retry import RetryCircuitBreaker
+
 logger = logging.getLogger(__name__)
 
 # Registry of created engines keyed by connection URL
@@ -57,6 +59,8 @@ class ConnectionConfig:
     write_timeout: int = 30
     retry_count: int = 3
     retry_delay: float = 1.0
+    backoff_base: float = 1.0
+    breaker_threshold: int = 5
 
     def to_engine_kwargs(self) -> Dict[str, Any]:
         """Build keyword arguments for sqlalchemy.create_engine.
@@ -134,6 +138,11 @@ class ConnectionPool:
     def __init__(self, config: ConnectionConfig):
         self.config = config
         self._engine: Optional[Engine] = None
+        self.retry_circuit = RetryCircuitBreaker(
+            max_retries=config.retry_count,
+            backoff_base=config.backoff_base,
+            breaker_threshold=config.breaker_threshold,
+        )
 
     @property
     def engine(self) -> Engine:
@@ -148,11 +157,11 @@ class ConnectionPool:
         Returns:
             A SQLAlchemy Connection context manager.
         """
-        return _retry_operation(
-            self.engine.connect,
-            retry_count=self.config.retry_count,
-            retry_delay=self.config.retry_delay,
-        )
+
+        def _connect():
+            return self.engine.connect()
+
+        return self.retry_circuit.call(_connect)
 
     def execute(self, statement: Any, parameters: Optional[Dict] = None):
         """Execute a SQL statement with retry logic.
@@ -171,11 +180,7 @@ class ConnectionPool:
             with self.get_connection() as conn:
                 return conn.execute(statement, parameters or {})
 
-        return _retry_operation(
-            _execute,
-            retry_count=self.config.retry_count,
-            retry_delay=self.config.retry_delay,
-        )
+        return self.retry_circuit.call(_execute)
 
     def dispose(self):
         """Dispose of the engine and its connection pool."""
