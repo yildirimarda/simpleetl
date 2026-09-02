@@ -148,6 +148,7 @@ from simpleetl.core.quality_rules import (
     QualityRuleEngine,
     QualityRuleError,
     QualityRuleHook,
+    QualityReportArtifact,
     RuleReport,
     RuleResult,
 )
@@ -613,6 +614,7 @@ __all__ = [
     "QualityRuleEngine",
     "QualityRuleError",
     "QualityRuleHook",
+    "QualityReportArtifact",
     "RuleReport",
     "RuleResult",
     # Schema drift detection

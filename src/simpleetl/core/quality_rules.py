@@ -14,6 +14,7 @@ Example rule definitions::
     {"type": "expression", "expr": "price > 0", "severity": "warning"}
 """
 
+import json
 import logging
 import re
 from dataclasses import dataclass, field
@@ -144,6 +145,42 @@ class RuleReport:
             "results": [r.to_dict() for r in self._results],
         }
 
+    def to_json(self, indent: int = 2) -> str:
+        """Return the report as a JSON string."""
+        return json.dumps(self.to_dict(), indent=indent, default=str)
+
+    def to_html(self, max_row_samples: int = 5) -> str:
+        """Return a minimal HTML page summarizing the report."""
+        rows = ""
+        for r in self._results:
+            status = "PASS" if r.passed else "FAIL"
+            color = "green" if r.passed else "red"
+            rows += (
+                f"<tr>"
+                f"<td>{r.rule_type}</td>"
+                f"<td>{r.column or '-'}</td>"
+                f'<td style="color:{color};font-weight:bold;">{status}</td>'
+                f"<td>{r.severity}</td>"
+                f"<td>{r.message}</td>"
+                f"<td>{r.failed_count}</td>"
+                f"</tr>\n"
+            )
+        return (
+            "<!DOCTYPE html>\n<html>\n<head><meta charset='utf-8'>"
+            "<title>Quality Rule Report</title></head>\n<body>\n"
+            "<h1>Quality Rule Report</h1>\n"
+            f"<p><b>Passed:</b> {self.passed} | "
+            f"<b>Total:</b> {len(self._results)} | "
+            f"<b>Passed rules:</b> {sum(1 for r in self._results if r.passed)} | "
+            f"<b>Errors:</b> {len(self.failures)} | "
+            f"<b>Warnings:</b> {len(self.warnings)}</p>\n"
+            '<table border="1" cellpadding="6" cellspacing="0">\n'
+            "<tr><th>Rule Type</th><th>Column</th><th>Status</th>"
+            "<th>Severity</th><th>Message</th><th>Failed Count</th></tr>\n"
+            f"{rows}"
+            "</table>\n</body>\n</html>"
+        )
+
     def summary(self) -> str:
         """Return a human-readable summary of the report."""
         passed_count = sum(1 for r in self._results if r.passed)
@@ -161,6 +198,200 @@ class RuleReport:
                 f"  [{result.severity.upper()}] {label}{target}: {result.message}"
             )
         return "\n".join(lines)
+
+
+class QualityReportArtifact:
+    """Generate an HTML/JSON artifact from a quality rule evaluation.
+
+    Includes pass/fail per rule, a summary, and optional row samples
+    for rules that failed. Designed to be written to a file path that
+    can be uploaded as a CI artifact (e.g. ``quality_report.html``).
+    """
+
+    def __init__(
+        self,
+        report: RuleReport,
+        df: Optional[pd.DataFrame] = None,
+        max_row_samples: int = 5,
+        output_path: str = "quality_report.html",
+        report_format: str = "html",
+    ):
+        self.report = report
+        self.df = df
+        self.max_row_samples = max_row_samples
+        self.output_path = output_path
+        self.report_format = report_format
+
+    def write(self, path: Optional[str] = None) -> str:
+        """Write the artifact to a file and return the file path."""
+        path = path or self.output_path
+        fmt = self.report_format
+        if fmt == "json":
+            content = self.to_json()
+        elif fmt == "html":
+            content = self.to_html()
+        else:
+            raise ValueError(f"Unsupported report format: {fmt!r}")
+        import pathlib
+
+        pathlib.Path(path).parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return path
+
+    def to_json(self) -> str:
+        """Return the artifact as a JSON string with row samples."""
+        samples = self._row_samples()
+        payload = {
+            "passed": self.report.passed,
+            "total_rules": len(self.report.results),
+            "passed_rules": sum(1 for r in self.report.results if r.passed),
+            "error_failures": len(self.report.failures),
+            "warning_failures": len(self.report.warnings),
+            "results": [r.to_dict() for r in self.report.results],
+            "row_samples": samples,
+        }
+        return json.dumps(payload, indent=2, default=str)
+
+    def to_html(self) -> str:
+        """Return the artifact as an HTML page with row samples."""
+        report_table_rows = ""
+        for r in self.report.results:
+            status = "PASS" if r.passed else "FAIL"
+            color = "green" if r.passed else "red"
+            report_table_rows += (
+                f"<tr>"
+                f"<td>{r.rule_type}</td>"
+                f"<td>{r.column or '-'}</td>"
+                f'<td style="color:{color};font-weight:bold;">{status}</td>'
+                f"<td>{r.severity}</td>"
+                f"<td>{r.message}</td>"
+                f"<td>{r.failed_count}</td>"
+                f"</tr>\n"
+            )
+
+        samples = self._row_samples()
+        sample_sections = []
+        for rule_key, sample_df in samples.items():
+            if sample_df is None or sample_df.empty:
+                continue
+            sample_rows = ""
+            for _, row in sample_df.iterrows():
+                cells = [f"<td>{str(v)}</td>" for v in row.values]
+                sample_rows += f"<tr>{''.join(cells)}</tr>\n"
+            headers = [f"<th>{c}</th>" for c in sample_df.columns]
+            sample_sections.append(
+                f"<h2>Failed rows for: {rule_key}</h2>\n"
+                f'<table border="1" cellpadding="4" cellspacing="0">\n'
+                f"<tr>{''.join(headers)}</tr>\n"
+                f"{sample_rows}"
+                f"</table>\n"
+            )
+
+        sample_html = "\n".join(sample_sections) if sample_sections else (
+            "<p>No failing row samples available.</p>\n"
+        )
+
+        return (
+            "<!DOCTYPE html>\n<html>\n<head>"
+            "<meta charset='utf-8'><title>Data Quality Report Artifact</title>"
+            "<style>"
+            "body{font-family:Arial,sans-serif;margin:2rem;background:#f8f9fa;}"
+            "h1{color:#2c3e50;}"
+            "table{border-collapse:collapse;width:100%;background:#fff;}"
+            "th{background:#2c3e50;color:#fff;text-align:left;padding:8px;}"
+            "td{padding:8px;border-bottom:1px solid #ddd;}"
+            "</style></head>\n<body>\n"
+            "<h1>Data Quality Report Artifact</h1>\n"
+            f"<p><b>Overall:</b> {self.report.passed}</p>\n"
+            f"<p><b>Rules evaluated:</b> {len(self.report.results)} | "
+            f"<b>Passed:</b> {sum(1 for r in self.report.results if r.passed)} | "
+            f"<b>Errors:</b> {len(self.report.failures)} | "
+            f"<b>Warnings:</b> {len(self.report.warnings)}</p>\n"
+            '<h2>Rule Results</h2>\n'
+            '<table border="1" cellpadding="6" cellspacing="0">\n'
+            '<tr><th>Rule Type</th><th>Column</th><th>Status</th>'
+            '<th>Severity</th><th>Message</th><th>Failed Count</th></tr>\n'
+            f"{report_table_rows}"
+            "</table>\n"
+            '<h2>Row Samples (Failed Rules)</h2>\n'
+            f"{sample_html}\n"
+            "</body>\n</html>"
+        )
+
+    def _row_samples(self) -> Dict[str, pd.DataFrame]:
+        """Extract sample failing rows per failed rule from the data."""
+        samples: Dict[str, pd.DataFrame] = {}
+        if self.df is None or self.df.empty:
+            return samples
+        for r in self.report.results:
+            if r.passed:
+                continue
+            label = r.metadata.get("name") or r.rule_type
+            key = f"{label} (column '{r.column}')" if r.column else label
+            try:
+                if r.rule_type == "not_null":
+                    mask = self.df[r.column].isna()
+                elif r.rule_type == "unique":
+                    dup_mask = self.df[r.column].duplicated(keep=False)
+                    mask = dup_mask
+                elif r.rule_type == "in_range":
+                    series = self.df[r.column].dropna()
+                    min_v = r.metadata.get("violations", {}).get("below_min", {}).get("min_value")
+                    max_v = r.metadata.get("violations", {}).get("above_max", {}).get("max_value")
+                    if min_v is not None and max_v is not None:
+                        mask = (self.df[r.column] < min_v) | (self.df[r.column] > max_v)
+                    elif min_v is not None:
+                        mask = self.df[r.column] < min_v
+                    elif max_v is not None:
+                        mask = self.df[r.column] > max_v
+                    else:
+                        mask = pd.Series(False, index=self.df.index)
+                elif r.rule_type == "in_set":
+                    unexpected = r.metadata.get("unexpected_values", [])
+                    mask = pd.Series(False, index=self.df.index)
+                    if r.column in self.df.columns and unexpected:
+                        mask = self.df[r.column].isin(unexpected)
+                elif r.rule_type == "matches_regex":
+                    pattern = r.metadata.get("pattern", "")
+                    mask = pd.Series(False, index=self.df.index)
+                    if r.column in self.df.columns and pattern:
+                        try:
+                            series = self.df[r.column].dropna().astype(str)
+                            matched = series.str.fullmatch(pattern)
+                            matched_series = pd.Series(False, index=self.df.index)
+                            matched_series.loc[series.index] = matched.values
+                            mask = ~matched_series
+                        except Exception:
+                            pass
+                elif r.rule_type == "expression":
+                    expr = r.metadata.get("expr") or r.rule_type
+                    try:
+                        result = self.df.eval(expr)
+                        mask = ~result
+                    except Exception:
+                        mask = pd.Series(False, index=self.df.index)
+                elif r.rule_type in ("min_length", "max_length"):
+                    value = r.metadata.get("value", 0)
+                    lengths = self.df[r.column].dropna().astype(str).str.len()
+                    if r.rule_type == "min_length":
+                        mask = lengths < value
+                    else:
+                        mask = lengths > value
+                else:
+                    mask = pd.Series(False, index=self.df.index)
+
+                # Convert boolean mask to same index as df
+                if isinstance(mask, pd.Series) and mask.index.equals(self.df.index):
+                    sampled = self.df[mask].head(self.max_row_samples)
+                else:
+                    sampled = self.df.iloc[:self.max_row_samples]
+                if not sampled.empty:
+                    samples[key] = sampled
+            except Exception as exc:
+                # Best-effort: don't crash artifact generation for bad samples
+                samples[key] = pd.DataFrame({"error": [str(exc)]})
+        return samples
 
 
 class QualityRuleEngine:
@@ -382,7 +613,7 @@ class QualityRuleEngine:
                     f"{failed} value(s) not matching pattern "
                     f"'{pattern}' in column '{column}'",
                     failed,
-                    {},
+                    {"pattern": pattern},
                 )
             return True, "", 0, {}
 
@@ -400,7 +631,7 @@ class QualityRuleEngine:
                     False,
                     f"{failed} value(s) {comparison} {value} in column '{column}'",
                     failed,
-                    {},
+                    {"value": value},
                 )
             return True, "", 0, {}
 
@@ -448,7 +679,7 @@ class QualityRuleEngine:
                 False,
                 f"{failed} row(s) do not satisfy expression '{expr}'",
                 failed,
-                {},
+                {"expr": expr},
             )
         return True, "", 0, {}
 
@@ -471,6 +702,10 @@ class QualityRuleHook(Hook):
         self,
         rules: Optional[List[Dict[str, Any]]] = None,
         engine: Optional[QualityRuleEngine] = None,
+        emit_report: bool = False,
+        report_path: str = "quality_report.html",
+        report_format: str = "html",
+        max_row_samples: int = 5,
     ):
         """Initialize the hook.
 
@@ -478,12 +713,21 @@ class QualityRuleHook(Hook):
             rules: Rule dictionaries used to build an engine. Ignored
                 when *engine* is provided.
             engine: A pre-built QualityRuleEngine to use directly.
+            emit_report: If True, write a quality report artifact after
+                evaluating rules.
+            report_path: File path for the emitted artifact.
+            report_format: ``"html"`` or ``"json"``.
+            max_row_samples: Max failing rows to include per rule.
 
         Raises:
             ValueError: If any rule definition is invalid.
         """
         self._engine = engine or QualityRuleEngine(rules or [])
         self._logger = logging.getLogger(f"{__name__}.QualityRuleHook")
+        self.emit_report = emit_report
+        self.report_path = report_path
+        self.report_format = report_format
+        self.max_row_samples = max_row_samples
 
     def execute(self, context: HookContext) -> None:
         """Evaluate the rules against the context data.
@@ -501,6 +745,30 @@ class QualityRuleHook(Hook):
         report = self._engine.evaluate(context.data)
         context.metadata["quality_rule_report"] = report
         job_name = context.job.config.name if context.job else "unknown"
+
+        # Optionally emit an artifact for CI upload
+        if self.emit_report:
+            try:
+                artifact = QualityReportArtifact(
+                    report=report,
+                    df=context.data,
+                    max_row_samples=self.max_row_samples,
+                    output_path=self.report_path,
+                    report_format=self.report_format,
+                )
+                path = artifact.write()
+                self._logger.info(
+                    "[QualityRuleHook] Job '%s': quality report artifact emitted: %s",
+                    job_name,
+                    path,
+                )
+            except Exception as exc:
+                self._logger.warning(
+                    "[QualityRuleHook] Job '%s': failed to emit quality report: %s",
+                    job_name,
+                    exc,
+                    exc_info=True,
+                )
 
         for result in report.warnings:
             self._logger.warning(
