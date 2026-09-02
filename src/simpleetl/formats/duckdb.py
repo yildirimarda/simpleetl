@@ -86,6 +86,7 @@ class DuckDBReader(DataReader):
         self,
         source: str,
         chunk_size: int = 10000,
+        max_buffer_mb: float = 0,
         *,
         query: Optional[str] = None,
         table: Optional[str] = None,

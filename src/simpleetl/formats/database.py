@@ -317,6 +317,7 @@ class DatabaseReader(DataReader):
         self,
         source: Union[str, sqlalchemy.engine.Engine, ConnectionPool],
         chunk_size: int = 10000,
+        max_buffer_mb: float = 0,
         **kwargs,
     ) -> Iterator[pd.DataFrame]:
         """

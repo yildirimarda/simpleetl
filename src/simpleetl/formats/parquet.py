@@ -9,7 +9,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from typing import Any, Dict, Iterator, Optional
-from .base import DataReader, DataWriter
+from .base import DataReader, DataWriter, _chunk_size_from_max_buffer
 from ..core.engine import is_polars_available, validate_engine
 from ..core.filesystem import is_cloud_path, get_filesystem
 
@@ -104,7 +104,12 @@ class ParquetReader(DataReader):
         return pl.read_parquet(source, **pl_kwargs).to_pandas()
 
     def read_chunks(
-        self, source: str, chunk_size: int = 10000, engine: str = "pandas", **kwargs
+        self,
+        source: Any,
+        chunk_size: int = 10000,
+        max_buffer_mb: float = 0,
+        engine: str = "pandas",
+        **kwargs,
     ) -> Iterator[pd.DataFrame]:
         """
         Read Parquet data in row-group chunks.
@@ -116,6 +121,7 @@ class ParquetReader(DataReader):
             source: Path to the Parquet file.
             chunk_size: Approximate number of rows per chunk (batch_size).
             engine: ``"pandas"`` (default) or ``"polars"``.
+            max_buffer_mb: When > 0, chunk_size is derived from this limit.
             **kwargs: Additional arguments. Supports 'columns' for column selection.
 
         Yields:
@@ -125,6 +131,8 @@ class ParquetReader(DataReader):
             ValueError: If *engine* is not ``"pandas"`` or ``"polars"``.
         """
         validate_engine(engine)
+        if max_buffer_mb > 0:
+            chunk_size = _chunk_size_from_max_buffer(max_buffer_mb)
         if engine == "polars":
             logger.debug(
                 "Chunked Parquet reads always use pyarrow; ignoring engine='polars'."

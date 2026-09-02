@@ -91,6 +91,7 @@ class DeltaLakeReader(DataReader):
         self,
         source: str,
         chunk_size: int = 10000,
+        max_buffer_mb: float = 0,
         *,
         version: Optional[int] = None,
         timestamp: Optional[str] = None,
