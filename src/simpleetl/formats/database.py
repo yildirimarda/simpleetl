@@ -18,6 +18,134 @@ from simpleetl.core.connection import (
 
 from .base import DataReader, DataWriter
 
+def _sql_value(value: Any) -> str:
+    """Format a Python value as a SQL literal."""
+    if value is None:
+        return "NULL"
+    if isinstance(value, bool):
+        return "TRUE" if value else "FALSE"
+    if isinstance(value, (int, float)):
+        return str(value)
+    # String / other: quote with single quotes and escape embedded quotes
+    escaped = str(value).replace("'", "''")
+    return f"'{escaped}'"
+
+
+def filter_config_to_sql(filter_config: Any) -> str:
+    """Translate a filter config (dict or list of dicts) into a SQL WHERE clause.
+
+    Supported filter keys per dict:
+
+    - ``column`` or ``filter_column`` (str) -- column name (required)
+    - ``min_value`` or ``filter_min_value`` (optional) -- inclusive lower bound
+    - ``max_value`` or ``filter_max_value`` (optional) -- inclusive upper bound
+    - ``filter_value`` or ``value`` (optional) -- equality value
+
+    When *filter_config* is a list, conditions are combined with ``AND``.
+
+    Args:
+        filter_config: A single filter dict, a list of filter dicts, or ``None``.
+
+    Returns:
+        A SQL ``WHERE`` clause fragment (without the ``WHERE`` keyword).
+        Returns an empty string when *filter_config* is ``None`` or empty.
+
+    Raises:
+        ValueError: If a filter dict is missing the column name or has no
+            applicable conditions.
+    """
+    if filter_config is None:
+        return ""
+
+    filters = filter_config if isinstance(filter_config, list) else [filter_config]
+    clauses: List[str] = []
+
+    for f in filters:
+        if not isinstance(f, dict):
+            raise ValueError(
+                f"Filter config must be a dict or list of dicts, got {type(f).__name__}"
+            )
+        column = f.get("column") or f.get("filter_column")
+        if column is None:
+            raise ValueError(
+                "Filter config missing 'column' or 'filter_column' key"
+            )
+
+        parts: List[str] = []
+        min_value = (
+            f.get("min_value")
+            if "min_value" in f
+            else f.get("filter_min_value")
+        )
+        max_value = (
+            f.get("max_value")
+            if "max_value" in f
+            else f.get("filter_max_value")
+        )
+        value = (
+            f.get("filter_value")
+            if "filter_value" in f
+            else f.get("value")
+        )
+
+        if value is not None:
+            parts.append(f"{column} = {_sql_value(value)}")
+        else:
+            if min_value is not None:
+                parts.append(f"{column} >= {_sql_value(min_value)}")
+            if max_value is not None:
+                parts.append(f"{column} <= {_sql_value(max_value)}")
+
+        if not parts:
+            # Allow non-empty filter that selects non-null values when no
+            # explicit conditions are set but column is specified.
+            parts.append(f"{column} IS NOT NULL")
+
+        clauses.append(" AND ".join(parts))
+
+    result = " AND ".join(clauses)
+    return result
+
+
+def _inject_filter_where(sql: str, where_clause: str) -> str:
+    """Insert a WHERE clause fragment into an existing SQL query."""
+    if not where_clause:
+        return sql
+
+    sql_lower = sql.lower()
+    # Determine insertion point before ORDER BY, GROUP BY, LIMIT, etc.
+    keywords = [
+        " order by ", " group by ", " limit ", " offset ",
+        " having ", " union ", " intersect ", " except ",
+    ]
+    insert_pos = len(sql)
+    for kw in keywords:
+        pos = sql_lower.find(kw)
+        if pos != -1 and pos < insert_pos:
+            insert_pos = pos
+
+    # If SQL already contains a WHERE clause, combine with AND.
+    where_pos = sql_lower.find(" where ")
+    if where_pos != -1:
+        before = sql[:where_pos + len(" where ")]
+        # Find insertion point after the existing WHERE expression but
+        # before the next keyword (like ORDER BY).
+        after_where = sql[where_pos + len(" where "):]
+        after_insert = len(after_where)
+        for kw in keywords:
+            pos = after_where.lower().find(kw)
+            if pos != -1:
+                after_insert = min(after_insert, pos)
+        existing = after_where[:after_insert].rstrip()
+        combined = f"({existing}) AND ({where_clause})"
+        after_part = after_where[after_insert:]
+        return f"{before}{combined}{after_part}"
+    else:
+        before = sql[:insert_pos].rstrip()
+        after = sql[insert_pos:].lstrip()
+        return f"{before} WHERE {where_clause} {after}".strip()
+
+
 logger = logging.getLogger(__name__)
 
 # URL prefixes recognized as SQLAlchemy connection strings. The snowflake
@@ -146,6 +274,14 @@ class Table:
         col_list = ", ".join(columns) if columns else "*"
         full_name = self.get_full_name()
         sql = f"SELECT {col_list} FROM {full_name}"
+
+        filter_config = kwargs.pop("filter_config", None)
+        filter_where = filter_config_to_sql(filter_config) if filter_config else ""
+        if where and filter_where:
+            where = f"({where}) AND ({filter_where})"
+        elif filter_where:
+            where = filter_where
+
         if where:
             sql += f" WHERE {where}"
         if order_by:
@@ -182,6 +318,14 @@ class Table:
         col_list = ", ".join(columns) if columns else "*"
         full_name = self.get_full_name()
         sql = f"SELECT {col_list} FROM {full_name}"
+
+        filter_config = kwargs.pop("filter_config", None)
+        filter_where = filter_config_to_sql(filter_config) if filter_config else ""
+        if where and filter_where:
+            where = f"({where}) AND ({filter_where})"
+        elif filter_where:
+            where = filter_where
+
         if where:
             sql += f" WHERE {where}"
 
@@ -313,13 +457,18 @@ class DatabaseReader(DataReader):
         table = kwargs.pop("table", None)
         chunksize = kwargs.pop("chunksize", None)
         params = kwargs.pop("params", None)
+        filter_config = kwargs.pop("filter_config", None)
 
         # Determine the engine: source may be a URL string, engine, or pool.
         # If source is a non-URL string (table name), we still need an engine
         # from kwargs or raise an error.
         engine = self._resolve_engine(source)
 
+        filter_where = filter_config_to_sql(filter_config) if filter_config else ""
+
         if sql:
+            if filter_where:
+                sql = _inject_filter_where(sql, filter_where)
             return pd.read_sql(
                 sql,
                 engine,
@@ -328,6 +477,18 @@ class DatabaseReader(DataReader):
                 **kwargs,
             )
         if table:
+            if filter_where:
+                # Generate a SELECT ... FROM query so the filter is pushed
+                # into SQL rather than applied in pandas.
+                sql = f"SELECT * FROM {table}"
+                sql = _inject_filter_where(sql, filter_where)
+                return pd.read_sql(
+                    sql,
+                    engine,
+                    params=params,
+                    chunksize=chunksize,
+                    **kwargs,
+                )
             return pd.read_sql_table(
                 table,
                 engine,
