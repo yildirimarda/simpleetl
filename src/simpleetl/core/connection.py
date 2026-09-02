@@ -210,7 +210,10 @@ def get_engine(config: ConnectionConfig) -> Engine:
     """
     global _engine_registry
 
-    if config.url in _engine_registry:
+    # Don't cache in-memory SQLite engines so each Table gets an isolated DB.
+    is_memory_sqlite = config.url == "sqlite:///:memory:"
+
+    if not is_memory_sqlite and config.url in _engine_registry:
         logger.debug("Returning cached engine for %s", _sanitize_url(config.url))
         return _engine_registry[config.url]
 
@@ -218,7 +221,8 @@ def get_engine(config: ConnectionConfig) -> Engine:
     kwargs = config.to_engine_kwargs()
     engine = create_engine(config.url, **kwargs)
 
-    _engine_registry[config.url] = engine
+    if not is_memory_sqlite:
+        _engine_registry[config.url] = engine
     return engine
 
 

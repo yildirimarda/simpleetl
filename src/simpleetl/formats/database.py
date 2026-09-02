@@ -18,6 +18,7 @@ from simpleetl.core.connection import (
 
 from .base import DataReader, DataWriter
 
+
 def _sql_value(value: Any) -> str:
     """Format a Python value as a SQL literal."""
     if value is None:
@@ -67,26 +68,16 @@ def filter_config_to_sql(filter_config: Any) -> str:
             )
         column = f.get("column") or f.get("filter_column")
         if column is None:
-            raise ValueError(
-                "Filter config missing 'column' or 'filter_column' key"
-            )
+            raise ValueError("Filter config missing 'column' or 'filter_column' key")
 
         parts: List[str] = []
         min_value = (
-            f.get("min_value")
-            if "min_value" in f
-            else f.get("filter_min_value")
+            f.get("min_value") if "min_value" in f else f.get("filter_min_value")
         )
         max_value = (
-            f.get("max_value")
-            if "max_value" in f
-            else f.get("filter_max_value")
+            f.get("max_value") if "max_value" in f else f.get("filter_max_value")
         )
-        value = (
-            f.get("filter_value")
-            if "filter_value" in f
-            else f.get("value")
-        )
+        value = f.get("filter_value") if "filter_value" in f else f.get("value")
 
         if value is not None:
             parts.append(f"{column} = {_sql_value(value)}")
@@ -115,8 +106,14 @@ def _inject_filter_where(sql: str, where_clause: str) -> str:
     sql_lower = sql.lower()
     # Determine insertion point before ORDER BY, GROUP BY, LIMIT, etc.
     keywords = [
-        " order by ", " group by ", " limit ", " offset ",
-        " having ", " union ", " intersect ", " except ",
+        " order by ",
+        " group by ",
+        " limit ",
+        " offset ",
+        " having ",
+        " union ",
+        " intersect ",
+        " except ",
     ]
     insert_pos = len(sql)
     for kw in keywords:
@@ -127,10 +124,10 @@ def _inject_filter_where(sql: str, where_clause: str) -> str:
     # If SQL already contains a WHERE clause, combine with AND.
     where_pos = sql_lower.find(" where ")
     if where_pos != -1:
-        before = sql[:where_pos + len(" where ")]
+        before = sql[: where_pos + len(" where ")]
         # Find insertion point after the existing WHERE expression but
         # before the next keyword (like ORDER BY).
-        after_where = sql[where_pos + len(" where "):]
+        after_where = sql[where_pos + len(" where ") :]
         after_insert = len(after_where)
         for kw in keywords:
             pos = after_where.lower().find(kw)

@@ -20,11 +20,17 @@ class TestFilterConfigToSql:
 
     def test_single_column_equality(self):
         expected = "status = 'active'"
-        assert filter_config_to_sql({"column": "status", "filter_value": "active"}) == expected
+        assert (
+            filter_config_to_sql({"column": "status", "filter_value": "active"})
+            == expected
+        )
 
     def test_single_column_equality_alias_key(self):
         expected = "status = 'active'"
-        assert filter_config_to_sql({"filter_column": "status", "value": "active"}) == expected
+        assert (
+            filter_config_to_sql({"filter_column": "status", "value": "active"})
+            == expected
+        )
 
     def test_single_column_min_value(self):
         assert filter_config_to_sql({"column": "age", "min_value": 18}) == "age >= 18"
@@ -33,9 +39,13 @@ class TestFilterConfigToSql:
         assert filter_config_to_sql({"column": "age", "max_value": 65}) == "age <= 65"
 
     def test_single_column_min_and_max(self):
-        result = filter_config_to_sql({
-            "column": "age", "min_value": 18, "max_value": 65,
-        })
+        result = filter_config_to_sql(
+            {
+                "column": "age",
+                "min_value": 18,
+                "max_value": 65,
+            }
+        )
         assert "age >= 18" in result
         assert "age <= 65" in result
         # Combined with AND
@@ -43,16 +53,20 @@ class TestFilterConfigToSql:
 
     def test_string_min_value_quoted(self):
         expected = "name >= 'Alice'"
-        assert filter_config_to_sql({"column": "name", "min_value": "Alice"}) == expected
+        assert (
+            filter_config_to_sql({"column": "name", "min_value": "Alice"}) == expected
+        )
 
     def test_integer_min_value_unquoted(self):
         assert filter_config_to_sql({"column": "id", "min_value": 1}) == "id >= 1"
 
     def test_list_of_filters_combined_with_and(self):
-        result = filter_config_to_sql([
-            {"column": "age", "min_value": 18},
-            {"column": "status", "filter_value": "active"},
-        ])
+        result = filter_config_to_sql(
+            [
+                {"column": "age", "min_value": 18},
+                {"column": "status", "filter_value": "active"},
+            ]
+        )
         assert "age >= 18" in result
         assert "status = 'active'" in result
         assert " AND " in result
@@ -102,6 +116,7 @@ class TestTablePushdown:
         table = Table("test_table", connection_string="sqlite:///:memory:")
         # Write some data so read works
         import pandas as pd
+
         df = pd.DataFrame({"id": [1, 2, 3], "age": [10, 25, 40]})
         table.write(df, if_exists="replace")
 
@@ -115,6 +130,7 @@ class TestTablePushdown:
     def test_read_chunks_with_filter_config(self):
         table = Table("test_table", connection_string="sqlite:///:memory:")
         import pandas as pd
+
         df = pd.DataFrame({"id": [1, 2, 3], "status": ["a", "b", "c"]})
         table.write(df, if_exists="replace")
 
