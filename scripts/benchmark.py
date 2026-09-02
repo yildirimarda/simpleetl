@@ -65,14 +65,17 @@ def benchmark_format(
                 kwargs = {"orient": "records", "lines": False}
             elif name == "XML":
                 kwargs = {"root_element": "data", "record_element": "row"}
+            if name in ("CSV", "Parquet"):
+                kwargs["engine"] = "pandas"
             start = time.perf_counter()
             writer.write(df, temp_path, **kwargs)
             write_times.append(time.perf_counter() - start)
             file_size = os.path.getsize(temp_path)
 
             # Read benchmark
+            read_kwargs = {"engine": "pandas"} if name in ("CSV", "Parquet") else {}
             start = time.perf_counter()
-            df_read = reader.read(temp_path)
+            df_read = reader.read(temp_path, **read_kwargs)
             read_times.append(time.perf_counter() - start)
 
             # Verify data integrity

@@ -54,18 +54,18 @@ def benchmark_csv(df: pd.DataFrame, chunk_size: int) -> dict:
         path = os.path.join(tmpdir, "test.csv")
 
         # Non-chunked
-        t1, m1 = measure_time_and_memory(lambda: CSVWriter().write(df, path))
-        t2, m2 = measure_time_and_memory(lambda: CSVReader().read(path))
+        t1, m1 = measure_time_and_memory(lambda: CSVWriter().write(df, path, engine="pandas"))
+        t2, m2 = measure_time_and_memory(lambda: CSVReader().read(path, engine="pandas"))
         non_chunked_time = t1 + t2
         non_chunked_mem = max(m1, m2)
 
         # Chunked
         t1, m1 = measure_time_and_memory(
-            lambda: CSVWriter().write_chunks(chunk_iterator(df, chunk_size), path)
+            lambda: CSVWriter().write_chunks(chunk_iterator(df, chunk_size), path, engine="pandas")
         )
         chunks = []
         t2, m2 = measure_time_and_memory(
-            lambda: chunks.extend(CSVReader().read_chunks(path, chunk_size))
+            lambda: chunks.extend(CSVReader().read_chunks(path, chunk_size, engine="pandas"))
         )
         chunked_time = t1 + t2
         chunked_mem = max(m1, m2)
@@ -130,18 +130,18 @@ def benchmark_parquet(df: pd.DataFrame, chunk_size: int) -> dict:
         path = os.path.join(tmpdir, "test.parquet")
 
         # Non-chunked
-        t1, m1 = measure_time_and_memory(lambda: ParquetWriter().write(df, path))
-        t2, m2 = measure_time_and_memory(lambda: ParquetReader().read(path))
+        t1, m1 = measure_time_and_memory(lambda: ParquetWriter().write(df, path, engine="pandas"))
+        t2, m2 = measure_time_and_memory(lambda: ParquetReader().read(path, engine="pandas"))
         non_chunked_time = t1 + t2
         non_chunked_mem = max(m1, m2)
 
         # Chunked
         t1, m1 = measure_time_and_memory(
-            lambda: ParquetWriter().write_chunks(chunk_iterator(df, chunk_size), path)
+            lambda: ParquetWriter().write_chunks(chunk_iterator(df, chunk_size), path, engine="pandas")
         )
         chunks = []
         t2, m2 = measure_time_and_memory(
-            lambda: chunks.extend(ParquetReader().read_chunks(path, chunk_size))
+            lambda: chunks.extend(ParquetReader().read_chunks(path, chunk_size, engine="pandas"))
         )
         chunked_time = t1 + t2
         chunked_mem = max(m1, m2)

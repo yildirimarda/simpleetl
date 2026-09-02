@@ -430,4 +430,4 @@
 
 ## Discovered
 
-- [ ] Make benchmark scripts explicitly pass `engine="pandas"` so the pandas-only baseline is reproducible and protected against future default changes.
+- [x] Make benchmark scripts explicitly pass `engine="pandas"` so the pandas-only baseline is reproducible and protected against future default changes.
