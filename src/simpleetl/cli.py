@@ -95,6 +95,40 @@ id,name,value
 4,delta,40
 """
 
+_INIT_TEST_PY = '''\
+"""Test skeleton for the starter ETL job."""
+
+import sys
+from pathlib import Path
+
+# Ensure the parent directory (where job.py lives) is importable.
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+import pytest
+from job import StarterJob
+
+
+class TestStarterJob:
+    """Prove the scaffolded pipeline runs end-to-end."""
+
+    def test_job_runs(self):
+        """Run the starter job and verify output exists."""
+        project_root = Path(__file__).parent.parent
+        job = StarterJob(str(project_root / "config.yaml"))
+        job.run()
+        assert (project_root / "output" / "output.parquet").is_file()
+
+    def test_config_loads(self):
+        """Verify the generated config loads without errors."""
+        from simpleetl.core.config import load_config
+        project_root = Path(__file__).parent.parent
+        config = load_config(str(project_root / "config.yaml"))
+        assert config.name == "starter_job"
+        assert config.platform == "local"
+'''
+
 _INIT_README_MD = """\
 # Starter SimpleETL Project
 
@@ -104,6 +138,7 @@ Scaffolded by `simpleetl --init`.
 
 - `config.yaml` — job configuration (validated by SimpleETL)
 - `job.py` — the ETL job (extract / transform / load)
+- `tests/test_starter.py` — pytest skeleton to prove the pipeline runs
 - `data/input.csv` — sample input data
 - `output/` — job output lands here
 
@@ -111,6 +146,7 @@ Scaffolded by `simpleetl --init`.
 
 From this directory: `python job.py` or `simpleetl --config config.yaml`.
 Check the config without running: `simpleetl --validate-config config.yaml`.
+Prove it works: `pytest tests/test_starter.py -v`.
 """
 
 
@@ -279,9 +315,9 @@ def profile_file(path: str, fmt: str = "markdown") -> None:
 def init_project(target_dir: str) -> None:
     """Scaffold a starter SimpleETL project in *target_dir*.
 
-    Creates ``config.yaml``, ``job.py``, ``data/input.csv``, ``README.md``
-    and an empty ``output/`` directory.  The target directory must either
-    not exist yet or be empty.
+    Creates ``config.yaml``, ``job.py``, ``tests/test_starter.py``,
+    ``data/input.csv``, ``README.md`` and an empty ``output/``
+    directory.  The target directory must either not exist yet or be empty.
 
     Args:
         target_dir: Directory to create the project in.
@@ -311,6 +347,7 @@ def init_project(target_dir: str) -> None:
         "job.py": _INIT_JOB_PY,
         "data/input.csv": _INIT_SAMPLE_CSV,
         "README.md": _INIT_README_MD,
+        "tests/test_starter.py": _INIT_TEST_PY,
     }
     (target / "output").mkdir(parents=True, exist_ok=True)
     for rel_path, content in files.items():
@@ -329,6 +366,7 @@ def init_project(target_dir: str) -> None:
     print(f"  cd {target}")
     print("  python job.py")
     print("  # or: simpleetl --config config.yaml")
+    print("  pytest tests/test_starter.py -v")
 
 
 def validate_config_file(

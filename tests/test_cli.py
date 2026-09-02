@@ -316,10 +316,12 @@ class TestCLIInit:
 
         assert (target / "config.yaml").is_file()
         assert (target / "job.py").is_file()
+        assert (target / "tests" / "test_starter.py").is_file()
         assert (target / "data" / "input.csv").is_file()
         assert (target / "README.md").is_file()
         assert (target / "output").is_dir()
         assert "config.yaml" in output
+        assert "tests/test_starter.py" in output
         assert "Next steps" in output
 
     def test_init_scaffold_contents(self, tmp_path):
@@ -344,9 +346,15 @@ class TestCLIInit:
         assert csv_lines[0] == "id,name,value"
         assert len(csv_lines) > 1
 
+        test_text = (target / "tests" / "test_starter.py").read_text()
+        assert "class TestStarterJob" in test_text
+        assert "test_job_runs" in test_text
+        assert "def test_config_loads" in test_text
+
         readme_text = (target / "README.md").read_text()
         assert "python job.py" in readme_text
         assert "simpleetl --config config.yaml" in readme_text
+        assert "pytest" in readme_text
 
     def test_init_generated_config_validates(self, tmp_path):
         """Test that the generated config.yaml passes load_config()."""
@@ -415,6 +423,22 @@ class TestCLIInit:
         )
         assert result.returncode == 0, result.stderr
         assert (target / "output" / "output.parquet").is_file()
+
+    def test_init_scaffolded_test_runs(self, tmp_path):
+        """Test that the scaffolded test_starter.py passes with pytest."""
+        import subprocess
+
+        target = tmp_path / "proj"
+        with patch("sys.stdout", new_callable=StringIO):
+            init_project(str(target))
+
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "tests/test_starter.py", "-v", "-q"],
+            cwd=str(target),
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
 
 
 class TestCLIValidateConfig:
