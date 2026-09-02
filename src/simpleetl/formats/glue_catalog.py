@@ -13,6 +13,8 @@ These classes are designed to be used inside an AWS Glue environment where
 import logging
 from typing import Any, Dict, Optional
 
+from ..core.hooks import Hook, POST_LOAD
+
 logger = logging.getLogger(__name__)
 
 # Formats supported by Glue Data Catalog writes
@@ -251,3 +253,60 @@ class GlueCatalogWriter:
             transformation_ctx=transformation_ctx,
             additional_options=additional_options,
         )
+
+
+class GlueCatalogHook(Hook):
+    """Register loaded output data in the AWS Glue Data Catalog.
+
+    Executed at the ``post_load`` hook point. Uses ``GlueCatalogWriter``
+    to write or register the output data. The hook reads its target
+    database, table name, and format from the constructor; these are
+    typically sourced from ``job.config.params`` when the hook is
+    registered by ``_register_config_hooks()``.
+    """
+
+    name = "glue_catalog"
+    priority = 0
+
+    def __init__(
+        self,
+        database: str = "default",
+        table_name: str = "output",
+        format: str = "parquet",
+    ) -> None:
+        self.database = database
+        self.table_name = table_name
+        self.format = format
+
+    def execute(self, context: Any) -> None:
+        if context.phase != POST_LOAD or context.data is None:
+            return
+
+        try:
+            writer = GlueCatalogWriter()
+            if hasattr(context.data, "toDF") and hasattr(context.data, "count"):
+                writer.write(
+                    frame=context.data,
+                    database=self.database,
+                    table_name=self.table_name,
+                    format=self.format,
+                )
+            else:
+                writer.write_from_pandas(
+                    dataframe=context.data,
+                    database=self.database,
+                    table_name=self.table_name,
+                    format=self.format,
+                )
+            logger.info(
+                "GlueCatalogHook: registered output in Glue Data Catalog: "
+                "%s.%s (format=%s)",
+                self.database,
+                self.table_name,
+                self.format,
+            )
+        except Exception as exc:
+            logger.warning(
+                "GlueCatalogHook: failed to register output in Glue Data Catalog: %s",
+                exc,
+            )

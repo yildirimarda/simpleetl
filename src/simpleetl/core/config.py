@@ -228,6 +228,7 @@ class ETLJobConfig(BaseModel):
     provenance_record_id_column: str = "id"
     quality_checks: Optional[Dict[str, Any]] = None
     lineage_enabled: bool = False
+    register_glue_catalog: bool = False
 
 
 def _apply_env_prefix(
