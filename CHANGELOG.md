@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/yildirimarda/simpleetl/compare/v0.4.0...v0.4.1) (2026-09-02)
+
+
+### Miscellaneous Chores
+
+* cut a clean release ([4d3c809](https://github.com/yildirimarda/simpleetl/commit/4d3c8094cb7cbca57c15b4467c40589d4b0486ae))
+
 ## [0.4.0](https://github.com/yildirimarda/simpleetl/compare/v0.3.0...v0.4.0) (2026-09-02)
 
 
