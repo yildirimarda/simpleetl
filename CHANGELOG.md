@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.4.0](https://github.com/yildirimarda/simpleetl/compare/v0.3.0...v0.4.0) (2026-09-02)
+
+
+### Features
+
+* add test skeleton to simpleetl --init scaffold ([#47](https://github.com/yildirimarda/simpleetl/issues/47)) ([e383fbc](https://github.com/yildirimarda/simpleetl/commit/e383fbc2035bdf9fd7fa7e383d90caa7176a3f71))
+* backpressure and bounded memory for streaming reads ([#38](https://github.com/yildirimarda/simpleetl/issues/38)) ([2963c38](https://github.com/yildirimarda/simpleetl/commit/2963c38330f24d49a3183fc4ed969d5f94a26c15))
+* CDC ingestion module with Debezium fixtures and integration tests ([#41](https://github.com/yildirimarda/simpleetl/issues/41)) ([dbafac9](https://github.com/yildirimarda/simpleetl/commit/dbafac9918a19eb2cc872aecd435191da59e1fc1))
+* dry-run mode --dry-run N with pipeline execution, schema print, no writes ([#48](https://github.com/yildirimarda/simpleetl/issues/48)) ([5d6b136](https://github.com/yildirimarda/simpleetl/commit/5d6b136afbeee9f283652bab41dcb95d047f6c01))
+* make benchmark scripts pass engine=pandas ([#50](https://github.com/yildirimarda/simpleetl/issues/50)) ([2646597](https://github.com/yildirimarda/simpleetl/commit/26465974171b97371b05af8fcba14ad5189b7867))
+* predicate pushdown for JDBC sources - translate filter configs to SQL WHERE clauses ([#43](https://github.com/yildirimarda/simpleetl/issues/43)) ([8685ced](https://github.com/yildirimarda/simpleetl/commit/8685ced5f7779c16b68fbfbdae6489a519a9b9ac))
+* publish benchmark doc with pandas-only 1M-row baseline results ([#49](https://github.com/yildirimarda/simpleetl/issues/49)) ([05044aa](https://github.com/yildirimarda/simpleetl/commit/05044aabaead828974f3cdfe725b550dd1c30a38))
+* quality report artifact with HTML/JSON output and row samples ([#46](https://github.com/yildirimarda/simpleetl/issues/46)) ([eded4f6](https://github.com/yildirimarda/simpleetl/commit/eded4f61ff1af605f26abc0bba6a55ca61bd9528))
+* real Unity Catalog integration on Databricks platform ([#42](https://github.com/yildirimarda/simpleetl/issues/42)) ([1087ec5](https://github.com/yildirimarda/simpleetl/commit/1087ec5b2af71abb1d6a52037be83bc70f616e5b))
+* retry with exponential backoff + jitter and circuit breaker for rest_api and database sources ([#40](https://github.com/yildirimarda/simpleetl/issues/40)) ([b3ff739](https://github.com/yildirimarda/simpleetl/commit/b3ff7398ac7201c7995bf24b4e1052a07cc5043c))
+* serve Prometheus metrics endpoint opt-in via config ([#45](https://github.com/yildirimarda/simpleetl/issues/45)) ([a757097](https://github.com/yildirimarda/simpleetl/commit/a757097a094bc7a56ab2f2e0fc9052612fee74c5))
+* transactional sink contract for exactly-once file writes ([#39](https://github.com/yildirimarda/simpleetl/issues/39)) ([9c2ece3](https://github.com/yildirimarda/simpleetl/commit/9c2ece3245c2462619264a12a8fa7c31ea732ead))
+* wire GlueCatalogWriter into ETL lifecycle behind config flag ([#44](https://github.com/yildirimarda/simpleetl/issues/44)) ([b37ecbd](https://github.com/yildirimarda/simpleetl/commit/b37ecbd6d8e06c56df3af992b857d3eb91370d6b))
+
+
+### Bug Fixes
+
+* **test:** compare min-of-runs, not mean, for microsecond-scale DAG benchmarks — CI noise only inflates upward ([d7c62fa](https://github.com/yildirimarda/simpleetl/commit/d7c62fad185bcb6d740c1eb3dddc515aa7f17f4c))
+
 ## [0.3.0](https://github.com/yildirimarda/simpleetl/compare/v0.2.0...v0.3.0) (2026-09-01)
 
 
