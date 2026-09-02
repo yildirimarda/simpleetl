@@ -145,6 +145,7 @@ def execute_atomic(
             elif os.path.exists(temp_path):
                 if os.path.isdir(temp_path):
                     import shutil
+
                     shutil.rmtree(temp_path)
                 else:
                     os.unlink(temp_path)

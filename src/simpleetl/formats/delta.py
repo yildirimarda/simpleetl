@@ -234,12 +234,16 @@ class DeltaLakeWriter(DataWriter):
             self._do_write(data, temp_path, **kwargs)
 
             if is_cloud_path(destination):
-                fs = filesystem if filesystem is not None else get_filesystem(
-                    destination
+                fs = (
+                    filesystem
+                    if filesystem is not None
+                    else get_filesystem(destination)
                 )
-                if mode == "overwrite" and hasattr(
-                    fs, "exists"
-                ) and fs.exists(destination):
+                if (
+                    mode == "overwrite"
+                    and hasattr(fs, "exists")
+                    and fs.exists(destination)
+                ):
                     if hasattr(fs, "rm"):
                         try:
                             fs.rm(destination, recursive=True)
@@ -258,7 +262,9 @@ class DeltaLakeWriter(DataWriter):
                 # so we only rename when it does not exist.
                 if os.path.exists(destination) and mode == "error":
                     # Should have been caught by deltalake; clean up temp.
-                    shutil.rmtree(temp_path) if os.path.isdir(temp_path) else os.unlink(temp_path)
+                    shutil.rmtree(temp_path) if os.path.isdir(temp_path) else os.unlink(
+                        temp_path
+                    )
                     raise FileExistsError(
                         f"Delta table already exists at {destination}"
                     )
@@ -276,9 +282,9 @@ class DeltaLakeWriter(DataWriter):
                         if hasattr(fs, "rm"):
                             fs.rm(temp_path, recursive=True)
                 elif os.path.exists(temp_path):
-                    shutil.rmtree(temp_path) if os.path.isdir(
+                    shutil.rmtree(temp_path) if os.path.isdir(temp_path) else os.unlink(
                         temp_path
-                    ) else os.unlink(temp_path)
+                    )
             except Exception:
                 pass
             raise
