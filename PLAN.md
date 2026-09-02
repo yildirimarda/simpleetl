@@ -407,6 +407,27 @@
 - [x] Examples and docs reviewed
 - [x] Lineage/audit/RBAC persistence verified end-to-end
 
+## Milestone 41: Product Roadmap — Streaming & Reliability
+
+- [ ] Backpressure and bounded memory for streaming reads: chunked CSV/JSON/Parquet readers must respect a max in-flight buffer (config: max_buffer_mb), with a test proving constant memory on a 1M-row synthetic file
+- [ ] Transactional sink contract for exactly-once file writes: write to temp path + atomic rename for filesystem sinks, staging-table + swap for JDBC sinks; document the guarantee per format
+- [ ] Retry with exponential backoff + jitter and a circuit breaker for rest_api and database sources (config: max_retries, backoff_base, breaker_threshold), with failure-injection tests
+- [ ] CDC ingestion: read Debezium-format change events from Kafka and apply insert/update/delete to a Delta or JDBC sink, with an integration test using recorded event fixtures
+
+## Milestone 42: Product Roadmap — Platform Depth
+
+- [ ] Real Unity Catalog integration on the Databricks platform: resolve tables via catalog.schema.table, propagate lineage to UC, document required cluster permissions
+- [ ] Predicate pushdown for JDBC sources: translate filter configs into WHERE clauses executed on the database instead of in pandas, with tests asserting the generated SQL
+- [ ] Glue platform: register outputs in the Glue Data Catalog (glue_catalog.py exists — wire it into the job lifecycle behind a config flag)
+
+## Milestone 43: Product Roadmap — Operability
+
+- [ ] Serve the Prometheus metrics endpoint the Dockerfile already EXPOSEs on 8000: /metrics from MetricsCollector and /health from core.health, opt-in via config
+- [ ] Data quality report artifact: after each job, optionally emit an HTML/JSON report from quality_rules results (pass/fail per rule, row samples), uploadable as a CI artifact
+- [ ] `simpleetl init` CLI command: scaffold a new job project (job class, config YAML, test skeleton) so a new user reaches a running pipeline in under five minutes
+- [ ] Dry-run mode: `simpleetl --config x.yaml --dry-run N` executes the full pipeline on the first N rows and prints the output schema + sample, writing nothing
+- [ ] Published benchmark doc: run the benchmarks/ suite against a pandas-only baseline on 1M-row datasets, commit results and methodology to docs/BENCHMARKS.md
+
 ## Discovered
 
 None — all previously discovered items have been promoted to their milestones and completed in prior PRs (#29–#35).
