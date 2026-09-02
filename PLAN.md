@@ -429,3 +429,5 @@
 - [x] Published benchmark doc: run the benchmarks/ suite against a pandas-only baseline on 1M-row datasets, commit results and methodology to docs/BENCHMARKS.md
 
 ## Discovered
+
+- [ ] Make benchmark scripts explicitly pass `engine="pandas"` so the pandas-only baseline is reproducible and protected against future default changes.
