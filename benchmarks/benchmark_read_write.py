@@ -42,9 +42,11 @@ def benchmark_format(fmt: str, df: pd.DataFrame, n_runs: int = 5) -> dict:
         for _ in range(n_runs):
             start = time.perf_counter()
             writer = FormatFactory.get_writer(fmt)
-            writer.write(df, path)
+            read_kwargs = {"engine": "pandas"} if fmt in ("csv", "parquet") else {}
+            write_kwargs = {"engine": "pandas"} if fmt in ("csv", "parquet") else {}
+            writer.write(df, path, **write_kwargs)
             reader = FormatFactory.get_reader(fmt)
-            _ = reader.read(path)
+            _ = reader.read(path, **read_kwargs)
             elapsed = time.perf_counter() - start
             times.append(elapsed)
     return {
