@@ -160,11 +160,18 @@ class TestEngineManagement:
         assert isinstance(engine, sqlalchemy.engine.Engine)
 
     def test_get_engine_caches_by_url(self):
-        """Test that engines are cached by URL."""
-        config = ConnectionConfig(url="sqlite:///:memory:")
-        engine1 = get_engine(config)
-        engine2 = get_engine(config)
-        assert engine1 is engine2
+        """Test that engines are cached by URL (file-based SQLite)."""
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
+            url = f"sqlite:///{f.name}"
+        try:
+            config1 = ConnectionConfig(url=url)
+            config2 = ConnectionConfig(url=url)
+            engine1 = get_engine(config1)
+            engine2 = get_engine(config2)
+            assert engine1 is engine2
+        finally:
+            dispose_engine(url)
+            os.unlink(f.name)
 
     def test_get_engine_different_urls(self):
         """Test that different URLs create different engines."""
