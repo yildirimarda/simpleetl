@@ -429,5 +429,3 @@
 - [ ] Published benchmark doc: run the benchmarks/ suite against a pandas-only baseline on 1M-row datasets, commit results and methodology to docs/BENCHMARKS.md
 
 ## Discovered
-
-None — all previously discovered items have been promoted to their milestones and completed in prior PRs (#29–#35).
