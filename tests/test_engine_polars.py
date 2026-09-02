@@ -270,7 +270,15 @@ class TestCSVPolarsEngine:
         local = str(tmp_path / "out.csv")
         fs = FakeFilesystem(local)
         CSVWriter().write(df, "s3://bucket/out.csv", engine="polars", filesystem=fs)
-        assert fs.opened == [("s3://bucket/out.csv", "w")]
+        # Transactional sink writes to a temp file then attempts atomic rename.
+        # FakeFilesystem has no mv, so it falls back to copy.
+        assert any(
+            ".tmp_" in str(path) and path.endswith("_out.csv") for path, _ in fs.opened
+        )
+        assert (
+            "s3://bucket/out.csv",
+            "w",
+        ) not in fs.opened  # old direct-write behavior
         pd.testing.assert_frame_equal(pd.read_csv(local), df)
 
     def test_read_chunks_ignores_polars_engine(self, df, tmp_path):
