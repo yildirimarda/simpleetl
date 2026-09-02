@@ -425,7 +425,7 @@
 - [x] Serve the Prometheus metrics endpoint the Dockerfile already EXPOSEs on 8000: /metrics from MetricsCollector and /health from core.health, opt-in via config
 - [x] Data quality report artifact: after each job, optionally emit an HTML/JSON report from quality_rules results (pass/fail per rule, row samples), uploadable as a CI artifact
 - [x] `simpleetl init` CLI command: scaffold a new job project (job class, config YAML, test skeleton) so a new user reaches a running pipeline in under five minutes
-- [ ] Dry-run mode: `simpleetl --config x.yaml --dry-run N` executes the full pipeline on the first N rows and prints the output schema + sample, writing nothing
+- [x] Dry-run mode: `simpleetl --config x.yaml --dry-run N` executes the full pipeline on the first N rows and prints the output schema + sample, writing nothing
 - [ ] Published benchmark doc: run the benchmarks/ suite against a pandas-only baseline on 1M-row datasets, commit results and methodology to docs/BENCHMARKS.md
 
 ## Discovered

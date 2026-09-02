@@ -5,7 +5,7 @@ Command-line interface for SimpleETL framework.
 import argparse
 import sys
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from .core.config import load_config
 from .core.dag import DAG, DAGRunner
@@ -184,8 +184,10 @@ def create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--dry-run",
-        action="store_true",
-        help="Validate configuration without running the job",
+        type=int,
+        metavar="N",
+        default=None,
+        help="Execute the full pipeline on the first N rows, print output schema + sample, and write nothing",
     )
     parser.add_argument(
         "--list-formats",
@@ -486,6 +488,112 @@ def run_job(
         raise SystemExit(1) from e
 
 
+def run_dry_run(
+    config_path: str,
+    n: int,
+    platform_override: Optional[str] = None,
+    template_vars: Optional[Dict[str, str]] = None,
+) -> None:
+    """Execute the pipeline dry-run on the first *n* rows.
+
+    The full pipeline (extract -> transform -> load) is executed with
+    ``load`` replaced by a no-op that captures output.  Nothing is
+    written to disk.  The output schema and a sample of the result
+    are printed to stdout.
+    """
+    import importlib
+
+    import pandas as pd
+
+    config = load_config(config_path, template_vars=template_vars or None)
+    logger.info(f"Loaded job config: {config.name}")
+    logger.info(f"Dry-run: processing first {n} rows, writing nothing")
+
+    if platform_override:
+        config.platform = platform_override
+
+    job_class_path = config.params.get("job_class")
+    if not job_class_path:
+        logger.info(
+            f"Job '{config.name}' has no job_class configured; "
+            "dry-run shows config only (no pipeline execution)."
+        )
+        print()
+        print("=== Dry-run config ===")
+        print(f"  Name:         {config.name}")
+        print(f"  Platform:     {config.platform}")
+        print(f"  Input format:  {config.input_format}")
+        print(f"  Output format: {config.output_format}")
+        return
+
+    try:
+        module_path, class_name = job_class_path.rsplit(".", 1)
+        cwd = str(Path.cwd())
+        if cwd not in sys.path:
+            sys.path.insert(0, cwd)
+        module = importlib.import_module(module_path)
+        job_class = getattr(module, class_name)
+        job = job_class(config)
+    except (ImportError, AttributeError, ValueError) as e:
+        logger.error(f"Failed to load job class '{job_class_path}': {e}")
+        raise SystemExit(1) from e
+
+    # Monkey-patch extract to cap at first N rows when a DataFrame is returned.
+    original_extract = job.extract
+
+    def _limited_extract(**kwargs) -> Any:
+        data = original_extract(**kwargs)
+        if isinstance(data, pd.DataFrame) and not data.empty:
+            data = data.head(n)
+        return data
+
+    # Monkey-patch load to capture data instead of writing.
+    captured_output: list = []
+
+    def _dry_load(data) -> None:
+        captured_output.append(data)
+
+    # Apply patches
+    job.extract = _limited_extract  # type: ignore[method-assign]
+    job.load = _dry_load  # type: ignore[method-assign]
+
+    try:
+        job.run()
+    except Exception as exc:
+        logger.warning(f"Dry-run pipeline raised an exception: {exc}")
+        # Continue so we can still report whatever was captured.
+
+    result = captured_output[-1] if captured_output else None
+
+    print()
+    print("=== Dry-run output schema ===")
+    if isinstance(result, pd.DataFrame):
+        print(f"Row count: {len(result)}")
+        print(f"Column count: {len(result.columns)}")
+        print(f"Columns: {list(result.columns)}")
+        print("Dtypes:")
+        for col, dtype in result.dtypes.items():
+            print(f"  {col}: {dtype}")
+    else:
+        print(f"Type: {type(result).__name__ if result is not None else 'None'}")
+        if result is not None:
+            print(f"Value preview: {str(result)[:200]}")
+
+    print()
+    print("=== Dry-run sample (first rows) ===")
+    if isinstance(result, pd.DataFrame):
+        sample_rows = min(n, len(result)) if not result.empty else 0
+        if sample_rows > 0:
+            print(result.head(sample_rows).to_string(index=False))
+        else:
+            print("(empty result)")
+    else:
+        if result is not None:
+            print(str(result)[:500])
+        else:
+            print("(no output captured — pipeline did not call load)")
+
+
 def run_dag(
     dag_config_path: str,
     max_parallel: int = 1,
@@ -583,9 +691,16 @@ def main() -> None:
             logger.error(f"Configuration file not found: {args.config}")
             sys.exit(1)
 
-        if args.dry_run:
-            config = load_config(args.config, template_vars=template_vars or None)
-            logger.info(f"Configuration valid: {config.name}")
+        if args.dry_run is not None:
+            if args.dry_run <= 0:
+                logger.error("--dry-run requires a positive integer N")
+                sys.exit(1)
+            run_dry_run(
+                args.config,
+                args.dry_run,
+                args.platform,
+                template_vars=template_vars or None,
+            )
             return
 
         run_job(args.config, args.platform, template_vars=template_vars or None)
