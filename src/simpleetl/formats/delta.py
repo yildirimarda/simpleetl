@@ -204,6 +204,85 @@ class DeltaLakeWriter(DataWriter):
             storage_options=storage_options,
         )
 
+    def _write_atomic(
+        self,
+        data: Any,
+        destination: str,
+        **kwargs: Any,
+    ) -> None:
+        """Atomic delta write using temp directory + rename for overwrite/error,
+        and direct write for append (delta manages its own transactions)."""
+        import os
+        import shutil
+
+        from .transactional_sink import (
+            _make_temp_path,
+            get_filesystem,
+            is_cloud_path,
+        )
+
+        mode = kwargs.get("mode", "append")
+        filesystem = kwargs.get("filesystem", None)
+
+        # Append mode: delta handles its own transaction; skip atomic rename.
+        if mode == "append":
+            return self._do_write(data, destination, **kwargs)
+
+        # Overwrite / error: use temp directory mechanism.
+        temp_path = _make_temp_path(destination)
+        try:
+            self._do_write(data, temp_path, **kwargs)
+
+            if is_cloud_path(destination):
+                fs = filesystem if filesystem is not None else get_filesystem(
+                    destination
+                )
+                if mode == "overwrite" and hasattr(
+                    fs, "exists"
+                ) and fs.exists(destination):
+                    if hasattr(fs, "rm"):
+                        try:
+                            fs.rm(destination, recursive=True)
+                        except Exception:
+                            pass
+                if hasattr(fs, "mv"):
+                    fs.mv(temp_path, destination, recursive=True)
+                else:
+                    raise RuntimeError(
+                        "Filesystem does not support mv for atomic rename"
+                    )
+            else:
+                if mode == "overwrite" and os.path.exists(destination):
+                    shutil.rmtree(destination)
+                # For error mode, _do_write raises if destination exists,
+                # so we only rename when it does not exist.
+                if os.path.exists(destination) and mode == "error":
+                    # Should have been caught by deltalake; clean up temp.
+                    shutil.rmtree(temp_path) if os.path.isdir(temp_path) else os.unlink(temp_path)
+                    raise FileExistsError(
+                        f"Delta table already exists at {destination}"
+                    )
+                os.rename(temp_path, destination)
+        except Exception:
+            # Clean up temp directory/file on failure
+            try:
+                if is_cloud_path(temp_path):
+                    fs = (
+                        filesystem
+                        if filesystem is not None
+                        else get_filesystem(temp_path)
+                    )
+                    if hasattr(fs, "exists") and fs.exists(temp_path):
+                        if hasattr(fs, "rm"):
+                            fs.rm(temp_path, recursive=True)
+                elif os.path.exists(temp_path):
+                    shutil.rmtree(temp_path) if os.path.isdir(
+                        temp_path
+                    ) else os.unlink(temp_path)
+            except Exception:
+                pass
+            raise
+
     def _do_write(
         self,
         data: Any,
