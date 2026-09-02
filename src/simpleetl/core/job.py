@@ -398,6 +398,17 @@ class ETLJob(ABC):
             for point in (POST_EXTRACT, POST_TRANSFORM):
                 self._config_hooks.setdefault(point, []).append(quality_hook)
 
+        if self.config.register_glue_catalog:
+            from ..formats.glue_catalog import GlueCatalogHook
+
+            glue_params = self.config.params.get("glue_catalog", {})
+            glue_hook = GlueCatalogHook(
+                database=glue_params.get("database", "default"),
+                table_name=glue_params.get("table_name", self.config.name),
+                format=glue_params.get("format", "parquet"),
+            )
+            self._config_hooks.setdefault(POST_LOAD, []).append(glue_hook)
+
     def _execute_hooks(
         self, hook_point: str, data: Any = None, error: Optional[Exception] = None
     ) -> HookContext:
