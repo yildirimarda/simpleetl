@@ -503,6 +503,16 @@ class ETLJob(ABC):
         """
         self._setup_logging()
 
+        health_server = None
+        if self.config.metrics_enabled:
+            from .health import HealthServer
+
+            health_server = HealthServer(port=8000)
+            health_server.start()
+            self.logger.info(
+                "Metrics endpoint enabled — serving /metrics and /health on port 8000"
+            )
+
         max_retries = self.config.max_retries
         base_delay = self.config.retry_delay
 
@@ -549,6 +559,9 @@ class ETLJob(ABC):
                 if self.checkpoint_manager:
                     self.checkpoint_manager.delete_checkpoint()
 
+                if health_server is not None:
+                    health_server.stop()
+
                 return
 
             except Exception as e:
@@ -570,6 +583,8 @@ class ETLJob(ABC):
                         self.logger.error(
                             "Permanent error detected, not retrying: %s", str(e)
                         )
+                        if health_server is not None:
+                            health_server.stop()
                         raise
 
                     # Exponential backoff with jitter
@@ -583,6 +598,8 @@ class ETLJob(ABC):
                         self.config.name,
                         exc_info=True,
                     )
+                    if health_server is not None:
+                        health_server.stop()
                     raise
 
     def run_with_partial_failure(

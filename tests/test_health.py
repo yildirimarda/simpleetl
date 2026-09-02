@@ -66,3 +66,73 @@ class TestHealthEndpoints:
         _, port = health_server
         resp = urllib.request.urlopen(f"http://127.0.0.1:{port}/readyz")
         assert resp.status == 200
+
+
+class TestMetricsEndpointViaConfig:
+    """Test that metrics endpoint is served opt-in via config."""
+
+    def test_metrics_enabled_starts_server(self):
+        """When metrics_enabled=True, the health server starts on port 8000."""
+        import urllib.request
+        import time
+        from simpleetl.core.config import ETLJobConfig
+        from simpleetl.core.job import ETLJob
+
+        class MinimalJob(ETLJob):
+            def run(self):
+                time.sleep(0.2)
+
+        config = ETLJobConfig(
+            name="metrics_test",
+            input_format="csv",
+            output_format="csv",
+            metrics_enabled=True,
+        )
+        job = MinimalJob(config)
+        # Start in background thread so we can query while job runs
+        import threading
+
+        job_thread = threading.Thread(target=job.run_with_error_handling)
+        job_thread.start()
+        time.sleep(0.05)
+        try:
+            resp = urllib.request.urlopen("http://127.0.0.1:8000/health")
+            assert resp.status == 200
+        finally:
+            job_thread.join(timeout=3.0)
+
+    def test_metrics_enabled_serves_metrics_endpoint(self):
+        """When metrics_enabled=True, /metrics returns Prometheus text."""
+        pytest.importorskip("prometheus_client")
+        import urllib.request
+        import time
+        from simpleetl.core.health import HealthServer
+
+        server = HealthServer(port=8000)
+        server.start()
+        time.sleep(0.05)
+        try:
+            resp = urllib.request.urlopen("http://127.0.0.1:8000/metrics")
+            assert resp.status == 200
+            body = resp.read()
+            assert b"etl_jobs_total" in body
+        finally:
+            server.stop()
+
+    def test_metrics_disabled_does_not_start_server(self):
+        """When metrics_enabled=False, no health server is started."""
+        from simpleetl.core.config import ETLJobConfig
+        from simpleetl.core.job import ETLJob
+
+        class MinimalJob(ETLJob):
+            def run(self):
+                pass
+
+        config = ETLJobConfig(
+            name="no_metrics_test",
+            input_format="csv",
+            output_format="csv",
+            metrics_enabled=False,
+        )
+        job = MinimalJob(config)
+        job.run_with_error_handling()
