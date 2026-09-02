@@ -291,8 +291,15 @@ class TestCSVCloudRoundTrip:
 
         writer = CSVWriter()
         writer.write(df, "s3://bucket/data.csv", filesystem=mock_fs)
-
-        mock_fs.open.assert_called_once_with("s3://bucket/data.csv", "w")
+        open_calls = [
+            call
+            for call in mock_fs.open.call_args_list
+            if ".tmp_" in str(call.args[0]) and str(call.args[0]).endswith("_data.csv")
+        ]
+        assert len(open_calls) == 1
+        mock_fs.mv.assert_called_once()
+        args, _ = mock_fs.mv.call_args
+        assert args[1] == "s3://bucket/data.csv"
 
 
 class TestJSONCloudRoundTrip:
@@ -325,8 +332,15 @@ class TestJSONCloudRoundTrip:
 
         writer = JSONWriter()
         writer.write(df, "s3://bucket/data.json", filesystem=mock_fs)
-
-        mock_fs.open.assert_called_once_with("s3://bucket/data.json", "w")
+        open_calls = [
+            call
+            for call in mock_fs.open.call_args_list
+            if ".tmp_" in str(call.args[0]) and str(call.args[0]).endswith("_data.json")
+        ]
+        assert len(open_calls) == 1
+        mock_fs.mv.assert_called_once()
+        args, _ = mock_fs.mv.call_args
+        assert args[1] == "s3://bucket/data.json"
 
 
 def _aws_credentials_available():
@@ -436,7 +450,16 @@ class TestAvroCloudRoundTrip:
         writer = AvroWriter()
         writer.write(df, "s3://bucket/data.avro", filesystem=mock_fs)
 
-        mock_fs.open.assert_called_once_with("s3://bucket/data.avro", "wb")
+        # Transactional sink writes to temp path then atomically renames.
+        open_calls = [
+            call
+            for call in mock_fs.open.call_args_list
+            if ".tmp_" in str(call.args[0]) and str(call.args[0]).endswith("_data.avro")
+        ]
+        assert len(open_calls) == 1
+        mock_fs.mv.assert_called_once()
+        args, _ = mock_fs.mv.call_args
+        assert args[1] == "s3://bucket/data.avro"
         # Verify Avro data was written to the BytesIO buffer
         mock_file.seek(0)
         reader = fastavro.reader(mock_file)
@@ -511,8 +534,15 @@ class TestExcelCloudRoundTrip:
 
         writer = ExcelWriter()
         writer.write(df, "s3://bucket/data.xlsx", filesystem=mock_fs)
-
-        mock_fs.open.assert_called_once_with("s3://bucket/data.xlsx", "wb")
+        open_calls = [
+            call
+            for call in mock_fs.open.call_args_list
+            if ".tmp_" in str(call.args[0]) and str(call.args[0]).endswith("_data.xlsx")
+        ]
+        assert len(open_calls) == 1
+        mock_fs.mv.assert_called_once()
+        args, _ = mock_fs.mv.call_args
+        assert args[1] == "s3://bucket/data.xlsx"
 
 
 class TestXMLCloudRoundTrip:
@@ -555,10 +585,15 @@ class TestXMLCloudRoundTrip:
 
         writer = XMLWriter()
         writer.write(df, "s3://bucket/data.xml", filesystem=mock_fs)
-
-        mock_fs.open.assert_called_once_with(
-            "s3://bucket/data.xml", "w", encoding="utf-8"
-        )
+        open_calls = [
+            call
+            for call in mock_fs.open.call_args_list
+            if ".tmp_" in str(call.args[0]) and str(call.args[0]).endswith("_data.xml")
+        ]
+        assert len(open_calls) == 1
+        mock_fs.mv.assert_called_once()
+        args, _ = mock_fs.mv.call_args
+        assert args[1] == "s3://bucket/data.xml"
 
 
 class TestLocalPathsStillWork:

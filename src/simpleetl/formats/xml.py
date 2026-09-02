@@ -76,6 +76,11 @@ class XMLWriter(DataWriter):
             **kwargs: Additional arguments for XML generation.
                 Supports 'filesystem' for an fsspec filesystem instance.
         """
+        from .transactional_sink import execute_atomic
+
+        return execute_atomic(self, data, destination, **kwargs)
+
+    def _do_write(self, data: pd.DataFrame, destination: str, **kwargs) -> None:
         root_element = kwargs.pop("root_element", "data")
         record_element = kwargs.pop("record_element", "record")
         filesystem = kwargs.pop("filesystem", None)

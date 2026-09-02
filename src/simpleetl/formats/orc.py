@@ -53,6 +53,12 @@ class OrcWriter(DataWriter):
             destination: Path to the output ORC file.
             **kwargs: Additional arguments (compression, etc.).
         """
+        from .transactional_sink import execute_atomic
+
+        return execute_atomic(self, data, destination, **kwargs)
+
+    def _do_write(self, data: pd.DataFrame, destination: str, **kwargs) -> None:
+        filesystem = kwargs.pop("filesystem", None)
         import pyarrow as pa
         from pyarrow import orc
 
@@ -60,10 +66,9 @@ class OrcWriter(DataWriter):
         compression = kwargs.pop("compression", "snappy")
 
         if is_cloud_path(destination):
-            fs = kwargs.pop("filesystem", None)
-            if fs is None:
-                fs = get_filesystem(destination)
-            with fs.open(destination, "wb") as f:
+            if filesystem is None:
+                filesystem = get_filesystem(destination)
+            with filesystem.open(destination, "wb") as f:
                 orc.write_table(
                     table,
                     f,

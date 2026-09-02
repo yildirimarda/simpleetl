@@ -117,7 +117,16 @@ class TestCSVCloudReadWrite:
 
         writer = CSVWriter()
         writer.write(df, "s3://bucket/data.csv", filesystem=mock_fs)
-        mock_fs.open.assert_called_once_with("s3://bucket/data.csv", "w")
+        # Transactional sink writes to a temp file then renames atomically
+        open_calls = [
+            call
+            for call in mock_fs.open.call_args_list
+            if ".tmp_" in str(call.args[0]) and str(call.args[0]).endswith("_data.csv")
+        ]
+        assert len(open_calls) == 1
+        mock_fs.mv.assert_called_once()
+        args, _ = mock_fs.mv.call_args
+        assert args[1] == "s3://bucket/data.csv"
 
     def test_csv_read_chunks_from_cloud(self):
         from simpleetl.formats.csv import CSVReader
@@ -190,16 +199,21 @@ class TestParquetCloudReadWrite:
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         with (
             patch(
-                "simpleetl.formats.parquet.get_filesystem",
+                "simpleetl.formats.transactional_sink.get_filesystem",
             ) as mock_get_fs,
+            patch(
+                "simpleetl.formats.parquet.get_filesystem",
+            ) as mock_get_fs_parquet,
             patch(
                 "simpleetl.formats.parquet.pd.DataFrame.to_parquet",
             ) as mock_to_parquet,
         ):
             mock_get_fs.return_value = MagicMock()
+            mock_get_fs_parquet.return_value = MagicMock()
             writer = ParquetWriter()
             writer.write(df, "s3://bucket/data.parquet")
-            mock_get_fs.assert_called_once_with("s3://bucket/data.parquet")
+            mock_get_fs.assert_called()
+            mock_get_fs_parquet.assert_called()
             mock_to_parquet.assert_called_once()
 
     def test_parquet_read_chunks_from_cloud(self):
@@ -288,7 +302,15 @@ class TestJSONCloudReadWrite:
 
         writer = JSONWriter()
         writer.write(df, "s3://bucket/data.json", filesystem=mock_fs)
-        mock_fs.open.assert_called_once_with("s3://bucket/data.json", "w")
+        open_calls = [
+            call
+            for call in mock_fs.open.call_args_list
+            if ".tmp_" in str(call.args[0]) and str(call.args[0]).endswith("_data.json")
+        ]
+        assert len(open_calls) == 1
+        mock_fs.mv.assert_called_once()
+        args, _ = mock_fs.mv.call_args
+        assert args[1] == "s3://bucket/data.json"
 
 
 # ---------------------------------------------------------------------------
@@ -339,7 +361,15 @@ class TestAvroCloudReadWrite:
 
         writer = AvroWriter()
         writer.write(df, "s3://bucket/data.avro", filesystem=mock_fs)
-        mock_fs.open.assert_called_once_with("s3://bucket/data.avro", "wb")
+        open_calls = [
+            call
+            for call in mock_fs.open.call_args_list
+            if ".tmp_" in str(call.args[0]) and str(call.args[0]).endswith("_data.avro")
+        ]
+        assert len(open_calls) == 1
+        mock_fs.mv.assert_called_once()
+        args, _ = mock_fs.mv.call_args
+        assert args[1] == "s3://bucket/data.avro"
 
 
 # ---------------------------------------------------------------------------
@@ -410,7 +440,15 @@ class TestExcelCloudReadWrite:
 
         writer = ExcelWriter()
         writer.write(df, "s3://bucket/data.xlsx", filesystem=mock_fs)
-        mock_fs.open.assert_called_once_with("s3://bucket/data.xlsx", "wb")
+        open_calls = [
+            call
+            for call in mock_fs.open.call_args_list
+            if ".tmp_" in str(call.args[0]) and str(call.args[0]).endswith("_data.xlsx")
+        ]
+        assert len(open_calls) == 1
+        mock_fs.mv.assert_called_once()
+        args, _ = mock_fs.mv.call_args
+        assert args[1] == "s3://bucket/data.xlsx"
 
 
 # ---------------------------------------------------------------------------
@@ -452,9 +490,15 @@ class TestXMLCloudReadWrite:
 
         writer = XMLWriter()
         writer.write(df, "s3://bucket/data.xml", filesystem=mock_fs)
-        mock_fs.open.assert_called_once_with(
-            "s3://bucket/data.xml", "w", encoding="utf-8"
-        )
+        open_calls = [
+            call
+            for call in mock_fs.open.call_args_list
+            if ".tmp_" in str(call.args[0]) and str(call.args[0]).endswith("_data.xml")
+        ]
+        assert len(open_calls) == 1
+        mock_fs.mv.assert_called_once()
+        args, _ = mock_fs.mv.call_args
+        assert args[1] == "s3://bucket/data.xml"
 
 
 # ---------------------------------------------------------------------------

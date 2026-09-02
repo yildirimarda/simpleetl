@@ -43,6 +43,7 @@ A lightweight, professional ETL (Extract, Transform, Load) framework for Python.
 | [Tracing](tracing.md) | OpenTelemetry tracing guide |
 | [Polars](polars.md) | Polars interop and IO acceleration guide |
 | [Kafka](kafka.md) | Kafka source/sink guide |
+| [Transactional Sink](transactional_sink.md) | Exactly-once file and database write guarantees |
 | [Warehouses](warehouses.md) | Snowflake & BigQuery dialect guide |
 
 ## Quick Example

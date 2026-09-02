@@ -173,11 +173,19 @@ class CSVWriter(DataWriter):
         Raises:
             ValueError: If *engine* is not ``"pandas"`` or ``"polars"``.
         """
+        from .transactional_sink import execute_atomic
+
         validate_engine(engine)
+        return execute_atomic(self, data, destination, engine=engine, **kwargs)
+
+    def _do_write(
+        self, data: pd.DataFrame, destination: str, engine: str = "pandas", **kwargs
+    ) -> None:
+        validate_engine(engine)
+        filesystem = kwargs.pop("filesystem", None)
         if engine == "polars" and self._write_polars(data, destination, kwargs):
             return
         if is_cloud_path(destination):
-            filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(destination)
             with filesystem.open(destination, "w") as f:
