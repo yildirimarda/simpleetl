@@ -101,6 +101,11 @@ class AvroWriter(DataWriter):
             **kwargs: Additional arguments. Supports 'schema' for Avro schema
                 and 'filesystem' for an fsspec filesystem instance.
         """
+        from .transactional_sink import execute_atomic
+
+        return execute_atomic(self, data, destination, **kwargs)
+
+    def _do_write(self, data: pd.DataFrame, destination: str, **kwargs) -> None:
         fastavro = _get_fastavro()
         records = data.to_dict(orient="records")
 

@@ -171,8 +171,9 @@ class DeltaLakeWriter(DataWriter):
             ValueError: If *mode* is not recognised.
             ImportError: If ``deltalake`` is not installed.
         """
+        from .transactional_sink import execute_atomic
+
         _require_deltalake()
-        import deltalake  # noqa: PLC0415
         import pyarrow as pa  # noqa: PLC0415
 
         valid_modes = {"append", "overwrite", "error"}
@@ -191,4 +192,25 @@ class DeltaLakeWriter(DataWriter):
         if storage_options:
             write_kwargs["storage_options"] = storage_options
 
+        # Delta Lake uses directory-based tables; we wrap the write
+        # in atomic rename at the directory level for exactly-once.
+        execute_atomic(
+            self,
+            (table, write_kwargs),
+            destination,
+            mode=mode,
+            partition_by=partition_by,
+            schema_mode=schema_mode,
+            storage_options=storage_options,
+        )
+
+    def _do_write(
+        self,
+        data: Any,
+        destination: str,
+        **kwargs: Any,
+    ) -> None:
+        _require_deltalake()
+        import deltalake  # noqa: PLC0415
+        table, write_kwargs = data
         deltalake.write_deltalake(destination, table, **write_kwargs)

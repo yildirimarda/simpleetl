@@ -127,17 +127,26 @@ class JSONWriter(DataWriter):
             **kwargs: Additional arguments to pass to pandas.DataFrame.to_json.
                 Supports 'filesystem' for an fsspec filesystem instance.
         """
+        from .transactional_sink import execute_atomic
+
         # Default to orient='records' for better JSON structure
         if "orient" not in kwargs:
             kwargs["orient"] = "records"
         if "lines" not in kwargs:
             kwargs["lines"] = True
 
-        # If writing to string, handle differently
+        if destination == "-":
+            return self._do_write(data, destination, **kwargs)
+
+        return execute_atomic(self, data, destination, **kwargs)
+
+    def _do_write(self, data: pd.DataFrame, destination: str, **kwargs) -> None:
+        # If writing to string, handle differently (not atomic)
         if destination == "-":
             json_str = data.to_json(**kwargs)
             print(json_str, end="")
-        elif is_cloud_path(destination):
+            return
+        if is_cloud_path(destination):
             filesystem = kwargs.pop("filesystem", None)
             if filesystem is None:
                 filesystem = get_filesystem(destination)

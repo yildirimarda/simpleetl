@@ -178,6 +178,14 @@ class ParquetWriter(DataWriter):
         Raises:
             ValueError: If *engine* is not ``"pandas"`` or ``"polars"``.
         """
+        from .transactional_sink import execute_atomic
+
+        validate_engine(engine)
+        return execute_atomic(self, data, destination, engine=engine, **kwargs)
+
+    def _do_write(
+        self, data: pd.DataFrame, destination: str, engine: str = "pandas", **kwargs
+    ) -> None:
         validate_engine(engine)
         if engine == "polars" and self._write_polars(data, destination, kwargs):
             return

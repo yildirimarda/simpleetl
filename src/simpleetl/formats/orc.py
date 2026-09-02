@@ -53,6 +53,11 @@ class OrcWriter(DataWriter):
             destination: Path to the output ORC file.
             **kwargs: Additional arguments (compression, etc.).
         """
+        from .transactional_sink import execute_atomic
+
+        return execute_atomic(self, data, destination, **kwargs)
+
+    def _do_write(self, data: pd.DataFrame, destination: str, **kwargs) -> None:
         import pyarrow as pa
         from pyarrow import orc
 
