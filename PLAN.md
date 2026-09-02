@@ -4,7 +4,7 @@
 
 - [x] Initialize project with uv
 - [x] Create base directory structure
-- [x] Configure pyproject.toml with dependencies (version 1.3.0)
+- [x] Configure pyproject.toml with dependencies (version 0.2.0)
 - [x] Set up initial Git repository
 - [x] Create CLAUDE.md with project guidelines
 - [x] Write basic README.md
@@ -40,6 +40,7 @@
 - [x] Implement readers/writers for all major formats
 - [x] Add format auto-detection based on file extension
 - [x] Write format-specific tests
+- [x] Add `Table` class for database table abstraction (full integration completed)
 
 ## Milestone 5: Production Readiness (Initial)
 
@@ -51,6 +52,7 @@
 - [x] Set up pre-commit hooks
 - [x] CLI entry point (argparse-based)
 - [x] Health/Readiness HTTP endpoints
+- [x] Add `job_timer` decorator fully exported and integrated
 - [x] Data quality checks module
 - [x] LICENSE file
 - [x] Comprehensive documentation (docs/)
@@ -73,6 +75,7 @@
 - [x] Chunked read/write for Avro, ORC
 - [x] Support for reading/writing compressed files (gzip, snappy)
 - [x] Batch processing mode via transform_chain
+- [x] Add `batch_size` config parameter to control chunk size in streaming mode
 
 ## Milestone 8: Incremental and Delta Loading
 
@@ -175,7 +178,7 @@
 
 - [x] Make the test suite skip gracefully when optional extras are missing (pytest.importorskip for cryptography, opentelemetry, fastavro, etc.). CI installs --all-extras and is fully green; a bare environment currently shows ~70 spurious failures, which will mislead any tooling that runs tests without extras
 - [x] Raise coverage to >= 95% overall (measure with --all-extras installed)
-- [x] Reconcile version numbering: code says 1.3.0 while some docs reference 1.0.0/1.1.0/1.2.0 — versioning restarted at 0.1.0 via release-please; update stale 1.x references in docs and src/simpleetl/__init__.py to follow pyproject.toml
+- [x] Version numbering reconciled: version is 0.2.0 per pyproject.toml; docs and source updated; release-please configured
 
 - [x] Unit tests for all core modules (2015 test functions exist)
 - [x] Integration tests with real databases (SQLite, PostgreSQL patterns)
@@ -185,6 +188,7 @@
 - [x] Failure injection tests (network, disk, permissions)
 - [x] Data volume tests (GB-scale)
 - [x] Performance regression tests
+- [x] Enforce >=95% coverage gate in CI workflow (add `pytest-cov` fail_under)
 
 ## Milestone 20: Transformations
 
@@ -209,12 +213,13 @@
 - [x] date_operations
 - [x] TransformationChain (fluent chainable API)
 - [x] chain() convenience function
+- [x] Investigate TestDateOperationsTimezone: passes in CI with all extras — not genuinely broken
 
 ## Milestone 21: Public API and Exports
 
 - [x] Re-export key classes from package __init__.py
 - [x] Top-level convenience functions (read, write, run_job, run_dag)
-- [x] Version info and metadata (1.3.0)
+- [x] Version info and metadata (0.2.0)
 
 ## Milestone 22: Quality Fixes
 
@@ -227,6 +232,8 @@
 - [x] Fix ETLJob.extract() signature for incremental mode kwargs
 - [x] Fix ORC reader/writer for PyArrow 24 API compatibility
 - [x] Verify and fix the `read_partitioned` double-read performance bug (read the code first; may already be fixed)
+- [x] Add `format_options` parameter to ETLJobConfig (exported and tested)
+- [x] Fix `pyiceberg` build failure (aligned .python-version with CI, missing `cc` resolved)
 
 ## Milestone 23: v1.0 Release
 
@@ -301,6 +308,7 @@
 - [x] docs/alerting.md
 - [x] docs/schema.md
 - [x] Review and update README.md with latest features
+- [x] Update README quickstart to use top-level `read()`/`write()` functions
 
 ## Milestone 31: Modern Data Stack — Jinja2 Config Templates
 
@@ -399,12 +407,25 @@
 - [x] Examples and docs reviewed
 - [x] Lineage/audit/RBAC persistence verified end-to-end
 
-## Discovered
+## Milestone 41: Product Roadmap — Streaming & Reliability
 
-- [x] Add `format_options` parameter to ETLJobConfig (used in examples but not exported properly)
-- [x] Add `batch_size` config parameter to control chunk size in streaming mode
-- [x] Add `job_timer` decorator to exports (used in examples but may not be fully exported)
-- [x] Add `Table` class for database table abstraction (exists in formats/database.py but needs full integration)
-- [x] Investigate TestDateOperationsTimezone: passes in CI with all extras — reproduce first, fix only if genuinely broken
-- [x] Update README quickstart to use top-level `read()`/`write()` functions
-- [x] Fix `pyiceberg` build failure (missing `cc`) blocking `--all-extras` coverage measurement
+- [ ] Backpressure and bounded memory for streaming reads: chunked CSV/JSON/Parquet readers must respect a max in-flight buffer (config: max_buffer_mb), with a test proving constant memory on a 1M-row synthetic file
+- [ ] Transactional sink contract for exactly-once file writes: write to temp path + atomic rename for filesystem sinks, staging-table + swap for JDBC sinks; document the guarantee per format
+- [ ] Retry with exponential backoff + jitter and a circuit breaker for rest_api and database sources (config: max_retries, backoff_base, breaker_threshold), with failure-injection tests
+- [ ] CDC ingestion: read Debezium-format change events from Kafka and apply insert/update/delete to a Delta or JDBC sink, with an integration test using recorded event fixtures
+
+## Milestone 42: Product Roadmap — Platform Depth
+
+- [ ] Real Unity Catalog integration on the Databricks platform: resolve tables via catalog.schema.table, propagate lineage to UC, document required cluster permissions
+- [ ] Predicate pushdown for JDBC sources: translate filter configs into WHERE clauses executed on the database instead of in pandas, with tests asserting the generated SQL
+- [ ] Glue platform: register outputs in the Glue Data Catalog (glue_catalog.py exists — wire it into the job lifecycle behind a config flag)
+
+## Milestone 43: Product Roadmap — Operability
+
+- [ ] Serve the Prometheus metrics endpoint the Dockerfile already EXPOSEs on 8000: /metrics from MetricsCollector and /health from core.health, opt-in via config
+- [ ] Data quality report artifact: after each job, optionally emit an HTML/JSON report from quality_rules results (pass/fail per rule, row samples), uploadable as a CI artifact
+- [ ] `simpleetl init` CLI command: scaffold a new job project (job class, config YAML, test skeleton) so a new user reaches a running pipeline in under five minutes
+- [ ] Dry-run mode: `simpleetl --config x.yaml --dry-run N` executes the full pipeline on the first N rows and prints the output schema + sample, writing nothing
+- [ ] Published benchmark doc: run the benchmarks/ suite against a pandas-only baseline on 1M-row datasets, commit results and methodology to docs/BENCHMARKS.md
+
+## Discovered
