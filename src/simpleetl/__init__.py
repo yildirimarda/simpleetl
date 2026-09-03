@@ -30,7 +30,7 @@ from importlib.metadata import version as _pkg_version
 try:
     __version__ = _pkg_version("simpleetl")
 except PackageNotFoundError:  # running from a source tree without install
-    __version__ = "0.4.1"
+    __version__ = "0.4.2"
 __author__ = "SimpleETL Contributors"
 
 # -- Core ETL ----------------------------------------------------------------
