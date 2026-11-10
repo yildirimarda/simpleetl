@@ -428,6 +428,11 @@
 - [x] Dry-run mode: `simpleetl --config x.yaml --dry-run N` executes the full pipeline on the first N rows and prints the output schema + sample, writing nothing
 - [x] Published benchmark doc: run the benchmarks/ suite against a pandas-only baseline on 1M-row datasets, commit results and methodology to docs/BENCHMARKS.md
 
+## Milestone 44: CI Hygiene — Dependency Audit
+
+- [ ] Decouple the vulnerability scan from the unit tests: remove `tests/test_security_audit.py::test_pip_audit_passes` (and keep the other tests in that file) so a newly published CVE no longer fails every pytest run; the CI `security` job stays the single gate, verified by `uv run --no-sync pytest tests/test_security_audit.py` passing offline
+- [ ] Add a weekly scheduled workflow (`.github/workflows/audit.yml`, cron plus workflow_dispatch) that runs `uv sync --frozen --all-extras --python 3.11` and `uv run --no-sync pip-audit --skip-editable`, so new advisories surface on a schedule instead of blocking unrelated PRs
+
 ## Discovered
 
 - [x] Make benchmark scripts explicitly pass `engine="pandas"` so the pandas-only baseline is reproducible and protected against future default changes.
