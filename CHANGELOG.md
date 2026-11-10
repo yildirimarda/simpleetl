@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/yildirimarda/simpleetl/compare/v0.4.2...v0.5.0) (2026-11-10)
+
+
+### Documentation
+
+* plan decoupling pip-audit from unit tests ([#54](https://github.com/yildirimarda/simpleetl/issues/54)) ([c531c7e](https://github.com/yildirimarda/simpleetl/commit/c531c7edad149dcdc16660f5286f7c6bc9b3893b))
+
+
+### Miscellaneous Chores
+
+* cut release 0.5.0 ([#56](https://github.com/yildirimarda/simpleetl/issues/56)) ([756d35d](https://github.com/yildirimarda/simpleetl/commit/756d35d87abfbfb96e7de63f6c1ff20ad53d7826))
+
 ## [0.4.2](https://github.com/yildirimarda/simpleetl/compare/v0.4.1...v0.4.2) (2026-09-03)
 
 
